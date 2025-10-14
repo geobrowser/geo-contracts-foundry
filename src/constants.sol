@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-
-pragma solidity ^0.8.8;
+pragma solidity 0.8.17;
 
 // The ID of the permission required to contribute content to Personal Space proposals.
 bytes32 constant MEMBER_PERMISSION_ID = keccak256('MEMBER_PERMISSION');
