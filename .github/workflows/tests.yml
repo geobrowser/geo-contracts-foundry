@@ -44,8 +44,6 @@ jobs:
 
   lint:
     name: Static Analysis
-    # Remove the following line if you wish to run static analysis
-    if: false
     runs-on: ubuntu-latest
 
     steps:
