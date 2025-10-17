@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
+
 import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 
 /// @notice The condition associated with `TestSharedPlugin`

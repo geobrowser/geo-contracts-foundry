@@ -1,25 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {Clones} from '@openzeppelin/contracts/proxy/Clones.sol';
-
 import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
+import {Clones} from '@openzeppelin/contracts/proxy/Clones.sol';
+
 import {PersonalSpaceAdminPlugin} from 'contracts/personal/PersonalSpaceAdminPlugin.sol';
+import {IPersonalSpaceAdminPluginSetup} from 'interfaces/personal/IPersonalSpaceAdminPluginSetup.sol';
 import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title PersonalSpaceAdminPluginSetup
-/// @author Aragon - 2023
 /// @notice The setup contract of the `PersonalSpaceAdminPlugin` plugin.
-contract PersonalSpaceAdminPluginSetup is PluginSetup {
+contract PersonalSpaceAdminPluginSetup is PluginSetup, IPersonalSpaceAdminPluginSetup {
   using Clones for address;
 
   /// @notice The address of the `PersonalSpaceAdminPlugin` plugin logic contract to be cloned.
   address private immutable implementation_;
-
-  event GeoPersonalAdminPluginCreated(address dao, address personalAdminPlugin);
 
   /// @notice The constructor setting the `PersonalSpaceAdminPlugin` implementation contract to clone from.
   constructor() {
@@ -99,7 +97,7 @@ contract PersonalSpaceAdminPluginSetup is PluginSetup {
     return implementation_;
   }
 
-  /// @notice Encodes the given installation parameters into a byte array
+  /// @inheritdoc IPersonalSpaceAdminPluginSetup
   function encodeInstallationParams(
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
@@ -107,7 +105,7 @@ contract PersonalSpaceAdminPluginSetup is PluginSetup {
     return abi.encode(_initialEditors, _initialMembers);
   }
 
-  /// @notice Decodes the given byte array into the original installation parameters
+  /// @inheritdoc IPersonalSpaceAdminPluginSetup
   function decodeInstallationParams(bytes memory _data)
     public
     pure

@@ -1,32 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
-
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
-import {PermissionManager} from '@aragon/osx/core/permission/PermissionManager.sol';
 import {PluginUUPSUpgradeable} from '@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol';
 import {ProposalUpgradeable} from '@aragon/osx/core/plugin/proposal/ProposalUpgradeable.sol';
+import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
 
-import {MAIN_SPACE_VOTING_INTERFACE_ID, MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
+import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
 import {Addresslist} from 'contracts/governance/base/Addresslist.sol';
 import {IEditors} from 'interfaces/base/IEditors.sol';
+import {IMainVotingPlugin} from 'interfaces/governance/IMainVotingPlugin.sol';
+import {IMemberAccessPlugin} from 'interfaces/governance/IMemberAccessPlugin.sol';
 import {IMultisig} from 'interfaces/governance/base/IMultisig.sol';
 
-bytes4 constant MEMBER_ACCESS_INTERFACE_ID = MemberAccessPlugin.initialize.selector
-  ^ MemberAccessPlugin.updateMultisigSettings.selector ^ MemberAccessPlugin.proposeAddMember.selector
-  ^ MemberAccessPlugin.getProposal.selector;
-
 /// @title Member access plugin (Multisig) - Release 1, Build 1
-/// @author Aragon - 2023
 /// @notice The on-chain multisig governance plugin in which a proposal passes if X out of Y approvals are met.
-contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgradeable {
+contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemberAccessPlugin {
   using SafeCastUpgradeable for uint256;
 
-  /// @notice The ID of the permission required to call the `addAddresses` functions.
+  /// @inheritdoc IMemberAccessPlugin
   bytes32 public constant UPDATE_MULTISIG_SETTINGS_PERMISSION_ID = keccak256('UPDATE_MULTISIG_SETTINGS_PERMISSION');
 
-  /// @notice The ID of the permission required to create new membership proposals.
+  /// @inheritdoc IMemberAccessPlugin
   bytes32 public constant PROPOSER_PERMISSION_ID = keccak256('PROPOSER_PERMISSION');
 
   /// @notice The minimum total amount of approvals required for proposals created by a non-editor
@@ -38,96 +33,16 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
   /// @notice The minimum total amount of approvals required for proposals created by an editor (multiple)
   uint16 internal constant MIN_APPROVALS_WHEN_CREATED_BY_EDITOR_OF_MANY = uint16(2);
 
-  /// @notice A container for proposal-related information.
-  /// @param executed Whether the proposal is executed or not.
-  /// @param approvals The number of approvals casted.
-  /// @param parameters The proposal-specific approve settings at the time of the proposal creation.
-  /// @param approvers The approves casted by the approvers.
-  /// @param actions The actions to be executed when the proposal passes.
-  /// @param _failsafeActionMap A bitmap allowing the proposal to succeed, even if certain actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
-  struct Proposal {
-    bool executed;
-    uint16 approvals;
-    ProposalParameters parameters;
-    mapping(address => bool) approvers;
-    IDAO.Action[] actions;
-    MainVotingPlugin mainVotingPlugin;
-    uint256 failsafeActionMap;
-  }
-
-  /// @notice A container for the proposal parameters.
-  /// @param minApprovals The number of approvals required.
-  /// @param snapshotBlock The number of the block prior to the proposal creation.
-  /// @param startDate The timestamp when the proposal starts.
-  /// @param endDate The timestamp when the proposal expires.
-  struct ProposalParameters {
-    uint16 minApprovals;
-    uint64 snapshotBlock;
-    uint64 startDate;
-    uint64 endDate;
-  }
-
-  /// @notice A container for the plugin settings.
-  /// @param proposalDuration The amount of time before a non-approved proposal expires.
-  struct MultisigSettings {
-    uint64 proposalDuration;
-  }
-
   /// @notice A mapping between proposal IDs and proposal information.
   mapping(uint256 => Proposal) internal proposals;
 
-  /// @notice The current plugin settings.
+  /// @inheritdoc IMemberAccessPlugin
   MultisigSettings public multisigSettings;
 
-  /// @notice Keeps track at which block number the multisig settings have been changed the last time.
-  /// @dev This variable prevents a proposal from being created in the same block in which the multisig settings change.
+  /// @inheritdoc IMemberAccessPlugin
   uint64 public lastMultisigSettingsChange;
 
-  event AddMemberProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    address indexed member,
-    address dao
-  );
-
-  /// @notice Thrown when creating a proposal at the same block that the settings were changed.
-  error ProposalCreationForbiddenOnSameBlock();
-
-  /// @notice Thrown if an approver is not allowed to cast an approve. This can be because the proposal
-  /// - is not open,
-  /// - was executed, or
-  /// - the approver is not on the address list
-  /// @param proposalId The ID of the proposal.
-  /// @param sender The address of the sender.
-  error ApprovalCastForbidden(uint256 proposalId, address sender);
-
-  /// @notice Thrown if the proposal execution is forbidden.
-  /// @param proposalId The ID of the proposal.
-  error ProposalExecutionForbidden(uint256 proposalId);
-
-  /// @notice Thrown when called from an incompatible contract.
-  error InvalidInterface();
-
-  /// @notice Emitted when a proposal is approved by an editor.
-  /// @param proposalId The ID of the proposal.
-  /// @param editor The editor casting the approve.
-  event Approved(uint256 indexed proposalId, address indexed editor);
-
-  /// @notice Emitted when a proposal is rejected by an editor.
-  /// @param proposalId The ID of the proposal.
-  /// @param editor The editor casting the rejection.
-  event Rejected(uint256 indexed proposalId, address indexed editor);
-
-  /// @notice Emitted when the plugin settings are set.
-  /// @param proposalDuration The amount of time before a non-approved proposal expires.
-  event MultisigSettingsUpdated(uint64 proposalDuration);
-
-  /// @notice Initializes Release 1, Build 1.
-  /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
-  /// @param _dao The IDAO interface of the associated DAO.
-  /// @param _multisigSettings The multisig settings.
+  /// @inheritdoc IMemberAccessPlugin
   function initialize(IDAO _dao, MultisigSettings calldata _multisigSettings) external virtual initializer {
     __PluginUUPSUpgradeable_init(_dao);
 
@@ -144,12 +59,11 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
     override(PluginUUPSUpgradeable, ProposalUpgradeable)
     returns (bool)
   {
-    return _interfaceId == MEMBER_ACCESS_INTERFACE_ID || _interfaceId == type(IMultisig).interfaceId
+    return _interfaceId == type(IMemberAccessPlugin).interfaceId || _interfaceId == type(IMultisig).interfaceId
       || super.supportsInterface(_interfaceId);
   }
 
-  /// @notice Updates the plugin settings.
-  /// @param _multisigSettings The new settings.
+  /// @inheritdoc IMemberAccessPlugin
   function updateMultisigSettings(MultisigSettings calldata _multisigSettings)
     external
     auth(UPDATE_MULTISIG_SETTINGS_PERMISSION_ID)
@@ -157,11 +71,7 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
     _updateMultisigSettings(_multisigSettings);
   }
 
-  /// @notice Creates a proposal to add a new member.
-  /// @param _metadata The metadata of the proposal.
-  /// @param _proposedMember The address of the member who may eveutnally be added.
-  /// @param _proposer The address to use as the proposal creator.
-  /// @return proposalId The ID of the proposal.
+  /// @inheritdoc IMemberAccessPlugin
   function proposeAddMember(
     bytes calldata _metadata,
     address _proposedMember,
@@ -169,7 +79,7 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
   ) public auth(PROPOSER_PERMISSION_ID) returns (uint256 proposalId) {
     // Check that the caller supports the `addMember` function
     if (
-      !MainVotingPlugin(msg.sender).supportsInterface(MAIN_SPACE_VOTING_INTERFACE_ID)
+      !MainVotingPlugin(msg.sender).supportsInterface(type(IMainVotingPlugin).interfaceId)
         || !MainVotingPlugin(msg.sender).supportsInterface(type(IEditors).interfaceId)
         || !MainVotingPlugin(msg.sender).supportsInterface(type(Addresslist).interfaceId)
     ) {
@@ -255,7 +165,6 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
   }
 
   /// @inheritdoc IMultisig
-  /// @param _proposalId The Id of the proposal to approve.
   function approve(uint256 _proposalId) public {
     _approve(_proposalId, msg.sender);
   }
@@ -283,8 +192,7 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
     }
   }
 
-  /// @notice Rejects the given proposal immediately.
-  /// @param _proposalId The Id of the proposal to reject.
+  /// @inheritdoc IMemberAccessPlugin
   function reject(uint256 _proposalId) public {
     if (!_canApprove(_proposalId, msg.sender)) {
       revert ApprovalCastForbidden(_proposalId, msg.sender);
@@ -308,13 +216,7 @@ contract MemberAccessPlugin is IMultisig, PluginUUPSUpgradeable, ProposalUpgrade
     return _canExecute(_proposalId);
   }
 
-  /// @notice Returns all information for a proposal vote by its ID.
-  /// @param _proposalId The ID of the proposal.
-  /// @return executed Whether the proposal is executed or not.
-  /// @return approvals The number of approvals casted.
-  /// @return parameters The parameters of the proposal vote.
-  /// @return actions The actions to be executed in the associated DAO after the proposal has passed.
-  /// @param failsafeActionMap A bitmap allowing the proposal to succeed, even if individual actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
+  /// @inheritdoc IMemberAccessPlugin
   function getProposal(uint256 _proposalId)
     public
     view

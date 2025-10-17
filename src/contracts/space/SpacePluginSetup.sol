@@ -9,15 +9,14 @@ import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSet
 
 import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
+import {ISpacePluginSetup} from 'interfaces/space/ISpacePluginSetup.sol';
 import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title SpacePluginSetup
 /// @dev Release 1, Build 1
-contract SpacePluginSetup is PluginSetup {
+contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
   address private immutable pluginImplementation;
   address private immutable pluginSetupProcessor;
-
-  event GeoSpacePluginCreated(address dao, address plugin);
 
   /// @notice Initializes the setup contract
   /// @param pluginSetupProcessorAddress The address of the PluginSetupProcessor contract deployed by Aragon on that chain
@@ -137,7 +136,7 @@ contract SpacePluginSetup is PluginSetup {
     return pluginImplementation;
   }
 
-  /// @notice Encodes the given installation parameters into a byte array
+  /// @inheritdoc ISpacePluginSetup
   function encodeInstallationParams(
     address _paymentManager,
     string memory _firstBlockEditsContentUri,
@@ -150,7 +149,7 @@ contract SpacePluginSetup is PluginSetup {
     );
   }
 
-  /// @notice Decodes the given byte array into the original installation parameters
+  /// @inheritdoc ISpacePluginSetup
   function decodeInstallationParams(bytes memory _data)
     public
     pure
@@ -166,12 +165,12 @@ contract SpacePluginSetup is PluginSetup {
       abi.decode(_data, (address, string, bytes, address, address));
   }
 
-  /// @notice Encodes the given uninstallation parameters into a byte array
+  /// @inheritdoc ISpacePluginSetup
   function encodeUninstallationParams(address _pluginUpgrader) public pure returns (bytes memory) {
     return abi.encode(_pluginUpgrader);
   }
 
-  /// @notice Decodes the given byte array into the original uninstallation parameters
+  /// @inheritdoc ISpacePluginSetup
   function decodeUninstallationParams(bytes memory _data) public pure returns (address pluginUpgrader) {
     (pluginUpgrader) = abi.decode(_data, (address));
   }

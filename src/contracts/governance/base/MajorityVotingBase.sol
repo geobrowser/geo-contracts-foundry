@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
+import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
+import {PluginUUPSUpgradeable} from '@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol';
+import {ProposalUpgradeable} from '@aragon/osx/core/plugin/proposal/ProposalUpgradeable.sol';
+import {RATIO_BASE, RatioOutOfBounds} from '@aragon/osx/plugins/utils/Ratio.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
 
-import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
-import {PluginUUPSUpgradeable} from '@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol';
-import {IProposal} from '@aragon/osx/core/plugin/proposal/IProposal.sol';
-import {ProposalUpgradeable} from '@aragon/osx/core/plugin/proposal/ProposalUpgradeable.sol';
-
-import {RATIO_BASE, RatioOutOfBounds} from '@aragon/osx/plugins/utils/Ratio.sol';
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 /// @title MajorityVotingBase
-/// @author Aragon X - 2022-2023
 /// @notice The abstract implementation of majority voting plugins.
 /// @notice Adapted to only make use of the required parameters and methods.
 ///
@@ -95,94 +92,15 @@ import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 /// Accordingly, early execution is possible when the vote is open, the modified support criterion, and the particicpation criterion are met.
 /// @dev This contract implements the `IMajorityVoting` interface.
 abstract contract MajorityVotingBase is
-  IMajorityVoting,
   Initializable,
   ERC165Upgradeable,
   PluginUUPSUpgradeable,
-  ProposalUpgradeable
+  ProposalUpgradeable,
+  IMajorityVoting
 {
   using SafeCastUpgradeable for uint256;
 
-  /// @notice The different voting modes available.
-  /// @param Standard In standard mode, early execution and vote replacement are disabled.
-  /// @param EarlyExecution In early execution mode, a proposal can be executed early before the end date if the vote outcome cannot mathematically change by more voters voting.
-  /// @param VoteReplacement In vote replacement mode, voters can change their vote multiple times and only the latest vote option is tallied.
-  enum VotingMode {
-    Standard,
-    EarlyExecution,
-    VoteReplacement
-  }
-
-  /// @notice The different threshold modes available.
-  /// @param Percentage The percentage-based threshold system (e.g., 60% = 6e5).
-  /// @param Flat The flat threshold system (e.g., 2 votes = 2).
-  enum ThresholdMode {
-    Percentage,
-    Flat
-  }
-
-  /// @notice A container for the majority voting settings that will be applied as parameters on proposal creation.
-  /// @param votingMode A parameter to select the vote mode. In standard mode (0), early execution and vote replacement are disabled. In early execution mode (1), a proposal can be executed early before the end date if the vote outcome cannot mathematically change by more voters voting. In vote replacement mode (2), voters can change their vote multiple times and only the latest vote option is tallied.
-  /// @param thresholdMode A parameter to select the threshold mode. In percentage mode (0), the percentage-based threshold system (e.g., 60% = 6e5) is enabled. In flat mode (1), the flat threshold system (e.g., 2 votes = 2) is enabled.
-  /// @param supportThreshold The support threshold value. Its percentage value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
-  /// @param duration The duration of proposals in seconds.
-  struct VotingSettings {
-    VotingMode votingMode;
-    ThresholdMode thresholdMode;
-    uint32 supportThreshold;
-    uint64 duration;
-  }
-
-  /// @notice A container for proposal-related information.
-  /// @param executed Whether the proposal is executed or not.
-  /// @param parameters The proposal parameters at the time of the proposal creation.
-  /// @param tally The vote tally of the proposal.
-  /// @param voters The votes casted by the voters.
-  /// @param didNonProposersVote Whether a wallet other than the proposer voted on the proposal.
-  /// @param actions The actions to be executed when the proposal passes.
-  /// @param allowFailureMap A bitmap allowing the proposal to succeed, even if individual actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
-  struct Proposal {
-    bool executed;
-    ProposalParameters parameters;
-    Tally tally;
-    mapping(address => IMajorityVoting.VoteOption) voters;
-    bool didNonProposersVote;
-    IDAO.Action[] actions;
-    uint256 allowFailureMap;
-  }
-
-  /// @notice A container for the proposal parameters at the time of proposal creation.
-  /// @param votingMode A parameter to select the vote mode.
-  /// @param thresholdMode A parameter to select the threshold mode.
-  /// @param supportThreshold The support threshold value. The percentage value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
-  /// @param startDate The start date of the proposal vote.
-  /// @param endDate The end date of the proposal vote.
-  /// @param snapshotBlock The number of the block prior to the proposal creation.
-  struct ProposalParameters {
-    VotingMode votingMode;
-    ThresholdMode thresholdMode;
-    uint32 supportThreshold;
-    uint64 startDate;
-    uint64 endDate;
-    uint64 snapshotBlock;
-  }
-
-  /// @notice A container for the proposal vote tally.
-  /// @param abstain The number of abstain votes casted.
-  /// @param yes The number of yes votes casted.
-  /// @param no The number of no votes casted.
-  struct Tally {
-    uint256 abstain;
-    uint256 yes;
-    uint256 no;
-  }
-
-  /// @notice The [ERC-165](https://eips.ethereum.org/EIPS/eip-165) interface ID of the contract.
-  bytes4 internal constant MAJORITY_VOTING_BASE_INTERFACE_ID = this.duration.selector ^ this.votingMode.selector
-    ^ this.totalVotingPower.selector ^ this.getProposal.selector ^ this.updateVotingSettings.selector
-    ^ this.createProposal.selector;
-
-  /// @notice The ID of the permission required to call the `updateVotingSettings` function.
+  /// @inheritdoc IMajorityVoting
   bytes32 public constant UPDATE_VOTING_SETTINGS_PERMISSION_ID = keccak256('UPDATE_VOTING_SETTINGS_PERMISSION');
 
   /// @notice A mapping between proposal IDs and proposal information.
@@ -190,43 +108,6 @@ abstract contract MajorityVotingBase is
 
   /// @notice The struct storing the voting settings.
   VotingSettings private votingSettings;
-
-  /// @notice Thrown if a date is out of bounds.
-  /// @param limit The limit value.
-  /// @param actual The actual value.
-  error DateOutOfBounds(uint64 limit, uint64 actual);
-
-  /// @notice Thrown if the minimal duration value is out of bounds (less than one hour or greater than 1 year).
-  /// @param limit The limit value.
-  /// @param actual The actual value.
-  error DurationOutOfBounds(uint64 limit, uint64 actual);
-
-  /// @notice Thrown when a sender is not allowed to create a proposal.
-  /// @param sender The sender address.
-  error ProposalCreationForbidden(address sender);
-
-  /// @notice Thrown if an account is not allowed to cast a vote. This can be because the vote
-  /// - has not started,
-  /// - has ended,
-  /// - was executed, or
-  /// - the account doesn't have voting powers.
-  /// @param proposalId The ID of the proposal.
-  /// @param account The address of the _account.
-  /// @param voteOption The chosen vote option.
-  error VoteCastForbidden(uint256 proposalId, address account, VoteOption voteOption);
-
-  /// @notice Thrown if the proposal execution is forbidden.
-  /// @param proposalId The ID of the proposal.
-  error ProposalExecutionForbidden(uint256 proposalId);
-
-  /// @notice Emitted when the voting settings are updated.
-  /// @param votingMode A parameter to select the vote mode.
-  /// @param thresholdMode A parameter to select the threshold mode.
-  /// @param supportThreshold The support threshold value.
-  /// @param duration The minimum duration of the proposal vote in seconds.
-  event VotingSettingsUpdated(
-    VotingMode votingMode, ThresholdMode thresholdMode, uint32 supportThreshold, uint64 duration
-  );
 
   /// @notice Initializes the component to be used by inheriting contracts.
   /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
@@ -247,7 +128,7 @@ abstract contract MajorityVotingBase is
     override(ERC165Upgradeable, PluginUUPSUpgradeable, ProposalUpgradeable)
     returns (bool)
   {
-    return _interfaceId == MAJORITY_VOTING_BASE_INTERFACE_ID || _interfaceId == type(IMajorityVoting).interfaceId
+    return _interfaceId == type(IMajorityVoting).interfaceId || _interfaceId == type(IMajorityVoting).interfaceId
       || super.supportsInterface(_interfaceId);
   }
 
@@ -316,27 +197,22 @@ abstract contract MajorityVotingBase is
     return votingSettings.supportThreshold;
   }
 
-  /// @notice Returns the minimum duration parameter stored in the voting settings.
-  /// @return The minimum duration parameter.
+  /// @inheritdoc IMajorityVoting
   function duration() public view virtual returns (uint64) {
     return votingSettings.duration;
   }
 
-  /// @notice Returns the vote mode stored in the voting settings.
-  /// @return The vote mode parameter.
+  /// @inheritdoc IMajorityVoting
   function votingMode() public view virtual returns (VotingMode) {
     return votingSettings.votingMode;
   }
 
-  /// @notice Returns the threshold mode stored in the voting settings.
-  /// @return The threshold mode parameter.
+  /// @inheritdoc IMajorityVoting
   function thresholdMode() public view virtual returns (ThresholdMode) {
     return votingSettings.thresholdMode;
   }
 
-  /// @notice Returns the support threshold percentage computed for a specific proposal ID.
-  /// @param _proposalId The ID of the proposal.
-  /// @return The support threshold percentage.
+  /// @inheritdoc IMajorityVoting
   function getSupportThresholdPercentage(uint256 _proposalId) public view virtual returns (uint32) {
     Proposal storage proposal_ = proposals[_proposalId];
 
@@ -360,19 +236,10 @@ abstract contract MajorityVotingBase is
     }
   }
 
-  /// @notice Returns the total voting power checkpointed for a specific block number.
-  /// @param _blockNumber The block number.
-  /// @return The total voting power.
+  /// @inheritdoc IMajorityVoting
   function totalVotingPower(uint256 _blockNumber) public view virtual returns (uint256);
 
-  /// @notice Returns all information for a proposal vote by its ID.
-  /// @param _proposalId The ID of the proposal.
-  /// @return open Whether the proposal is open or not.
-  /// @return executed Whether the proposal is executed or not.
-  /// @return parameters The parameters of the proposal vote.
-  /// @return tally The current tally of the proposal vote.
-  /// @return actions The actions to be executed in the associated DAO after the proposal has passed.
-  /// @return allowFailureMap The bit map representations of which actions are allowed to revert so tx still succeeds.
+  /// @inheritdoc IMajorityVoting
   function getProposal(uint256 _proposalId)
     public
     view
@@ -396,8 +263,7 @@ abstract contract MajorityVotingBase is
     allowFailureMap = proposal_.allowFailureMap;
   }
 
-  /// @notice Updates the voting settings.
-  /// @param _votingSettings The new voting settings.
+  /// @inheritdoc IMajorityVoting
   function updateVotingSettings(VotingSettings calldata _votingSettings)
     external
     virtual
@@ -405,21 +271,6 @@ abstract contract MajorityVotingBase is
   {
     _updateVotingSettings(_votingSettings);
   }
-
-  /// @notice Creates a new majority voting proposal.
-  /// @param _metadata The metadata of the proposal.
-  /// @param _actions The actions that will be executed after the proposal passes.
-  /// @param _allowFailureMap Allows proposal to succeed even if an action reverts. Uses bitmap representation. If the bit at index `x` is 1, the tx succeeds even if the action at `x` failed. Passing 0 will be treated as atomic execution.
-  /// @param _voteOption The chosen vote option to be casted on proposal creation.
-  /// @param _tryEarlyExecution If `true`,  early execution is tried after the vote cast. The call does not revert if early execution is not possible.
-  /// @return proposalId The ID of the proposal.
-  function createProposal(
-    bytes calldata _metadata,
-    IDAO.Action[] calldata _actions,
-    uint256 _allowFailureMap,
-    VoteOption _voteOption,
-    bool _tryEarlyExecution
-  ) external virtual returns (uint256 proposalId);
 
   /// @notice Internal function to cast a vote. It assumes the queried vote exists.
   /// @param _proposalId The ID of the proposal.

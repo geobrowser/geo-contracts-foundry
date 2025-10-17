@@ -15,27 +15,22 @@ import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 ///      as their "home space". To set an existing space as home, users must request it and the
 ///      space's DAO must accept. Spaces can migrate to new DAO contracts while keeping their ID.
 contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
-  /// @notice The DAOFactory contract used to deploy new DAO instances
+  /// @inheritdoc ISpaceRegistry
   DAOFactory public daoFactory;
 
-  /// @notice Maps each unique space ID to its current DAO contract address
+  /// @inheritdoc ISpaceRegistry
   mapping(bytes16 => address) public daoAddressBySpaceId;
 
-  /// @notice Reverse mapping: DAO address to its space ID
+  /// @inheritdoc ISpaceRegistry
   mapping(address => bytes16) public spacesByDAOAddress;
 
-  /// @notice The home space ID for each user address (bytes16(0) if none)
+  /// @inheritdoc ISpaceRegistry
   mapping(address => bytes16) public homeSpaceByAddress;
 
-  /// @notice Pending home space requests: user address to requested space ID
-  /// @dev When a user wants to set an existing space as home, the space ID is stored here
-  ///      until the space's DAO accepts. Using space IDs (not DAO addresses) ensures
-  ///      requests remain valid if the space migrates to a new DAO contract.
+  /// @inheritdoc ISpaceRegistry
   mapping(address => bytes16) public pendingHomeSpaceId;
 
-  /// @notice Initializes the SpaceRegistry contract
-  /// @param _owner The address that will own this registry contract
-  /// @param _daoFactory The address of the DAOFactory contract used to deploy spaces
+  /// @inheritdoc ISpaceRegistry
   function initialize(address _owner, address _daoFactory) external initializer {
     if (_daoFactory == address(0)) revert SpaceRegistryInvalidZeroAddress();
 

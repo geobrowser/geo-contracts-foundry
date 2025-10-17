@@ -8,25 +8,13 @@ import {ProposalUpgradeable} from '@aragon/osx/core/plugin/proposal/ProposalUpgr
 import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
 
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
-
-import {IEditors} from 'interfaces/base/IEditors.sol';
-import {IMembers} from 'interfaces/base/IMembers.sol';
+import {IPersonalSpaceAdminPlugin} from 'interfaces/personal/IPersonalSpaceAdminPlugin.sol';
 import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title PersonalSpaceAdminPlugin
-/// @author Aragon - 2023
 /// @notice The admin governance plugin giving execution permission on the DAO to a single address.
-contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEditors, IMembers {
+contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IPersonalSpaceAdminPlugin {
   using SafeCastUpgradeable for uint256;
-
-  /// @notice The [ERC-165](https://eips.ethereum.org/EIPS/eip-165) interface ID of the contract.
-  bytes4 internal constant ADMIN_INTERFACE_ID = this.initialize.selector ^ this.executeProposal.selector
-    ^ this.submitEdits.selector ^ this.submitFlagContent.selector ^ this.submitAcceptSubspace.selector
-    ^ this.submitRemoveSubspace.selector ^ this.submitNewMember.selector ^ this.submitRemoveMember.selector
-    ^ this.submitNewEditor.selector ^ this.submitRemoveEditor.selector ^ this.leaveSpace.selector;
-
-  /// @notice Raised when a wallet who is not an editor or a member attempts to do something
-  error NotAMember(address caller);
 
   modifier onlyMembers() {
     if (!isMember(msg.sender)) {
@@ -35,11 +23,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     _;
   }
 
-  /// @notice Initializes the contract.
-  /// @dev This method is required to support [ERC-1167](https://eips.ethereum.org/EIPS/eip-1167).
-  /// @param _dao The associated DAO.
-  /// @param _initialEditors The initial editors.
-  /// @param _initialMembers The initial members.
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function initialize(
     IDAO _dao,
     address[] calldata _initialEditors,
@@ -60,24 +44,21 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     override(PluginCloneable, ProposalUpgradeable)
     returns (bool)
   {
-    return _interfaceId == ADMIN_INTERFACE_ID || super.supportsInterface(_interfaceId);
+    return _interfaceId == type(IPersonalSpaceAdminPlugin).interfaceId || super.supportsInterface(_interfaceId);
   }
 
-  /// @notice Returns whether the given address holds membership/editor permission on the plugin
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function isMember(address _account) public view returns (bool) {
     return dao().hasPermission(address(this), _account, MEMBER_PERMISSION_ID, bytes('')) || isEditor(_account);
   }
 
-  /// @notice Returns whether the given address holds editor permission on the plugin
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function isEditor(address _account) public view returns (bool) {
     // Does the address hold the permission on the plugin?
     return dao().hasPermission(address(this), _account, EDITOR_PERMISSION_ID, bytes(''));
   }
 
-  /// @notice Creates and executes a new proposal.
-  /// @param _metadata The metadata of the proposal.
-  /// @param _actions The actions to be executed.
-  /// @param _allowFailureMap A bitmap allowing the proposal to succeed, even if individual actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function executeProposal(
     bytes calldata _metadata,
     IDAO.Action[] calldata _actions,
@@ -96,10 +77,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     dao().execute(bytes32(_proposalId), _actions, _allowFailureMap);
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO emit new content on the given space.
-  /// @param _editsContentUri The URI of the IPFS content to publish.
-  /// @param _editsMetadata The metadata of the edits to publish.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitEdits(
     string memory _editsContentUri,
     bytes memory _editsMetadata,
@@ -117,9 +95,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     // The event will be emitted by the space plugin
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO emit flag content on the given space.
-  /// @param _flagContentUri The URI of the IPFS content to flag.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitFlagContent(string memory _flagContentUri, address _spacePlugin) public onlyMembers {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
 
@@ -133,9 +109,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     // The event will be emitted by the space plugin
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO accept the given DAO as a subspace.
-  /// @param _subspaceDao The address of the DAO that holds the new subspace
-  /// @param _spacePlugin The address of the space plugin where changes will be executed
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitAcceptSubspace(IDAO _subspaceDao, address _spacePlugin) public onlyMembers {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = _spacePlugin;
@@ -148,9 +122,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     // The event will be emitted by the space plugin
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO remove the given DAO as a subspace.
-  /// @param _subspaceDao The address of the DAO that holds the subspace to remove
-  /// @param _spacePlugin The address of the space plugin where changes will be executed
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitRemoveSubspace(IDAO _subspaceDao, address _spacePlugin) public onlyMembers {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = _spacePlugin;
@@ -163,8 +135,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     // The event will be emitted by the space plugin
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO grant membership permission to the given address
-  /// @param _newMember The address to grant member permission to
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitNewMember(address _newMember) public auth(EDITOR_PERMISSION_ID) {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = address(dao());
@@ -177,8 +148,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     emit MemberAdded(address(dao()), _newMember);
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO revoke membership permission from the given address
-  /// @param _member The address that will no longer be a member
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitRemoveMember(address _member) public auth(EDITOR_PERMISSION_ID) {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = address(dao());
@@ -191,7 +161,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     emit MemberRemoved(address(dao()), _member);
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO revoke any permission from the sender address
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function leaveSpace() external {
     IDAO.Action[] memory _actions;
     if (dao().hasPermission(address(this), msg.sender, MEMBER_PERMISSION_ID, bytes(''))) {
@@ -215,8 +185,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     }
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO grant editor permission to the given address
-  /// @param _newEditor The address to grant editor permission to
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitNewEditor(address _newEditor) public auth(EDITOR_PERMISSION_ID) {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = address(dao());
@@ -229,8 +198,7 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IEdit
     emit EditorAdded(address(dao()), _newEditor);
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO revoke editor permission from the given address
-  /// @param _editor The address that will no longer be an editor
+  /// @inheritdoc IPersonalSpaceAdminPlugin
   function submitRemoveEditor(address _editor) public auth(EDITOR_PERMISSION_ID) {
     IDAO.Action[] memory _actions = new IDAO.Action[](1);
     _actions[0].to = address(dao());
