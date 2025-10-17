@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
 import {IEmitter} from 'interfaces/core/IEmitter.sol';
@@ -11,9 +11,9 @@ contract MockEmitter is IEmitter {
     address _account,
     bytes32 _action,
     bytes32 _topic,
-    bytes calldata _spaceData,
-    bytes calldata _accountData
+    bytes calldata _data,
+    bytes calldata _signature
   ) external {
-    emit Ping(_space, _account, _action, _topic, _spaceData);
+    emit Ping(_space, _account, _action, _topic, _data);
   }
 }
