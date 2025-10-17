@@ -9,7 +9,7 @@ import {IProposal} from '@aragon/osx/core/plugin/proposal/IProposal.sol';
 /// @author Aragon Association - 2022-2023
 /// @notice The interface of majority voting plugin.
 interface IMajorityVoting is IPlugin, IProposal {
-  /// @notice Vote options that a voter can chose from.
+  /// @notice Vote options that a voter can choose from.
   /// @param None The default option state of a voter indicating the absence from the vote. This option neither influences support nor participation.
   /// @param Abstain This option does not influence the support but counts towards participation.
   /// @param Yes This option increases the support and counts towards participation.

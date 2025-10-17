@@ -11,7 +11,7 @@ import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 /// @title IMainVotingPlugin (Address list)
 /// @author Aragon - 2023
-/// @notice The majority voting implementation using a list of member addresses.
+/// @notice The majority voting implementation using a list of editor addresses.
 /// @dev This interface inherits from `IMajorityVoting` interface.
 interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers {
   event PublishEditsProposalCreated(
@@ -164,7 +164,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   function addEditor(address _account) external;
 
   /// @notice Removes existing editors from the address list.
-  /// @param _account The addresses of the editors to be removed. NOTE: Only one member can be removed at a time.
+  /// @param _account The addresses of the editors to be removed. NOTE: Only one editor can be removed at a time.
   function removeEditor(address _account) external;
 
   /// @notice Defines the given address as a new space member that can create proposals.
@@ -229,7 +229,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
 
   /// @notice Creates a proposal to add a new member.
   /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _proposedMember The address of the member who may eveutnally be added.
+  /// @param _proposedMember The address of the member who may eventually be added.
   /// @return proposalId NOTE: The proposal ID will belong to the Multisig plugin, not to this contract.
   function proposeAddMember(
     bytes calldata _metadataContentUri,
@@ -238,7 +238,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
 
   /// @notice Creates a proposal to remove an existing member.
   /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _member The address of the member who may eveutnally be removed.
+  /// @param _member The address of the member who may eventually be removed.
   /// @return proposalId The ID of the created proposal.
   function proposeRemoveMember(
     bytes calldata _metadataContentUri,
@@ -247,7 +247,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
 
   /// @notice Creates a proposal to remove an existing member.
   /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _proposedEditor The address of the wallet who may eveutnally be made an editor.
+  /// @param _proposedEditor The address of the wallet who may eventually be made an editor.
   /// @return proposalId The ID of the created proposal.
   function proposeAddEditor(
     bytes calldata _metadataContentUri,
@@ -256,7 +256,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
 
   /// @notice Creates a proposal to remove an existing editor.
   /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _editor The address of the editor who may eveutnally be removed.
+  /// @param _editor The address of the editor who may eventually be removed.
   /// @return proposalId The ID of the created proposal.
   function proposeRemoveEditor(
     bytes calldata _metadataContentUri,

@@ -113,7 +113,7 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
 
   /// @notice Creates a proposal to add a new member.
   /// @param _metadata The metadata of the proposal.
-  /// @param _proposedMember The address of the member who may eveutnally be added.
+  /// @param _proposedMember The address of the member who may eventually be added.
   /// @param _proposer The address to use as the proposal creator.
   /// @return proposalId The ID of the proposal.
   function proposeAddMember(
