@@ -1,38 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {PermissionManager} from '@aragon/osx/core/permission/PermissionManager.sol';
-import {IDAO, PluginUUPSUpgradeable} from '@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol';
-import {RATIO_BASE, _applyRatioCeiled} from '@aragon/osx/plugins/utils/Ratio.sol';
+import {IDAO} from '@aragon/osx/core/plugin/PluginUUPSUpgradeable.sol';
 import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
 
-import {MEMBER_ACCESS_INTERFACE_ID, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
+import {IMemberAccessPlugin, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
 import {Addresslist} from 'contracts/governance/base/Addresslist.sol';
 import {MajorityVotingBase} from 'contracts/governance/base/MajorityVotingBase.sol';
-
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
 import {IEditors} from 'interfaces/base/IEditors.sol';
 import {IMembers} from 'interfaces/base/IMembers.sol';
+import {IMainVotingPlugin} from 'interfaces/governance/IMainVotingPlugin.sol';
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
-
-// The [ERC-165](https://eips.ethereum.org/EIPS/eip-165) interface ID of the contract.
-bytes4 constant MAIN_SPACE_VOTING_INTERFACE_ID = MainVotingPlugin.initialize.selector
-  ^ MainVotingPlugin.createProposal.selector ^ MainVotingPlugin.proposeEdits.selector
-  ^ MainVotingPlugin.proposeFlagContent.selector ^ MainVotingPlugin.proposeAcceptSubspace.selector
-  ^ MainVotingPlugin.proposeRemoveSubspace.selector ^ MainVotingPlugin.proposeAddMember.selector
-  ^ MainVotingPlugin.proposeRemoveMember.selector ^ MainVotingPlugin.proposeAddEditor.selector
-  ^ MainVotingPlugin.proposeRemoveEditor.selector ^ MainVotingPlugin.addEditor.selector
-  ^ MainVotingPlugin.removeEditor.selector ^ MainVotingPlugin.addMember.selector ^ MainVotingPlugin.removeMember.selector
-  ^ MainVotingPlugin.leaveSpace.selector ^ MainVotingPlugin.cancelProposal.selector;
 
 /// @title MainVotingPlugin (Address list)
 /// @author Aragon - 2023
 /// @notice The majority voting implementation using a list of member addresses.
 /// @dev This contract inherits from `MajorityVotingBase` and implements the `IMajorityVoting` interface.
-contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers {
+contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin {
   using SafeCastUpgradeable for uint256;
 
-  /// @notice The ID of the permission required to call the `addAddresses` and `removeAddresses` functions.
+  /// @inheritdoc IMainVotingPlugin
   bytes32 public constant UPDATE_ADDRESSES_PERMISSION_ID = keccak256('UPDATE_ADDRESSES_PERMISSION');
 
   /// @notice Who created each proposal
@@ -41,125 +29,8 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
   /// @notice Whether an address is considered as a space member (not editor)
   mapping(address => bool) internal members;
 
-  /// @notice The address of the plugin where new memberships are approved, using a different set of rules.
+  /// @inheritdoc IMainVotingPlugin
   MemberAccessPlugin public memberAccessPlugin;
-
-  event PublishEditsProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    string editsContentUri,
-    address dao
-  );
-
-  /// @notice Emitted when a new flag content proposal is created.
-  /// @param proposalId Unique identifier of the proposal.
-  /// @param creator Address of the user that created the proposal.
-  /// @param startDate The timestamp when the proposal becomes active.
-  /// @param endDate The timestamp when the proposal ends.
-  /// @param flagContentUri URI pointing to the proposal's content that will be flagged.
-  /// @param dao Address of the DAO associated with the proposal.
-  event FlagContentProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    string flagContentUri,
-    address dao
-  );
-
-  event RemoveMemberProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    bytes metadata,
-    address indexed member,
-    address dao
-  );
-
-  event AddEditorProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    bytes metadata,
-    address indexed editor,
-    address dao
-  );
-
-  event RemoveEditorProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    bytes metadata,
-    address indexed editor,
-    address dao
-  );
-
-  event AcceptSubspaceProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    bytes metadata,
-    address indexed subspace,
-    address dao
-  );
-
-  event RemoveSubspaceProposalCreated(
-    uint256 indexed proposalId,
-    address indexed creator,
-    uint64 startDate,
-    uint64 endDate,
-    bytes metadata,
-    address indexed subspace,
-    address dao
-  );
-
-  /// @notice Emitted when the creator cancels a proposal
-  event ProposalCanceled(uint256 proposalId);
-
-  /// @notice Raised when more than one editor is attempted to be added or removed
-  error OnlyOneEditorPerCall(uint256 length);
-
-  /// @notice Raised when attempting to remove the last editor
-  error NoEditorsLeft();
-
-  /// @notice Raised when a non-editor attempts to leave a space
-  error NotAnEditor();
-
-  /// @notice Raised when a wallet who is not an editor or a member attempts to do something
-  error NotAMember(address caller);
-
-  /// @notice Raised when someone who didn't create a proposal attempts to cancel it
-  error OnlyCreatorCanCancel();
-
-  /// @notice Raised when attempting to cancel a proposal that already ended
-  error ProposalIsNotOpen();
-
-  /// @notice Raised when a content proposal is called with empty data
-  error EmptyContent();
-
-  /// @notice Thrown when the given contract doesn't support a required interface.
-  error InvalidInterface(address);
-
-  /// @notice Raised when a non-editor attempts to call a restricted function.
-  error Unauthorized();
-
-  /// @notice Thrown when attempting propose membership for an existing member.
-  error AlreadyAMember(address _member);
-
-  /// @notice Thrown when attempting propose removing membership for a non-member.
-  error AlreadyNotAMember(address _member);
-
-  /// @notice Thrown when attempting propose removing membership for a non-member.
-  error AlreadyAnEditor(address _editor);
-
-  /// @notice Thrown when attempting propose removing someone who already isn't an editor.
-  error AlreadyNotAnEditor(address _editor);
 
   modifier onlyMembers() {
     if (!isMember(msg.sender)) {
@@ -168,13 +39,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     _;
   }
 
-  /// @notice Initializes the component.
-  /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
-  /// @param _dao The IDAO interface of the associated DAO.
-  /// @param _votingSettings The voting settings.
-  /// @param _initialEditors The initial editors.
-  /// @param _initialMembers The initial members.
-  /// @param _memberAccessPlugin The member access plugin.
+  /// @inheritdoc IMainVotingPlugin
   function initialize(
     IDAO _dao,
     VotingSettings calldata _votingSettings,
@@ -192,7 +57,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     }
     emit MembersAdded(address(_dao), _initialMembers);
 
-    if (!_memberAccessPlugin.supportsInterface(MEMBER_ACCESS_INTERFACE_ID)) {
+    if (!_memberAccessPlugin.supportsInterface(type(IMemberAccessPlugin).interfaceId)) {
       revert InvalidInterface(address(_memberAccessPlugin));
     }
     memberAccessPlugin = _memberAccessPlugin;
@@ -202,29 +67,39 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
   /// @param _interfaceId The ID of the interface.
   /// @return Returns `true` if the interface is supported.
   function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
-    return _interfaceId == MAIN_SPACE_VOTING_INTERFACE_ID || _interfaceId == type(Addresslist).interfaceId
+    return _interfaceId == type(IMainVotingPlugin).interfaceId || _interfaceId == type(Addresslist).interfaceId
       || _interfaceId == type(MajorityVotingBase).interfaceId || _interfaceId == type(IMembers).interfaceId
       || _interfaceId == type(IEditors).interfaceId || super.supportsInterface(_interfaceId);
   }
 
-  /// @notice Returns whether the given address is currently listed as an editor
+  /// @inheritdoc IMainVotingPlugin
   function isEditor(address _account) public view returns (bool) {
     return isListed(_account);
   }
 
-  /// @notice Returns whether the given address holds membership/editor permission on the main voting plugin
+  /// @inheritdoc IMainVotingPlugin
   function isMember(address _account) public view returns (bool) {
     return members[_account] || isEditor(_account);
   }
 
   /// @inheritdoc MajorityVotingBase
-  function totalVotingPower(uint256 _blockNumber) public view override returns (uint256) {
+  function totalVotingPower(uint256 _blockNumber)
+    public
+    view
+    override(IMajorityVoting, MajorityVotingBase)
+    returns (uint256)
+  {
     return addresslistLengthAtBlock(_blockNumber);
   }
 
   /// @notice Determines whether at least one editor besides the creator has approved.
   /// @param _proposalId The ID of the proposal to check.
-  function isMinParticipationReached(uint256 _proposalId) public view override returns (bool) {
+  function isMinParticipationReached(uint256 _proposalId)
+    public
+    view
+    override(IMajorityVoting, MajorityVotingBase)
+    returns (bool)
+  {
     Proposal storage proposal_ = proposals[_proposalId];
 
     // Zero votes?
@@ -241,9 +116,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     return proposal_.didNonProposersVote;
   }
 
-  /// @notice Adds new editors to the address list.
-  /// @param _account The address of the new editor.
-  /// @dev This function is used during the plugin initialization.
+  /// @inheritdoc IMainVotingPlugin
   function addEditor(address _account) external auth(UPDATE_ADDRESSES_PERMISSION_ID) {
     if (isEditor(_account)) return;
 
@@ -254,8 +127,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     emit EditorAdded(address(dao()), _account);
   }
 
-  /// @notice Removes existing editors from the address list.
-  /// @param _account The addresses of the editors to be removed. NOTE: Only one member can be removed at a time.
+  /// @inheritdoc IMainVotingPlugin
   function removeEditor(address _account) external auth(UPDATE_ADDRESSES_PERMISSION_ID) {
     if (!isEditor(_account)) return;
     else if (addresslistLength() <= 1) revert NoEditorsLeft();
@@ -267,8 +139,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     emit EditorRemoved(address(dao()), _account);
   }
 
-  /// @notice Defines the given address as a new space member that can create proposals.
-  /// @param _account The address of the space member to be added.
+  /// @inheritdoc IMainVotingPlugin
   function addMember(address _account) external auth(UPDATE_ADDRESSES_PERMISSION_ID) {
     if (members[_account]) return;
 
@@ -276,8 +147,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     emit MemberAdded(address(dao()), _account);
   }
 
-  /// @notice Removes the given address as a proposal creator.
-  /// @param _account The address of the space member to be removed.
+  /// @inheritdoc IMainVotingPlugin
   function removeMember(address _account) external auth(UPDATE_ADDRESSES_PERMISSION_ID) {
     if (!members[_account]) return;
 
@@ -285,7 +155,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     emit MemberRemoved(address(dao()), _account);
   }
 
-  /// @notice Removes msg.sender from the list of editors and members, whichever is applicable. If the last editor leaves the space, the space will become read-only.
+  /// @inheritdoc IMainVotingPlugin
   function leaveSpace() external {
     if (isEditor(msg.sender)) {
       // Not checking whether msg.sender is the last editor. It is acceptable
@@ -304,7 +174,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     }
   }
 
-  /// @notice Removes msg.sender from the list of editors. If the last editor leaves the space, the space will become read-only.
+  /// @inheritdoc IMainVotingPlugin
   function leaveSpaceAsEditor() external {
     if (!isEditor(msg.sender)) {
       revert NotAnEditor();
@@ -320,7 +190,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     emit EditorLeft(address(dao()), msg.sender);
   }
 
-  /// @inheritdoc MajorityVotingBase
+  /// @inheritdoc IMajorityVoting
   function createProposal(
     bytes calldata _metadataContentUri,
     IDAO.Action[] calldata _actions,
@@ -372,12 +242,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     }
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO emit new content on the given space.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _editsContentUri The URI of the IPFS content to publish.
-  /// @param _editsMetadata The metadata of the edits to publish.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeEdits(
     bytes calldata _metadataContentUri,
     string memory _editsContentUri,
@@ -404,11 +269,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates and executes a proposal that makes the DAO emit flag content on the given space.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _flagContentUri The URI of the IPFS content to flag.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeFlagContent(
     bytes calldata _metadataContentUri,
     string memory _flagContentUri,
@@ -434,11 +295,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates a proposal to make the DAO accept the given DAO as a subspace.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _subspaceDao The address of the DAO that holds the new subspace.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeAcceptSubspace(
     bytes calldata _metadataContentUri,
     IDAO _subspaceDao,
@@ -465,11 +322,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates a proposal to make the DAO remove the given DAO as a subspace.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _subspaceDao The address of the DAO that holds the subspace to remove.
-  /// @param _spacePlugin The address of the space plugin where changes will be executed.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeRemoveSubspace(
     bytes calldata _metadataContentUri,
     IDAO _subspaceDao,
@@ -496,10 +349,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates a proposal to add a new member.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _proposedMember The address of the member who may eveutnally be added.
-  /// @return proposalId NOTE: The proposal ID will belong to the Multisig plugin, not to this contract.
+  /// @inheritdoc IMainVotingPlugin
   function proposeAddMember(
     bytes calldata _metadataContentUri,
     address _proposedMember
@@ -513,11 +363,11 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     return memberAccessPlugin.proposeAddMember(_metadataContentUri, _proposedMember, msg.sender);
   }
 
-  /// @notice Creates a proposal to remove an existing member.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _member The address of the member who may eveutnally be removed.
-  /// @return proposalId The ID of the created proposal.
-  function proposeRemoveMember(bytes calldata _metadataContentUri, address _member) public returns (uint256 proposalId) {
+  /// @inheritdoc IMainVotingPlugin
+  function proposeRemoveMember(
+    bytes calldata _metadataContentUri,
+    address _member
+  ) public returns (uint256 proposalId) {
     if (!isEditor(msg.sender)) {
       revert Unauthorized();
     } else if (!isMember(_member)) {
@@ -541,10 +391,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates a proposal to remove an existing member.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _proposedEditor The address of the wallet who may eveutnally be made an editor.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeAddEditor(
     bytes calldata _metadataContentUri,
     address _proposedEditor
@@ -570,10 +417,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Creates a proposal to remove an existing editor.
-  /// @param _metadataContentUri The metadata of the proposal.
-  /// @param _editor The address of the editor who may eveutnally be removed.
-  /// @return proposalId The ID of the created proposal.
+  /// @inheritdoc IMainVotingPlugin
   function proposeRemoveEditor(
     bytes calldata _metadataContentUri,
     address _editor
@@ -599,7 +443,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IEditors, IMembers
     );
   }
 
-  /// @notice Cancels the given proposal. It can only be called by the creator and the proposal must have not ended.
+  /// @inheritdoc IMainVotingPlugin
   function cancelProposal(uint256 _proposalId) external {
     if (proposalCreators[_proposalId] != msg.sender) {
       revert OnlyCreatorCanCancel();

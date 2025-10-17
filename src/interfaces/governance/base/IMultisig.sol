@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
-
 /// @title IMultisig
 /// @author Aragon X - 2023
 /// @notice An interface for an on-chain multisig governance plugin in which a proposal passes if X out of Y approvals are met.
 interface IMultisig {
   /// @notice Approves and, optionally, executes the proposal.
-  /// @param _proposalId The ID of the proposal.
+  /// @param _proposalId The ID of the proposal to approve.
   function approve(uint256 _proposalId) external;
 
   /// @notice Checks if an account can participate on a proposal vote. This can be because the vote

@@ -5,6 +5,5 @@ pragma solidity 0.8.17;
 // See related issue here https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/86
 
 import {DAOFactory} from '@aragon/osx/framework/dao/DAOFactory.sol';
-
 import {PluginRepoFactory} from '@aragon/osx/framework/plugin/repo/PluginRepoFactory.sol';
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';

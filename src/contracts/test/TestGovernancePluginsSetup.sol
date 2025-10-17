@@ -6,20 +6,19 @@ import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
+
 import {MemberAccessExecuteCondition} from 'contracts/conditions/MemberAccessExecuteCondition.sol';
 import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
-import {MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
-import {MajorityVotingBase} from 'contracts/governance/base/MajorityVotingBase.sol';
+import {IMemberAccessPlugin, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
+import {IGovernancePluginsSetup} from 'interfaces/governance/IGovernancePluginsSetup.sol';
+import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 // Not ideal, but to test this E2E, the contract needs to be cloned
-contract TestGovernancePluginsSetup is PluginSetup {
+contract TestGovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
   address private immutable mainVotingPluginImplementationAddr;
   address public immutable memberAccessPluginImplementationAddr;
   address private immutable pluginSetupProcessor;
-
-  /// @notice Thrown when the array of helpers does not have the correct size
-  error InvalidHelpers(uint256 actualLength);
 
   /// @notice Initializes the setup contract
   /// @param pluginSetupProcessorAddress The address of the PluginSetupProcessor contract deployed by Aragon on that chain
@@ -37,7 +36,7 @@ contract TestGovernancePluginsSetup is PluginSetup {
   ) external returns (address mainVotingPlugin, PreparedSetupData memory preparedSetupData) {
     // Decode the custom installation parameters
     (
-      MajorityVotingBase.VotingSettings memory _votingSettings,
+      IMajorityVoting.VotingSettings memory _votingSettings,
       address[] memory _initialEditors,
       address[] memory _initialMembers,
       uint64 _memberAccessProposalDuration,
@@ -49,7 +48,7 @@ contract TestGovernancePluginsSetup is PluginSetup {
       memberAccessPluginImplementation(),
       abi.encodeCall(
         MemberAccessPlugin.initialize,
-        (IDAO(_dao), MemberAccessPlugin.MultisigSettings({proposalDuration: _memberAccessProposalDuration}))
+        (IDAO(_dao), IMemberAccessPlugin.MultisigSettings({proposalDuration: _memberAccessProposalDuration}))
       )
     );
 
@@ -147,12 +146,18 @@ contract TestGovernancePluginsSetup is PluginSetup {
     preparedSetupData.helpers[0] = _memberAccessPlugin;
   }
 
+  /// @inheritdoc IPluginSetup
   /// @notice WARNING: This test function is meant to revert when performed by the pluginUpgrader
   function prepareUpdate(
     address _dao,
     uint16 _currentBuild,
     SetupPayload calldata _payload
-  ) external view override returns (bytes memory initData, PreparedSetupData memory preparedSetupData) {
+  )
+    external
+    view
+    override(IPluginSetup, PluginSetup)
+    returns (bytes memory initData, PreparedSetupData memory preparedSetupData)
+  {
     (_currentBuild, _payload, initData);
     bool _requestSomeNewPermission = decodeUpdateParams(_payload.data);
 
@@ -261,14 +266,14 @@ contract TestGovernancePluginsSetup is PluginSetup {
     return mainVotingPluginImplementationAddr;
   }
 
-  /// @notice Returns the address of the MemberAccessPlugin implementation
+  /// @notice IGovernancePluginsSetup
   function memberAccessPluginImplementation() public view returns (address) {
     return memberAccessPluginImplementationAddr;
   }
 
-  /// @notice Encodes the given installation parameters into a byte array
+  /// @notice IGovernancePluginsSetup
   function encodeInstallationParams(
-    MajorityVotingBase.VotingSettings calldata _votingSettings,
+    IMajorityVoting.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
     uint64 _memberAccessProposalDuration,
@@ -277,20 +282,21 @@ contract TestGovernancePluginsSetup is PluginSetup {
     return abi.encode(_votingSettings, _initialEditors, _initialMembers, _memberAccessProposalDuration, _pluginUpgrader);
   }
 
-  /// @notice Decodes the given byte array into the original installation parameters
+  /// @notice IGovernancePluginsSetup
   function decodeInstallationParams(bytes memory _data)
     public
     pure
     returns (
-      MajorityVotingBase.VotingSettings memory votingSettings,
+      IMajorityVoting.VotingSettings memory votingSettings,
       address[] memory initialEditors,
       address[] memory initialMembers,
       uint64 memberAccessProposalDuration,
       address pluginUpgrader
     )
   {
-    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader) =
-      abi.decode(_data, (MajorityVotingBase.VotingSettings, address[], address[], uint64, address));
+    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader) = abi.decode(
+      _data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address)
+    );
   }
 
   /// @notice Encodes the given update parameters into a byte array
@@ -303,12 +309,12 @@ contract TestGovernancePluginsSetup is PluginSetup {
     (requestSomeNewPermission) = abi.decode(_data, (bool));
   }
 
-  /// @notice Encodes the given uninstallation parameters into a byte array
+  /// @notice IGovernancePluginsSetup
   function encodeUninstallationParams(address _pluginUpgrader) public pure returns (bytes memory) {
     return abi.encode(_pluginUpgrader);
   }
 
-  /// @notice Decodes the given byte array into the original uninstallation parameters
+  /// @notice IGovernancePluginsSetup
   function decodeUninstallationParams(bytes memory _data) public pure returns (address pluginUpgrader) {
     (pluginUpgrader) = abi.decode(_data, (address));
   }

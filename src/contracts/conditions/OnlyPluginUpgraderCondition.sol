@@ -3,12 +3,14 @@ pragma solidity 0.8.17;
 
 import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
-import {PermissionCondition} from '@aragon/osx/core/permission/PermissionCondition.sol';
+import {IPermissionCondition, PermissionCondition} from '@aragon/osx/core/permission/PermissionCondition.sol';
 import {PermissionManager} from '@aragon/osx/core/permission/PermissionManager.sol';
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
+import {IOnlyPluginUpgraderCondition} from 'interfaces/conditions/IOnlyPluginUpgraderCondition.sol';
+
 /// @notice The condition associated with the `pluginUpgrader`
-contract OnlyPluginUpgraderCondition is PermissionCondition {
+contract OnlyPluginUpgraderCondition is PermissionCondition, IOnlyPluginUpgraderCondition {
   bytes32 private constant UPGRADE_PLUGIN_PERMISSION_ID = keccak256('UPGRADE_PLUGIN_PERMISSION');
 
   /// @notice The address of the DAO contract
@@ -17,9 +19,6 @@ contract OnlyPluginUpgraderCondition is PermissionCondition {
   address private psp;
   /// @notice Contracts where the permission can be granted
   mapping(address => bool) private allowedPluginAddresses;
-
-  /// @notice Thrown when the constructor receives empty parameters
-  error InvalidParameters();
 
   /// @notice The constructor of the condition
   /// @param _targetPluginAddresses The addresses of the contracts where upgradeTo and upgradeToAndCall can be called
@@ -40,6 +39,7 @@ contract OnlyPluginUpgraderCondition is PermissionCondition {
   }
 
   /// @notice Checks whether the current action grants update to the PSP, updates a predefined plugin and revokes the update permission
+  /// @inheritdoc IPermissionCondition
   function isGranted(
     address _where,
     address _who,

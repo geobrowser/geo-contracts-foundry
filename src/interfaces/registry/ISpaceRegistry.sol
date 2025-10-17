@@ -61,6 +61,29 @@ interface ISpaceRegistry {
   /// @param spaceId The space ID that is already the user's home space
   error SpaceRegistryAlreadyHomeSpace(bytes16 spaceId);
 
+  /// @notice The DAOFactory contract used to deploy new DAO instances
+  function daoFactory() external view returns (DAOFactory);
+
+  /// @notice Maps each unique space ID to its current DAO contract address
+  function daoAddressBySpaceId(bytes16 _spaceId) external view returns (address dao);
+
+  /// @notice Reverse mapping: DAO address to its space ID
+  function spacesByDAOAddress(address _dao) external view returns (bytes16 spaceId);
+
+  /// @notice The home space ID for each user address (bytes16(0) if none)
+  function homeSpaceByAddress(address _user) external view returns (bytes16 spaceId);
+
+  /// @notice Pending home space requests: user address to requested space ID
+  /// @dev When a user wants to set an existing space as home, the space ID is stored here
+  ///      until the space's DAO accepts. Using space IDs (not DAO addresses) ensures
+  ///      requests remain valid if the space migrates to a new DAO contract.
+  function pendingHomeSpaceId(address _user) external view returns (bytes16 spaceId);
+
+  /// @notice Initializes the SpaceRegistry contract
+  /// @param _owner The address that will own this registry contract
+  /// @param _daoFactory The address of the DAOFactory contract used to deploy spaces
+  function initialize(address _owner, address _daoFactory) external;
+
   /**
    * @notice Creates a new space by deploying a DAO, optionally setting it as the home space for the caller.
    * @dev see AragonOSX docs for more details on the DAOFactory.DAOSettings and DAOFactory.PluginSettings

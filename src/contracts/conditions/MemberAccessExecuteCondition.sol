@@ -2,12 +2,13 @@
 pragma solidity 0.8.17;
 
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
-import {PermissionCondition} from '@aragon/osx/core/permission/PermissionCondition.sol';
-import {PermissionManager} from '@aragon/osx/core/permission/PermissionManager.sol';
+import {IPermissionCondition, PermissionCondition} from '@aragon/osx/core/permission/PermissionCondition.sol';
+
 import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
+import {IMemberAccessExecuteCondition} from 'interfaces/conditions/IMemberAccessExecuteCondition.sol';
 
 /// @notice The condition associated with `TestSharedPlugin`
-contract MemberAccessExecuteCondition is PermissionCondition {
+contract MemberAccessExecuteCondition is PermissionCondition, IMemberAccessExecuteCondition {
   /// @notice The address of the contract where the permission can be granted
   address private targetContract;
 
@@ -18,6 +19,7 @@ contract MemberAccessExecuteCondition is PermissionCondition {
   }
 
   /// @notice Checks whether the current action attempts to add members
+  /// @inheritdoc IPermissionCondition
   function isGranted(
     address _where,
     address _who,

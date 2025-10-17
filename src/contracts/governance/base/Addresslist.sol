@@ -4,11 +4,12 @@ pragma solidity 0.8.17;
 import {_uncheckedAdd, _uncheckedSub} from '@aragon/osx/utils/UncheckedMath.sol';
 import {CheckpointsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/CheckpointsUpgradeable.sol';
 
+import {IAddresslist} from 'interfaces/governance/base/IAddresslist.sol';
+
 /// @title Addresslist
 /// @author Aragon X - 2021-2024
-/// @notice The majority voting implementation using a list of member addresses.
-/// @dev This contract inherits from `MajorityVotingBase` and implements the `IMajorityVoting` interface.
-abstract contract Addresslist {
+/// @notice A list of member addresses.
+abstract contract Addresslist is IAddresslist {
   using CheckpointsUpgradeable for CheckpointsUpgradeable.History;
 
   /// @notice The mapping containing the checkpointed history of the address list.
@@ -17,34 +18,22 @@ abstract contract Addresslist {
   /// @notice The checkpointed history of the length of the address list.
   CheckpointsUpgradeable.History private _addresslistLengthCheckpoints;
 
-  /// @notice Thrown when the address list update is invalid, which can be caused by the addition of an existing member or removal of a non-existing member.
-  /// @param member The array of member addresses to be added or removed.
-  error InvalidAddresslistUpdate(address member);
-
-  /// @notice Checks if an account is on the address list at a specific block number.
-  /// @param _account The account address being checked.
-  /// @param _blockNumber The block number.
-  /// @return Whether the account is listed at the specified block number.
+  /// @inheritdoc IAddresslist
   function isListedAtBlock(address _account, uint256 _blockNumber) public view virtual returns (bool) {
     return _addresslistCheckpoints[_account].getAtBlock(_blockNumber) == 1;
   }
 
-  /// @notice Checks if an account is currently on the address list.
-  /// @param _account The account address being checked.
-  /// @return Whether the account is currently listed.
+  /// @inheritdoc IAddresslist
   function isListed(address _account) public view virtual returns (bool) {
     return _addresslistCheckpoints[_account].latest() == 1;
   }
 
-  /// @notice Returns the length of the address list at a specific block number.
-  /// @param _blockNumber The specific block to get the count from. If `0`, then the latest checkpoint value is returned.
-  /// @return The address list length at the specified block number.
+  /// @inheritdoc IAddresslist
   function addresslistLengthAtBlock(uint256 _blockNumber) public view virtual returns (uint256) {
     return _addresslistLengthCheckpoints.getAtBlock(_blockNumber);
   }
 
-  /// @notice Returns the current length of the address list.
-  /// @return The current address list length.
+  /// @inheritdoc IAddresslist
   function addresslistLength() public view virtual returns (uint256) {
     return _addresslistLengthCheckpoints.latest();
   }
