@@ -7,28 +7,22 @@ import {SignatureChecker} from '@openzeppelin/contracts/utils/cryptography/Signa
 import {IAccount} from 'interfaces/core/IAccount.sol';
 
 contract AccountVerifier is Ownable, IAccount {
-    uint256 public nonce;
+  uint256 public nonce;
 
-    function verify(
-        address _space, 
-        bytes32 _action, 
-        bytes32 _topic, 
-        bytes calldata _data, 
-        bytes calldata _signature
-    ) external {
-        // Construct the messageHash
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            _space,
-            _action,
-            _topic,
-            _data,
-            nonce
-        ));
+  function verify(
+    address _space,
+    bytes32 _action,
+    bytes32 _topic,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external {
+    // Construct the messageHash
+    bytes32 messageHash = keccak256(abi.encodePacked(_space, _action, _topic, _data, nonce));
 
-        // Validate that owner is the signer of the message hash, revert if not
-        if (!SignatureChecker.isValidSignatureNow(owner(), messageHash, _signature)) revert InvalidSignature();
+    // Validate that owner is the signer of the message hash, revert if not
+    if (!SignatureChecker.isValidSignatureNow(owner(), messageHash, _signature)) revert InvalidSignature();
 
-        // Increment nonce to prevent replay
-        nonce++;
-    }
+    // Increment nonce to prevent replay
+    nonce++;
+  }
 }
