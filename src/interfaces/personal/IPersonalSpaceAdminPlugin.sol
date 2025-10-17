@@ -9,7 +9,6 @@ import {IEditors} from 'interfaces/base/IEditors.sol';
 import {IMembers} from 'interfaces/base/IMembers.sol';
 
 /// @title IPersonalSpaceAdminPlugin
-/// @author Aragon - 2023
 /// @notice The admin governance plugin giving execution permission on the DAO to a single address.
 interface IPersonalSpaceAdminPlugin is IPlugin, IProposal, IEditors, IMembers {
   /// @notice Raised when a wallet who is not an editor or a member attempts to do something

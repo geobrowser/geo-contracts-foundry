@@ -2,7 +2,6 @@
 pragma solidity 0.8.17;
 
 /// @title IMultisig
-/// @author Aragon X - 2023
 /// @notice An interface for an on-chain multisig governance plugin in which a proposal passes if X out of Y approvals are met.
 interface IMultisig {
   /// @notice Approves and, optionally, executes the proposal.

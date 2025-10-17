@@ -12,7 +12,6 @@ import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/mat
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 /// @title MajorityVotingBase
-/// @author Aragon X - 2022-2023
 /// @notice The abstract implementation of majority voting plugins.
 /// @notice Adapted to only make use of the required parameters and methods.
 ///

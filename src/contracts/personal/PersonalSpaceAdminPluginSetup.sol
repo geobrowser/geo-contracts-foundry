@@ -12,7 +12,6 @@ import {IPersonalSpaceAdminPluginSetup} from 'interfaces/personal/IPersonalSpace
 import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title PersonalSpaceAdminPluginSetup
-/// @author Aragon - 2023
 /// @notice The setup contract of the `PersonalSpaceAdminPlugin` plugin.
 contract PersonalSpaceAdminPluginSetup is PluginSetup, IPersonalSpaceAdminPluginSetup {
   using Clones for address;

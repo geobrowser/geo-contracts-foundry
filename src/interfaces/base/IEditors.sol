@@ -2,7 +2,6 @@
 pragma solidity 0.8.17;
 
 /// @title IEditors
-/// @author Aragon X - 2024
 interface IEditors {
   /// @notice Emitted when editors are added to the DAO plugin.
   /// @param dao The address of the DAO whose plugin has added editors.

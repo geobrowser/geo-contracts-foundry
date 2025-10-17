@@ -14,7 +14,6 @@ import {IMemberAccessPlugin} from 'interfaces/governance/IMemberAccessPlugin.sol
 import {IMultisig} from 'interfaces/governance/base/IMultisig.sol';
 
 /// @title Member access plugin (Multisig) - Release 1, Build 1
-/// @author Aragon - 2023
 /// @notice The on-chain multisig governance plugin in which a proposal passes if X out of Y approvals are met.
 contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemberAccessPlugin {
   using SafeCastUpgradeable for uint256;

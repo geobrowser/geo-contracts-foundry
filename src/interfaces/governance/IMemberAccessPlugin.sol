@@ -9,7 +9,6 @@ import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
 import {IMultisig} from 'interfaces/governance/base/IMultisig.sol';
 
 /// @title Member access plugin (Multisig) - Release 1, Build 1
-/// @author Aragon - 2023
 /// @notice The on-chain multisig governance plugin in which a proposal passes if X out of Y approvals are met.
 interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
   /// @notice A container for proposal-related information.

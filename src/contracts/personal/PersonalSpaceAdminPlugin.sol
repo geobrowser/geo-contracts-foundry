@@ -12,7 +12,6 @@ import {IPersonalSpaceAdminPlugin} from 'interfaces/personal/IPersonalSpaceAdmin
 import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title PersonalSpaceAdminPlugin
-/// @author Aragon - 2023
 /// @notice The admin governance plugin giving execution permission on the DAO to a single address.
 contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IPersonalSpaceAdminPlugin {
   using SafeCastUpgradeable for uint256;

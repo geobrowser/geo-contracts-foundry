@@ -6,7 +6,6 @@ import {IPlugin} from '@aragon/osx/core/plugin/IPlugin.sol';
 import {IProposal} from '@aragon/osx/core/plugin/proposal/IProposal.sol';
 
 /// @title IMajorityVoting
-/// @author Aragon Association - 2022-2023
 /// @notice The interface of majority voting plugin.
 interface IMajorityVoting is IPlugin, IProposal {
   /// @notice Vote options that a voter can choose from.

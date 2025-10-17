@@ -7,7 +7,6 @@ import {CheckpointsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/
 import {IAddresslist} from 'interfaces/governance/base/IAddresslist.sol';
 
 /// @title Addresslist
-/// @author Aragon X - 2021-2024
 /// @notice A list of member addresses.
 abstract contract Addresslist is IAddresslist {
   using CheckpointsUpgradeable for CheckpointsUpgradeable.History;

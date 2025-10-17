@@ -14,7 +14,6 @@ import {IMainVotingPlugin} from 'interfaces/governance/IMainVotingPlugin.sol';
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 /// @title MainVotingPlugin (Address list)
-/// @author Aragon - 2023
 /// @notice The majority voting implementation using a list of editor addresses.
 /// @dev This contract inherits from `MajorityVotingBase` and implements the `IMajorityVoting` interface.
 contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin {

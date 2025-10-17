@@ -10,7 +10,6 @@ import {IAddresslist} from 'interfaces/governance/base/IAddresslist.sol';
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 
 /// @title IMainVotingPlugin (Address list)
-/// @author Aragon - 2023
 /// @notice The majority voting implementation using a list of editor addresses.
 /// @dev This interface inherits from `IMajorityVoting` interface.
 interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers {

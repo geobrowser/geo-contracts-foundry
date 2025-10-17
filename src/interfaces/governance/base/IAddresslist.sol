@@ -2,7 +2,6 @@
 pragma solidity 0.8.17;
 
 /// @title IAddresslist
-/// @author Aragon X - 2021-2024
 /// @notice A list of member addresses.
 interface IAddresslist {
   /// @notice Thrown when the address list update is invalid, which can be caused by the addition of an existing member or removal of a non-existing member.

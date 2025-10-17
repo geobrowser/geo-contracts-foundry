@@ -4,7 +4,6 @@ pragma solidity 0.8.17;
 import {IPluginSetup} from '@aragon/osx/framework/plugin/setup/IPluginSetup.sol';
 
 /// @title IPersonalSpaceAdminPluginSetup
-/// @author Aragon - 2023
 /// @notice The setup interface of the `PersonalSpaceAdminPlugin` plugin.
 interface IPersonalSpaceAdminPluginSetup is IPluginSetup {
   event GeoPersonalAdminPluginCreated(address dao, address personalAdminPlugin);
