@@ -12,7 +12,7 @@ contract DAOSpace is ISpace {
 
   /// @dev Universal entrypoint for the DAO space
   /// @dev Maybe some access control so only callable by the Emitter
-  function call(address _account, bytes32 _action, bytes32 _topic, bytes calldata _data) external {
+  function write(address _account, bytes32 _action, bytes32 _topic, bytes calldata _data) external {
     if (_action == ADD_EDITOR) _addEditor(_account, _topic, _data);
     if (_action == REMOVE_EDITOR) _removeEditor(_account, _topic, _data);
     if (_action == ADD_MEMBER) _addMember(_account, _topic, _data);

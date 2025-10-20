@@ -18,7 +18,7 @@ contract Emitter is IEmitter {
   ) external {
     // If msg.sender is not the space
     // Then pass the account, action, topic, and data to the space
-    if (msg.sender != _space) ISpace(_space).call(_account, _action, _topic, _data);
+    if (msg.sender != _space) ISpace(_space).write(_account, _action, _topic, _data);
 
     // If msg.sender is not the account
     // Then pass the space, action, topic, data, and signature for verification to the account
