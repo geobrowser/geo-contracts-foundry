@@ -161,8 +161,9 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       address pluginUpgrader
     )
   {
-    (paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress, pluginUpgrader) =
-      abi.decode(_data, (address, string, bytes, address, address));
+    (
+      paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress, pluginUpgrader
+    ) = abi.decode(_data, (address, string, bytes, address, address));
   }
 
   /// @inheritdoc ISpacePluginSetup

@@ -261,9 +261,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       address pluginUpgrader
     )
   {
-    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader) = abi.decode(
-      _data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address)
-    );
+    (
+      votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader
+    ) = abi.decode(_data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address));
   }
 
   /// @inheritdoc IGovernancePluginsSetup
