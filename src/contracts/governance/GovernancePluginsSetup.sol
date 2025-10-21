@@ -5,10 +5,8 @@ import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
-import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
 import {MemberAccessExecuteCondition} from 'contracts/conditions/MemberAccessExecuteCondition.sol';
-import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
 import {IMemberAccessPlugin, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
 import {IGovernancePluginsSetup} from 'interfaces/governance/IGovernancePluginsSetup.sol';
@@ -20,12 +18,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
   address private immutable mainVotingPluginImplementation;
   /// @inheritdoc IGovernancePluginsSetup
   address public immutable memberAccessPluginImplementation;
-  address private immutable pluginSetupProcessor;
 
   /// @notice Initializes the setup contract
-  /// @param pluginSetupProcessorAddress The address of the PluginSetupProcessor contract deployed by Aragon on that chain
-  constructor(PluginSetupProcessor pluginSetupProcessorAddress) {
-    pluginSetupProcessor = address(pluginSetupProcessorAddress);
+  constructor() {
     mainVotingPluginImplementation = address(new MainVotingPlugin());
     memberAccessPluginImplementation = address(new MemberAccessPlugin());
   }
@@ -41,8 +36,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       IMajorityVoting.VotingSettings memory _votingSettings,
       address[] memory _initialEditors,
       address[] memory _initialMembers,
-      uint64 _memberAccessProposalDuration,
-      address _pluginUpgrader
+      uint64 _memberAccessProposalDuration
     ) = decodeInstallationParams(_data);
 
     // Deploy the member access plugin
@@ -67,8 +61,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
     address _memberAccessExecuteCondition = address(new MemberAccessExecuteCondition(mainVotingPlugin));
 
     // List the requested permissions
-    PermissionLib.MultiTargetPermission[] memory permissions =
-      new PermissionLib.MultiTargetPermission[](_pluginUpgrader == address(0x0) ? 6 : 7);
+    PermissionLib.MultiTargetPermission[] memory permissions = new PermissionLib.MultiTargetPermission[](6);
 
     // The main voting plugin can execute on the DAO
     permissions[0] = PermissionLib.MultiTargetPermission({
@@ -124,25 +117,6 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
 
     // The DAO doesn't need APPLY_UPDATE_PERMISSION_ID on the PSP
 
-    // pluginUpgrader permissions
-    if (_pluginUpgrader != address(0x0)) {
-      // pluginUpgrader can make the DAO execute applyUpdate
-      // pluginUpgrader can make the DAO execute grant/revoke
-      address[] memory _targetPluginAddresses = new address[](2);
-      _targetPluginAddresses[0] = mainVotingPlugin;
-      _targetPluginAddresses[1] = _memberAccessPlugin;
-      OnlyPluginUpgraderCondition _onlyPluginUpgraderCondition = new OnlyPluginUpgraderCondition(
-        DAO(payable(_dao)), PluginSetupProcessor(pluginSetupProcessor), _targetPluginAddresses
-      );
-      permissions[6] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.GrantWithCondition,
-        where: _dao,
-        who: _pluginUpgrader,
-        condition: address(_onlyPluginUpgraderCondition),
-        permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
-      });
-    }
-
     preparedSetupData.permissions = permissions;
     preparedSetupData.helpers = new address[](1);
     preparedSetupData.helpers[0] = _memberAccessPlugin;
@@ -159,11 +133,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       revert InvalidHelpers(_payload.currentHelpers.length);
     }
 
-    // Decode incoming params
-    address _pluginUpgrader = decodeUninstallationParams(_payload.data);
     address _memberAccessPlugin = _payload.currentHelpers[0];
 
-    permissionChanges = new PermissionLib.MultiTargetPermission[](_pluginUpgrader == address(0x0) ? 6 : 7);
+    permissionChanges = new PermissionLib.MultiTargetPermission[](6);
 
     // Main voting plugin permissions
 
@@ -172,7 +144,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _dao,
       who: _payload.plugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
     });
     // The DAO can no longer update the plugin settings
@@ -180,7 +152,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _payload.plugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MainVotingPlugin(mainVotingPluginImplementation).UPDATE_VOTING_SETTINGS_PERMISSION_ID()
     });
     // The DAO can no longer manage the list of addresses
@@ -188,7 +160,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _payload.plugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MainVotingPlugin(mainVotingPluginImplementation).UPDATE_ADDRESSES_PERMISSION_ID()
     });
 
@@ -199,7 +171,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _memberAccessPlugin,
       who: _payload.plugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MemberAccessPlugin(memberAccessPluginImplementation).PROPOSER_PERMISSION_ID()
     });
 
@@ -208,7 +180,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _dao,
       who: _memberAccessPlugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
     });
     // The DAO can no longer update the plugin settings
@@ -216,21 +188,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _memberAccessPlugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MemberAccessPlugin(memberAccessPluginImplementation).UPDATE_MULTISIG_SETTINGS_PERMISSION_ID()
     });
-
-    if (_pluginUpgrader != address(0x0)) {
-      // pluginUpgrader can no longer make the DAO execute applyUpdate
-      // pluginUpgrader can no longer make the DAO execute grant/revoke
-      permissionChanges[6] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.Revoke,
-        where: _dao,
-        who: _pluginUpgrader,
-        condition: address(0),
-        permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
-      });
-    }
   }
 
   /// @inheritdoc IPluginSetup
@@ -243,10 +203,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
     IMajorityVoting.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
-    uint64 _memberAccessProposalDuration,
-    address _pluginUpgrader
+    uint64 _memberAccessProposalDuration
   ) public pure returns (bytes memory) {
-    return abi.encode(_votingSettings, _initialEditors, _initialMembers, _memberAccessProposalDuration, _pluginUpgrader);
+    return abi.encode(_votingSettings, _initialEditors, _initialMembers, _memberAccessProposalDuration);
   }
 
   /// @inheritdoc IGovernancePluginsSetup
@@ -257,22 +216,10 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       IMajorityVoting.VotingSettings memory votingSettings,
       address[] memory initialEditors,
       address[] memory initialMembers,
-      uint64 memberAccessProposalDuration,
-      address pluginUpgrader
+      uint64 memberAccessProposalDuration
     )
   {
-    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader) = abi.decode(
-      _data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address)
-    );
-  }
-
-  /// @inheritdoc IGovernancePluginsSetup
-  function encodeUninstallationParams(address _pluginUpgrader) public pure returns (bytes memory) {
-    return abi.encode(_pluginUpgrader);
-  }
-
-  /// @inheritdoc IGovernancePluginsSetup
-  function decodeUninstallationParams(bytes memory _data) public pure returns (address pluginUpgrader) {
-    (pluginUpgrader) = abi.decode(_data, (address));
+    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration) =
+      abi.decode(_data, (IMajorityVoting.VotingSettings, address[], address[], uint64));
   }
 }

@@ -21,8 +21,7 @@ interface IGovernancePluginsSetup is IPluginSetup {
     IMajorityVoting.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
-    uint64 _memberAccessProposalDuration,
-    address _pluginUpgrader
+    uint64 _memberAccessProposalDuration
   ) external pure returns (bytes memory);
 
   /// @notice Decodes the given byte array into the original installation parameters
@@ -33,13 +32,6 @@ interface IGovernancePluginsSetup is IPluginSetup {
       IMajorityVoting.VotingSettings memory votingSettings,
       address[] memory initialEditors,
       address[] memory initialMembers,
-      uint64 memberAccessProposalDuration,
-      address pluginUpgrader
+      uint64 memberAccessProposalDuration
     );
-
-  /// @notice Encodes the given uninstallation parameters into a byte array
-  function encodeUninstallationParams(address _pluginUpgrader) external pure returns (bytes memory);
-
-  /// @notice Decodes the given byte array into the original uninstallation parameters
-  function decodeUninstallationParams(bytes memory _data) external pure returns (address pluginUpgrader);
 }

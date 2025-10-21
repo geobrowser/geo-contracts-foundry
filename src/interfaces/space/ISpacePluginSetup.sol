@@ -13,8 +13,7 @@ interface ISpacePluginSetup is IPluginSetup {
     address _paymentManager,
     string memory _firstBlockEditsContentUri,
     bytes memory _firstBlockEditsMetadata,
-    address _predecessorAddress,
-    address _pluginUpgrader
+    address _predecessorAddress
   ) external pure returns (bytes memory);
 
   /// @notice Decodes the given byte array into the original installation parameters
@@ -25,13 +24,6 @@ interface ISpacePluginSetup is IPluginSetup {
       address paymentManager,
       string memory firstBlockEditsContentUri,
       bytes memory firstBlockEditsMetadata,
-      address predecessorAddress,
-      address pluginUpgrader
+      address predecessorAddress
     );
-
-  /// @notice Encodes the given uninstallation parameters into a byte array
-  function encodeUninstallationParams(address _pluginUpgrader) external pure returns (bytes memory);
-
-  /// @notice Decodes the given byte array into the original uninstallation parameters
-  function decodeUninstallationParams(bytes memory _data) external pure returns (address pluginUpgrader);
 }
