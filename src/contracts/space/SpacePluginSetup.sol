@@ -7,7 +7,6 @@ import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
-import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
 import {ISpacePluginSetup} from 'interfaces/space/ISpacePluginSetup.sol';
 import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID} from 'src/constants.sol';
@@ -72,16 +71,11 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
     if (_pluginUpgrader != address(0x0)) {
       // pluginUpgrader can make the DAO execute applyUpdate
       // pluginUpgrader can make the DAO execute grant/revoke
-      address[] memory _targetPluginAddresses = new address[](2);
-      _targetPluginAddresses[0] = plugin;
-      OnlyPluginUpgraderCondition _onlyPluginUpgraderCondition = new OnlyPluginUpgraderCondition(
-        DAO(payable(_dao)), PluginSetupProcessor(pluginSetupProcessor), _targetPluginAddresses
-      );
       permissions[2] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.GrantWithCondition,
+        operation: PermissionLib.Operation.Grant,
         where: _dao,
         who: _pluginUpgrader,
-        condition: address(_onlyPluginUpgraderCondition),
+        condition: PermissionLib.NO_CONDITION,
         permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
       });
     }
@@ -125,7 +119,7 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
         operation: PermissionLib.Operation.Revoke,
         where: _dao,
         who: _pluginUpgrader,
-        condition: address(0),
+        condition: PermissionLib.NO_CONDITION,
         permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
       });
     }
@@ -161,8 +155,9 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       address pluginUpgrader
     )
   {
-    (paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress, pluginUpgrader) =
-      abi.decode(_data, (address, string, bytes, address, address));
+    (
+      paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress, pluginUpgrader
+    ) = abi.decode(_data, (address, string, bytes, address, address));
   }
 
   /// @inheritdoc ISpacePluginSetup

@@ -8,7 +8,6 @@ import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/Plug
 import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
 import {MemberAccessExecuteCondition} from 'contracts/conditions/MemberAccessExecuteCondition.sol';
-import {OnlyPluginUpgraderCondition} from 'contracts/conditions/OnlyPluginUpgraderCondition.sol';
 import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
 import {IMemberAccessPlugin, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
 import {IGovernancePluginsSetup} from 'interfaces/governance/IGovernancePluginsSetup.sol';
@@ -128,17 +127,11 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
     if (_pluginUpgrader != address(0x0)) {
       // pluginUpgrader can make the DAO execute applyUpdate
       // pluginUpgrader can make the DAO execute grant/revoke
-      address[] memory _targetPluginAddresses = new address[](2);
-      _targetPluginAddresses[0] = mainVotingPlugin;
-      _targetPluginAddresses[1] = _memberAccessPlugin;
-      OnlyPluginUpgraderCondition _onlyPluginUpgraderCondition = new OnlyPluginUpgraderCondition(
-        DAO(payable(_dao)), PluginSetupProcessor(pluginSetupProcessor), _targetPluginAddresses
-      );
       permissions[6] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.GrantWithCondition,
+        operation: PermissionLib.Operation.Grant,
         where: _dao,
         who: _pluginUpgrader,
-        condition: address(_onlyPluginUpgraderCondition),
+        condition: PermissionLib.NO_CONDITION,
         permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
       });
     }
@@ -172,7 +165,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _dao,
       who: _payload.plugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
     });
     // The DAO can no longer update the plugin settings
@@ -180,7 +173,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _payload.plugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MainVotingPlugin(mainVotingPluginImplementation).UPDATE_VOTING_SETTINGS_PERMISSION_ID()
     });
     // The DAO can no longer manage the list of addresses
@@ -188,7 +181,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _payload.plugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MainVotingPlugin(mainVotingPluginImplementation).UPDATE_ADDRESSES_PERMISSION_ID()
     });
 
@@ -199,7 +192,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _memberAccessPlugin,
       who: _payload.plugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MemberAccessPlugin(memberAccessPluginImplementation).PROPOSER_PERMISSION_ID()
     });
 
@@ -208,7 +201,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _dao,
       who: _memberAccessPlugin,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
     });
     // The DAO can no longer update the plugin settings
@@ -216,7 +209,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       operation: PermissionLib.Operation.Revoke,
       where: _memberAccessPlugin,
       who: _dao,
-      condition: address(0),
+      condition: PermissionLib.NO_CONDITION,
       permissionId: MemberAccessPlugin(memberAccessPluginImplementation).UPDATE_MULTISIG_SETTINGS_PERMISSION_ID()
     });
 
@@ -227,7 +220,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
         operation: PermissionLib.Operation.Revoke,
         where: _dao,
         who: _pluginUpgrader,
-        condition: address(0),
+        condition: PermissionLib.NO_CONDITION,
         permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
       });
     }
@@ -261,9 +254,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       address pluginUpgrader
     )
   {
-    (votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader) = abi.decode(
-      _data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address)
-    );
+    (
+      votingSettings, initialEditors, initialMembers, memberAccessProposalDuration, pluginUpgrader
+    ) = abi.decode(_data, (IMajorityVoting.VotingSettings, address[], address[], uint64, address));
   }
 
   /// @inheritdoc IGovernancePluginsSetup
