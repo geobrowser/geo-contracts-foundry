@@ -5,7 +5,6 @@ import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
-import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
 import {ISpacePluginSetup} from 'interfaces/space/ISpacePluginSetup.sol';
@@ -15,12 +14,9 @@ import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID} from 'src/constants.sol';
 /// @dev Release 1, Build 1
 contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
   address private immutable pluginImplementation;
-  address private immutable pluginSetupProcessor;
 
   /// @notice Initializes the setup contract
-  /// @param pluginSetupProcessorAddress The address of the PluginSetupProcessor contract deployed by Aragon on that chain
-  constructor(PluginSetupProcessor pluginSetupProcessorAddress) {
-    pluginSetupProcessor = address(pluginSetupProcessorAddress);
+  constructor() {
     pluginImplementation = address(new SpacePlugin());
   }
 

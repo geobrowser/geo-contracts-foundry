@@ -5,7 +5,6 @@ import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
-import {PluginSetupProcessor} from '@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol';
 
 import {MemberAccessExecuteCondition} from 'contracts/conditions/MemberAccessExecuteCondition.sol';
 import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
@@ -19,12 +18,9 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
   address private immutable mainVotingPluginImplementation;
   /// @inheritdoc IGovernancePluginsSetup
   address public immutable memberAccessPluginImplementation;
-  address private immutable pluginSetupProcessor;
 
   /// @notice Initializes the setup contract
-  /// @param pluginSetupProcessorAddress The address of the PluginSetupProcessor contract deployed by Aragon on that chain
-  constructor(PluginSetupProcessor pluginSetupProcessorAddress) {
-    pluginSetupProcessor = address(pluginSetupProcessorAddress);
+  constructor() {
     mainVotingPluginImplementation = address(new MainVotingPlugin());
     memberAccessPluginImplementation = address(new MemberAccessPlugin());
   }
