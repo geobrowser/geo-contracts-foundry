@@ -30,8 +30,7 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       address _paymentManager,
       string memory _firstBlockEditsContentUri,
       bytes memory _firstBlockEditsMetadata,
-      address _predecessorAddress,
-      address _pluginUpgrader
+      address _predecessorAddress
     ) = decodeInstallationParams(_data);
 
     // Deploy new plugin instance
@@ -43,8 +42,7 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       )
     );
 
-    PermissionLib.MultiTargetPermission[] memory permissions =
-      new PermissionLib.MultiTargetPermission[](_pluginUpgrader == address(0x0) ? 2 : 3);
+    PermissionLib.MultiTargetPermission[] memory permissions = new PermissionLib.MultiTargetPermission[](2);
 
     // The DAO can emit content
     permissions[0] = PermissionLib.MultiTargetPermission({
@@ -63,19 +61,6 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       permissionId: SUBSPACE_PERMISSION_ID
     });
 
-    // pluginUpgrader permissions
-    if (_pluginUpgrader != address(0x0)) {
-      // pluginUpgrader can make the DAO execute applyUpdate
-      // pluginUpgrader can make the DAO execute grant/revoke
-      permissions[2] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.Grant,
-        where: _dao,
-        who: _pluginUpgrader,
-        condition: PermissionLib.NO_CONDITION,
-        permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
-      });
-    }
-
     preparedSetupData.permissions = permissions;
 
     emit GeoSpacePluginCreated(_dao, plugin);
@@ -86,10 +71,7 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
     address _dao,
     SetupPayload calldata _payload
   ) external view returns (PermissionLib.MultiTargetPermission[] memory permissionChanges) {
-    // Decode incoming params
-    address _pluginUpgrader = decodeUninstallationParams(_payload.data);
-
-    permissionChanges = new PermissionLib.MultiTargetPermission[](_pluginUpgrader == address(0x0) ? 2 : 3);
+    permissionChanges = new PermissionLib.MultiTargetPermission[](2);
 
     // The DAO can make it emit content
     permissionChanges[0] = PermissionLib.MultiTargetPermission({
@@ -107,18 +89,6 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       condition: PermissionLib.NO_CONDITION,
       permissionId: SUBSPACE_PERMISSION_ID
     });
-
-    if (_pluginUpgrader != address(0x0)) {
-      // pluginUpgrader can no longer make the DAO execute applyUpdate
-      // pluginUpgrader can no longer make the DAO execute grant/revoke
-      permissionChanges[2] = PermissionLib.MultiTargetPermission({
-        operation: PermissionLib.Operation.Revoke,
-        where: _dao,
-        who: _pluginUpgrader,
-        condition: PermissionLib.NO_CONDITION,
-        permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
-      });
-    }
   }
 
   /// @inheritdoc IPluginSetup
@@ -131,12 +101,9 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
     address _paymentManager,
     string memory _firstBlockEditsContentUri,
     bytes memory _firstBlockEditsMetadata,
-    address _predecessorAddress,
-    address _pluginUpgrader
+    address _predecessorAddress
   ) public pure returns (bytes memory) {
-    return abi.encode(
-      _paymentManager, _firstBlockEditsContentUri, _firstBlockEditsMetadata, _predecessorAddress, _pluginUpgrader
-    );
+    return abi.encode(_paymentManager, _firstBlockEditsContentUri, _firstBlockEditsMetadata, _predecessorAddress);
   }
 
   /// @inheritdoc ISpacePluginSetup
@@ -147,22 +114,11 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
       address paymentManager,
       string memory firstBlockEditsContentUri,
       bytes memory firstBlockEditsMetadata,
-      address predecessorAddress,
-      address pluginUpgrader
+      address predecessorAddress
     )
   {
     (
-      paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress, pluginUpgrader
-    ) = abi.decode(_data, (address, string, bytes, address, address));
-  }
-
-  /// @inheritdoc ISpacePluginSetup
-  function encodeUninstallationParams(address _pluginUpgrader) public pure returns (bytes memory) {
-    return abi.encode(_pluginUpgrader);
-  }
-
-  /// @inheritdoc ISpacePluginSetup
-  function decodeUninstallationParams(bytes memory _data) public pure returns (address pluginUpgrader) {
-    (pluginUpgrader) = abi.decode(_data, (address));
+      paymentManager, firstBlockEditsContentUri, firstBlockEditsMetadata, predecessorAddress
+    ) = abi.decode(_data, (address, string, bytes, address));
   }
 }
