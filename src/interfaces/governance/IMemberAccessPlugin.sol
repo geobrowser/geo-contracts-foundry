@@ -17,7 +17,8 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
   /// @param parameters The proposal-specific approve settings at the time of the proposal creation.
   /// @param approvers The approves casted by the approvers.
   /// @param actions The actions to be executed when the proposal passes.
-  /// @param _failsafeActionMap A bitmap allowing the proposal to succeed, even if certain actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
+  /// @param mainVotingPlugin The `MainVotingPlugin` contract.
+  /// @param failsafeActionMap A bitmap allowing the proposal to succeed, even if certain actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
   struct Proposal {
     bool executed;
     uint16 approvals;
@@ -46,6 +47,13 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
     uint64 proposalDuration;
   }
 
+  /// @notice Emitted when a proposal to add a new member is created.
+  /// @param proposalId The ID of the proposal.
+  /// @param creator The address of the proposal creator.
+  /// @param startDate The timestamp when the proposal starts.
+  /// @param endDate The timestamp when the proposal expires.
+  /// @param member The address of the member who may eventually be added.
+  /// @param dao The address of the associated DAO.
   event AddMemberProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -88,17 +96,21 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
   event MultisigSettingsUpdated(uint64 proposalDuration);
 
   /// @notice The ID of the permission required to call the `addAddresses` functions.
-  function UPDATE_MULTISIG_SETTINGS_PERMISSION_ID() external view returns (bytes32);
+  /// @return updateMultisigSettingsPermissionId The ID of the update-multisig-settings permission.
+  function UPDATE_MULTISIG_SETTINGS_PERMISSION_ID() external view returns (bytes32 updateMultisigSettingsPermissionId);
 
   /// @notice The ID of the permission required to create new membership proposals.
-  function PROPOSER_PERMISSION_ID() external view returns (bytes32);
+  /// @return proposerPermissionId The ID of the proposer permission.
+  function PROPOSER_PERMISSION_ID() external view returns (bytes32 proposerPermissionId);
 
   /// @notice The current plugin settings.
-  function multisigSettings() external view returns (uint64);
+  /// @return multisigSettings The multisig settings.
+  function multisigSettings() external view returns (uint64 multisigSettings);
 
   /// @notice Keeps track at which block number the multisig settings have been changed the last time.
   /// @dev This variable prevents a proposal from being created in the same block in which the multisig settings change.
-  function lastMultisigSettingsChange() external view returns (uint64);
+  /// @return lastMultisigSettingsChange The block number at which the multisig settings have been changed the last time.
+  function lastMultisigSettingsChange() external view returns (uint64 lastMultisigSettingsChange);
 
   /// @notice Initializes Release 1, Build 1.
   /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
@@ -131,7 +143,7 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
   /// @return approvals The number of approvals casted.
   /// @return parameters The parameters of the proposal vote.
   /// @return actions The actions to be executed in the associated DAO after the proposal has passed.
-  /// @param failsafeActionMap A bitmap allowing the proposal to succeed, even if individual actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
+  /// @return failsafeActionMap A bitmap allowing the proposal to succeed, even if individual actions might revert. If the bit at index `i` is 1, the proposal succeeds even if the `i`th action reverts. A failure map value of 0 requires every action to not revert.
   function getProposal(uint256 _proposalId)
     external
     view

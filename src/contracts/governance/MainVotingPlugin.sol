@@ -31,6 +31,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin 
   /// @inheritdoc IMainVotingPlugin
   MemberAccessPlugin public memberAccessPlugin;
 
+  /// @notice Checks and reverts if the caller is not a member
   modifier onlyMembers() {
     if (!isMember(msg.sender)) {
       revert NotAMember(msg.sender);
@@ -71,12 +72,12 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin 
       || _interfaceId == type(IEditors).interfaceId || super.supportsInterface(_interfaceId);
   }
 
-  /// @inheritdoc IMainVotingPlugin
+  /// @inheritdoc IEditors
   function isEditor(address _account) public view returns (bool) {
     return isListed(_account);
   }
 
-  /// @inheritdoc IMainVotingPlugin
+  /// @inheritdoc IMembers
   function isMember(address _account) public view returns (bool) {
     return members[_account] || isEditor(_account);
   }

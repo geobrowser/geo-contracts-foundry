@@ -13,6 +13,13 @@ import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 /// @notice The majority voting implementation using a list of editor addresses.
 /// @dev This interface inherits from `IMajorityVoting` interface.
 interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers {
+  /// @notice Emitted when a new publish edits proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param editsContentUri URI pointing to the proposal's content that will be published.
+  /// @param dao Address of the DAO associated with the proposal.
   event PublishEditsProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -38,6 +45,14 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     address dao
   );
 
+  /// @notice Emitted when a new remove member proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param metadata The metadata of the proposal.
+  /// @param member The address of the member who may eventually be removed.
+  /// @param dao Address of the DAO associated with the proposal.
   event RemoveMemberProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -48,6 +63,14 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     address dao
   );
 
+  /// @notice Emitted when a new add editor proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param metadata The metadata of the proposal.
+  /// @param editor The address of the editor who may eventually be added.
+  /// @param dao Address of the DAO associated with the proposal.
   event AddEditorProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -58,6 +81,14 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     address dao
   );
 
+  /// @notice Emitted when a new remove editor proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param metadata The metadata of the proposal.
+  /// @param editor The address of the editor who may eventually be removed.
+  /// @param dao Address of the DAO associated with the proposal.
   event RemoveEditorProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -68,6 +99,14 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     address dao
   );
 
+  /// @notice Emitted when a new accept subspace proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param metadata The metadata of the proposal.
+  /// @param subspace The address of the DAO that holds the new subspace.
+  /// @param dao Address of the DAO associated with the proposal.
   event AcceptSubspaceProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -78,6 +117,14 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     address dao
   );
 
+  /// @notice Emitted when a new remove subspace proposal is created.
+  /// @param proposalId Unique identifier of the proposal.
+  /// @param creator Address of the user that created the proposal.
+  /// @param startDate The timestamp when the proposal becomes active.
+  /// @param endDate The timestamp when the proposal ends.
+  /// @param metadata The metadata of the proposal.
+  /// @param subspace The address of the DAO that holds the subspace to remove.
+  /// @param dao Address of the DAO associated with the proposal.
   event RemoveSubspaceProposalCreated(
     uint256 indexed proposalId,
     address indexed creator,
@@ -89,10 +136,8 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   );
 
   /// @notice Emitted when the creator cancels a proposal
+  /// @param proposalId The ID of the cancelled proposal
   event ProposalCanceled(uint256 proposalId);
-
-  /// @notice Raised when more than one editor is attempted to be added or removed
-  error OnlyOneEditorPerCall(uint256 length);
 
   /// @notice Raised when attempting to remove the last editor
   error NoEditorsLeft();
@@ -101,6 +146,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   error NotAnEditor();
 
   /// @notice Raised when a wallet who is not an editor or a member attempts to do something
+  /// @param caller The address of the caller
   error NotAMember(address caller);
 
   /// @notice Raised when someone who didn't create a proposal attempts to cancel it
@@ -118,23 +164,29 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   /// @notice Raised when a non-editor attempts to call a restricted function.
   error Unauthorized();
 
-  /// @notice Thrown when attempting propose membership for an existing member.
+  /// @notice Thrown when attempting to propose adding membership for an existing member.
+  /// @param _member The address of the proposed member.
   error AlreadyAMember(address _member);
 
-  /// @notice Thrown when attempting propose removing membership for a non-member.
+  /// @notice Thrown when attempting to propose removing membership for a non-member.
+  /// @param _member The address of the proposed member.
   error AlreadyNotAMember(address _member);
 
-  /// @notice Thrown when attempting propose removing membership for a non-member.
+  /// @notice Thrown when attempting to propose adding someone who already is an editor.
+  /// @param _editor The address of the proposed editor.
   error AlreadyAnEditor(address _editor);
 
-  /// @notice Thrown when attempting propose removing someone who already isn't an editor.
+  /// @notice Thrown when attempting to propose removing someone who already isn't an editor.
+  /// @param _editor The address of the proposed editor.
   error AlreadyNotAnEditor(address _editor);
 
   /// @notice The ID of the permission required to call the `addAddresses` and `removeAddresses` functions.
-  function UPDATE_ADDRESSES_PERMISSION_ID() external view returns (bytes32);
+  /// @return updateAddressesPermissionId The ID of the update-addresses permission.
+  function UPDATE_ADDRESSES_PERMISSION_ID() external view returns (bytes32 updateAddressesPermissionId);
 
   /// @notice The address of the plugin where new memberships are approved, using a different set of rules.
-  function memberAccessPlugin() external view returns (MemberAccessPlugin);
+  /// @return memberAccessPlugin The `MemberAccessPlugin` contract.
+  function memberAccessPlugin() external view returns (MemberAccessPlugin memberAccessPlugin);
 
   /// @notice Initializes the component.
   /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
@@ -151,15 +203,9 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
     MemberAccessPlugin _memberAccessPlugin
   ) external;
 
-  /// @notice Returns whether the given address is currently listed as an editor
-  function isEditor(address _account) external view returns (bool);
-
-  /// @notice Returns whether the given address holds membership/editor permission on the main voting plugin
-  function isMember(address _account) external view returns (bool);
-
   /// @notice Adds new editors to the address list.
-  /// @param _account The address of the new editor.
   /// @dev This function is used during the plugin initialization.
+  /// @param _account The address of the new editor.
   function addEditor(address _account) external;
 
   /// @notice Removes existing editors from the address list.
@@ -229,7 +275,7 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   /// @notice Creates a proposal to add a new member.
   /// @param _metadataContentUri The metadata of the proposal.
   /// @param _proposedMember The address of the member who may eventually be added.
-  /// @return proposalId NOTE: The proposal ID will belong to the Multisig plugin, not to this contract.
+  /// @return proposalId The ID of the created proposal. NOTE: The proposal ID will belong to the Multisig plugin, not to this contract.
   function proposeAddMember(
     bytes calldata _metadataContentUri,
     address _proposedMember
@@ -263,5 +309,6 @@ interface IMainVotingPlugin is IAddresslist, IMajorityVoting, IEditors, IMembers
   ) external returns (uint256 proposalId);
 
   /// @notice Cancels the given proposal. It can only be called by the creator and the proposal must have not ended.
+  /// @param _proposalId The ID of the proposal to cancel.
   function cancelProposal(uint256 _proposalId) external;
 }

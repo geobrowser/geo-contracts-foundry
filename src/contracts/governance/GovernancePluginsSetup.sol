@@ -15,6 +15,7 @@ import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
 /// @title GovernancePluginsSetup
 /// @dev Release 1, Build 1
 contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
+  /// @notice The address of the MainVotingPlugin implementation
   address private immutable mainVotingPluginImplementation;
   /// @inheritdoc IGovernancePluginsSetup
   address public immutable memberAccessPluginImplementation;

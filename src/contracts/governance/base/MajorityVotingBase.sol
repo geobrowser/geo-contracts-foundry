@@ -275,6 +275,7 @@ abstract contract MajorityVotingBase is
   /// @notice Internal function to cast a vote. It assumes the queried vote exists.
   /// @param _proposalId The ID of the proposal.
   /// @param _voteOption The chosen vote option to be casted on the proposal vote.
+  /// @param _voter The address of the voter.
   /// @param _tryEarlyExecution If `true`,  early execution is tried after the vote cast. The call does not revert if early execution is not possible.
   function _vote(uint256 _proposalId, VoteOption _voteOption, address _voter, bool _tryEarlyExecution) internal virtual;
 
@@ -294,9 +295,9 @@ abstract contract MajorityVotingBase is
   function _canVote(uint256 _proposalId, address _voter, VoteOption _voteOption) internal view virtual returns (bool);
 
   /// @notice Internal function to check if a proposal can be executed. It assumes the queried proposal exists.
+  /// @dev Threshold and minimal values are compared with `>` and `>=` comparators, respectively.
   /// @param _proposalId The ID of the proposal.
   /// @return True if the proposal can be executed, false otherwise.
-  /// @dev Threshold and minimal values are compared with `>` and `>=` comparators, respectively.
   function _canExecute(uint256 _proposalId) internal view virtual returns (bool) {
     Proposal storage proposal_ = proposals[_proposalId];
 

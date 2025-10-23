@@ -2,6 +2,7 @@
 pragma solidity 0.8.17;
 
 /// @title IEditors
+/// @notice An interface to be implemented by DAO plugins that define editorship.
 interface IEditors {
   /// @notice Emitted when editors are added to the DAO plugin.
   /// @param dao The address of the DAO whose plugin has added editors.
@@ -23,7 +24,7 @@ interface IEditors {
   /// @param editor The address of the editor leaving.
   event EditorLeft(address dao, address editor);
 
-  /// @notice Checks if an account is an editor on the DAO.
+  /// @notice Checks if an account is an editor.
   /// @param _account The address of the account to be checked.
   /// @return Whether the account is an editor or not.
   function isEditor(address _account) external view returns (bool);

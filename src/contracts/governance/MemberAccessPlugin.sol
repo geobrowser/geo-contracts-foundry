@@ -170,6 +170,8 @@ contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemb
   }
 
   /// @notice Internal implementation, allowing proposeAddMember() to specify the proposer.
+  /// @param _proposalId The ID of the proposal to approve.
+  /// @param _approver The address of the approver.
   function _approve(uint256 _proposalId, address _approver) internal {
     if (!_canApprove(_proposalId, _approver)) {
       revert ApprovalCastForbidden(_proposalId, _approver);

@@ -12,6 +12,7 @@ import {IMembers} from 'interfaces/base/IMembers.sol';
 /// @notice The admin governance plugin giving execution permission on the DAO to a single address.
 interface IPersonalSpaceAdminPlugin is IPlugin, IProposal, IEditors, IMembers {
   /// @notice Raised when a wallet who is not an editor or a member attempts to do something
+  /// @param caller The address of the caller
   error NotAMember(address caller);
 
   /// @notice Initializes the contract.
@@ -20,12 +21,6 @@ interface IPersonalSpaceAdminPlugin is IPlugin, IProposal, IEditors, IMembers {
   /// @param _initialEditors The initial editors.
   /// @param _initialMembers The initial members.
   function initialize(IDAO _dao, address[] calldata _initialEditors, address[] calldata _initialMembers) external;
-
-  /// @notice Returns whether the given address holds membership/editor permission on the plugin
-  function isMember(address _account) external view returns (bool);
-
-  /// @notice Returns whether the given address holds editor permission on the plugin
-  function isEditor(address _account) external view returns (bool);
 
   /// @notice Creates and executes a new proposal.
   /// @param _metadata The metadata of the proposal.

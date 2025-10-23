@@ -8,6 +8,8 @@ import {ProposalUpgradeable} from '@aragon/osx/core/plugin/proposal/ProposalUpgr
 import {SafeCastUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol';
 
 import {SpacePlugin} from 'contracts/space/SpacePlugin.sol';
+import {IEditors} from 'interfaces/base/IEditors.sol';
+import {IMembers} from 'interfaces/base/IMembers.sol';
 import {IPersonalSpaceAdminPlugin} from 'interfaces/personal/IPersonalSpaceAdminPlugin.sol';
 import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
@@ -16,6 +18,7 @@ import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IPersonalSpaceAdminPlugin {
   using SafeCastUpgradeable for uint256;
 
+  /// @notice Checks and reverts if the caller is not a member
   modifier onlyMembers() {
     if (!isMember(msg.sender)) {
       revert NotAMember(msg.sender);
@@ -47,12 +50,12 @@ contract PersonalSpaceAdminPlugin is PluginCloneable, ProposalUpgradeable, IPers
     return _interfaceId == type(IPersonalSpaceAdminPlugin).interfaceId || super.supportsInterface(_interfaceId);
   }
 
-  /// @inheritdoc IPersonalSpaceAdminPlugin
+  /// @inheritdoc IMembers
   function isMember(address _account) public view returns (bool) {
     return dao().hasPermission(address(this), _account, MEMBER_PERMISSION_ID, bytes('')) || isEditor(_account);
   }
 
-  /// @inheritdoc IPersonalSpaceAdminPlugin
+  /// @inheritdoc IEditors
   function isEditor(address _account) public view returns (bool) {
     // Does the address hold the permission on the plugin?
     return dao().hasPermission(address(this), _account, EDITOR_PERMISSION_ID, bytes(''));
