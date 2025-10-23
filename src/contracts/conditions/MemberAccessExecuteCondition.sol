@@ -47,6 +47,9 @@ contract MemberAccessExecuteCondition is PermissionCondition, IMemberAccessExecu
     return true;
   }
 
+  /// @notice Gets the function selector from raw data
+  /// @param _data The raw data
+  /// @return selector The function selector
   function _getSelector(bytes memory _data) internal pure returns (bytes4 selector) {
     // Slices are only supported for bytes calldata, not bytes memory
     // Bytes memory requires an assembly block
@@ -55,11 +58,15 @@ contract MemberAccessExecuteCondition is PermissionCondition, IMemberAccessExecu
     }
   }
 
-  function _decodeAddMemberCalldata(bytes memory _data) internal pure returns (bytes4 sig, address account) {
+  /// @notice Decodes the calldata for adding a member
+  /// @param _data The calldata for adding a member
+  /// @return selector The function selector to add a member
+  /// @return account The account to add as member
+  function _decodeAddMemberCalldata(bytes memory _data) internal pure returns (bytes4 selector, address account) {
     // Slicing is only supported for bytes calldata, not bytes memory
     // Bytes memory requires an assembly block
     assembly {
-      sig := mload(add(_data, 0x20)) // 32
+      selector := mload(add(_data, 0x20)) // 32
       account := mload(add(_data, 0x24)) // 32 + 4
     }
   }

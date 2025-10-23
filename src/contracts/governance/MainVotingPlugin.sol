@@ -31,6 +31,7 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin 
   /// @inheritdoc IMainVotingPlugin
   MemberAccessPlugin public memberAccessPlugin;
 
+  /// @notice Checks and reverts if the caller is not a member
   modifier onlyMembers() {
     if (!isMember(msg.sender)) {
       revert NotAMember(msg.sender);
@@ -62,21 +63,19 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin 
     memberAccessPlugin = _memberAccessPlugin;
   }
 
-  /// @notice Checks if this or the parent contract supports an interface by its ID.
-  /// @param _interfaceId The ID of the interface.
-  /// @return Returns `true` if the interface is supported.
+  /// @inheritdoc MajorityVotingBase
   function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
     return _interfaceId == type(IMainVotingPlugin).interfaceId || _interfaceId == type(Addresslist).interfaceId
       || _interfaceId == type(MajorityVotingBase).interfaceId || _interfaceId == type(IMembers).interfaceId
       || _interfaceId == type(IEditors).interfaceId || super.supportsInterface(_interfaceId);
   }
 
-  /// @inheritdoc IMainVotingPlugin
+  /// @inheritdoc IEditors
   function isEditor(address _account) public view returns (bool) {
     return isListed(_account);
   }
 
-  /// @inheritdoc IMainVotingPlugin
+  /// @inheritdoc IMembers
   function isMember(address _account) public view returns (bool) {
     return members[_account] || isEditor(_account);
   }
@@ -91,8 +90,8 @@ contract MainVotingPlugin is Addresslist, MajorityVotingBase, IMainVotingPlugin 
     return addresslistLengthAtBlock(_blockNumber);
   }
 
+  /// @inheritdoc MajorityVotingBase
   /// @notice Determines whether at least one editor besides the creator has approved.
-  /// @param _proposalId The ID of the proposal to check.
   function isMinParticipationReached(uint256 _proposalId)
     public
     view

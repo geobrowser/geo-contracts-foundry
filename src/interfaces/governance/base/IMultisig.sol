@@ -11,10 +11,10 @@ interface IMultisig {
   /// @notice Checks if an account can participate on a proposal vote. This can be because the vote
   /// - was executed, or
   /// - the voter is not listed.
+  /// @dev The function assumes the queried proposal exists.
   /// @param _proposalId The proposal Id.
   /// @param _account The address of the user to check.
   /// @return Returns true if the account is allowed to vote.
-  /// @dev The function assumes the queried proposal exists.
   function canApprove(uint256 _proposalId, address _account) external view returns (bool);
 
   /// @notice Checks if a proposal can be executed.

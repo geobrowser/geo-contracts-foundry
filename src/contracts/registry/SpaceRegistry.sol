@@ -135,8 +135,6 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _dao, block.chainid)));
   }
 
-  /// @notice Authorizes an upgrade to a new implementation
-  /// @dev Can only be called by the owner as part of the UUPS upgrade pattern
-  /// @param newImplementation The address of the new implementation contract
+  /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

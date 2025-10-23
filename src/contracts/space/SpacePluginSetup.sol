@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
@@ -13,6 +12,7 @@ import {CONTENT_PERMISSION_ID, SUBSPACE_PERMISSION_ID} from 'src/constants.sol';
 /// @title SpacePluginSetup
 /// @dev Release 1, Build 1
 contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
+  /// @notice The plugin implementation address
   address private immutable pluginImplementation;
 
   /// @notice Initializes the setup contract

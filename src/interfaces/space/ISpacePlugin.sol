@@ -44,11 +44,12 @@ interface ISpacePlugin is IPlugin {
   error InvalidAddress();
 
   /// @notice Interacts with core Arbitrum-specific system-level functionality.
-  /// @dev Precompiled contract that exists in every Arbitrum chain at address(100), 0x0000000000000000000000000000000000000064.
-  function ARB_SYS() external view returns (ArbSys);
+  /// @return arbSys Precompiled contract that exists in every Arbitrum chain at address(100), 0x0000000000000000000000000000000000000064.
+  function ARB_SYS() external view returns (ArbSys arbSys);
 
   /// @notice The address of the PaymentManager contract (L2).
-  function paymentManager() external view returns (address);
+  /// @return paymentManager The address of the PaymentManager contract (L2).
+  function paymentManager() external view returns (address paymentManager);
 
   /// @notice Initializes the plugin when build 1 is installed.
   /// @param _dao The address of the DAO to read the permissions from.

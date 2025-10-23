@@ -49,9 +49,7 @@ contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemb
     _updateMultisigSettings(_multisigSettings);
   }
 
-  /// @notice Checks if this or the parent contract supports an interface by its ID.
-  /// @param _interfaceId The ID of the interface.
-  /// @return Returns `true` if the interface is supported.
+  /// @inheritdoc ProposalUpgradeable
   function supportsInterface(bytes4 _interfaceId)
     public
     view
@@ -170,6 +168,8 @@ contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemb
   }
 
   /// @notice Internal implementation, allowing proposeAddMember() to specify the proposer.
+  /// @param _proposalId The ID of the proposal to approve.
+  /// @param _approver The address of the approver.
   function _approve(uint256 _proposalId, address _approver) internal {
     if (!_canApprove(_proposalId, _approver)) {
       revert ApprovalCastForbidden(_proposalId, _approver);

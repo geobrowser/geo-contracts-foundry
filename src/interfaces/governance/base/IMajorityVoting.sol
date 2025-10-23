@@ -94,6 +94,22 @@ interface IMajorityVoting is IPlugin, IProposal {
     uint256 no;
   }
 
+  /// @notice Emitted when the voting settings are updated.
+  /// @param votingMode A parameter to select the vote mode.
+  /// @param thresholdMode A parameter to select the threshold mode.
+  /// @param supportThreshold The support threshold value.
+  /// @param duration The minimum duration of the proposal vote in seconds.
+  event VotingSettingsUpdated(
+    VotingMode votingMode, ThresholdMode thresholdMode, uint32 supportThreshold, uint64 duration
+  );
+
+  /// @notice Emitted when a vote is cast by a voter.
+  /// @param proposalId The ID of the proposal.
+  /// @param voter The voter casting the vote.
+  /// @param voteOption The casted vote option.
+  /// @param votingPower The voting power behind this vote.
+  event VoteCast(uint256 indexed proposalId, address indexed voter, VoteOption voteOption, uint256 votingPower);
+
   /// @notice Thrown if a date is out of bounds.
   /// @param limit The limit value.
   /// @param actual The actual value.
@@ -122,24 +138,9 @@ interface IMajorityVoting is IPlugin, IProposal {
   /// @param proposalId The ID of the proposal.
   error ProposalExecutionForbidden(uint256 proposalId);
 
-  /// @notice Emitted when the voting settings are updated.
-  /// @param votingMode A parameter to select the vote mode.
-  /// @param thresholdMode A parameter to select the threshold mode.
-  /// @param supportThreshold The support threshold value.
-  /// @param duration The minimum duration of the proposal vote in seconds.
-  event VotingSettingsUpdated(
-    VotingMode votingMode, ThresholdMode thresholdMode, uint32 supportThreshold, uint64 duration
-  );
-
-  /// @notice Emitted when a vote is cast by a voter.
-  /// @param proposalId The ID of the proposal.
-  /// @param voter The voter casting the vote.
-  /// @param voteOption The casted vote option.
-  /// @param votingPower The voting power behind this vote.
-  event VoteCast(uint256 indexed proposalId, address indexed voter, VoteOption voteOption, uint256 votingPower);
-
   /// @notice The ID of the permission required to call the `updateVotingSettings` function.
-  function UPDATE_VOTING_SETTINGS_PERMISSION_ID() external view returns (bytes32);
+  /// @return updateVotingSettingsPermissionId The ID of the update-voting-settings permission.
+  function UPDATE_VOTING_SETTINGS_PERMISSION_ID() external view returns (bytes32 updateVotingSettingsPermissionId);
 
   /// @notice Votes for a vote option and, optionally, executes the proposal.
   /// @dev `_voteOption`, 1 -> abstain, 2 -> yes, 3 -> no
@@ -163,11 +164,11 @@ interface IMajorityVoting is IPlugin, IProposal {
   /// - has ended,
   /// - was executed, or
   /// - the voter doesn't have voting powers.
+  /// @dev The function assumes the queried proposal exists.
   /// @param _proposalId The proposal Id.
   /// @param _account The account address to be checked.
   /// @param  _voteOption Whether the voter abstains, supports or opposes the proposal.
   /// @return Returns true if the account is allowed to vote.
-  /// @dev The function assumes the queried proposal exists.
   function canVote(uint256 _proposalId, address _account, VoteOption _voteOption) external view returns (bool);
 
   /// @notice Checks if a proposal can be executed.

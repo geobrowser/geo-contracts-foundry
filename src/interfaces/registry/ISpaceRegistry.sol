@@ -62,21 +62,30 @@ interface ISpaceRegistry {
   error SpaceRegistryAlreadyHomeSpace(bytes16 spaceId);
 
   /// @notice The DAOFactory contract used to deploy new DAO instances
-  function daoFactory() external view returns (DAOFactory);
+  /// @return daoFactory The DAOFactory contract
+  function daoFactory() external view returns (DAOFactory daoFactory);
 
   /// @notice Maps each unique space ID to its current DAO contract address
+  /// @param _spaceId The ID of the space
+  /// @return dao The address of the DAO
   function daoAddressBySpaceId(bytes16 _spaceId) external view returns (address dao);
 
   /// @notice Reverse mapping: DAO address to its space ID
+  /// @param _dao The address of the DAO
+  /// @return spaceId The ID of the space
   function spacesByDAOAddress(address _dao) external view returns (bytes16 spaceId);
 
   /// @notice The home space ID for each user address (bytes16(0) if none)
+  /// @param _user The address of the user
+  /// @return spaceId The ID of the home space
   function homeSpaceByAddress(address _user) external view returns (bytes16 spaceId);
 
   /// @notice Pending home space requests: user address to requested space ID
   /// @dev When a user wants to set an existing space as home, the space ID is stored here
   ///      until the space's DAO accepts. Using space IDs (not DAO addresses) ensures
   ///      requests remain valid if the space migrates to a new DAO contract.
+  /// @param _user The address of the user
+  /// @return spaceId The ID of the pending home space
   function pendingHomeSpaceId(address _user) external view returns (bytes16 spaceId);
 
   /// @notice Initializes the SpaceRegistry contract
@@ -114,7 +123,7 @@ interface ISpaceRegistry {
 
   /**
    * @notice Creates a new space by deploying a DAO, with a specific space ID. This function can only be called by Geo governance to migrate existing spaces.
-   * @dev see AragonOSX docs for more details on the DAOFactory.DAOSettings and DAOFactory.PluginSettings
+   * @dev See AragonOSX docs for more details on the DAOFactory.DAOSettings and DAOFactory.PluginSettings
    * @param _daoSettings The settings for the DAO to be created
    * @param _pluginSettings The settings for the plugins to be installed on the DAO
    * @param _spaceId The ID of the space to create
