@@ -63,6 +63,20 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
     address dao
   );
 
+  /// @notice Emitted when a proposal is approved by an editor.
+  /// @param proposalId The ID of the proposal.
+  /// @param editor The editor casting the approve.
+  event Approved(uint256 indexed proposalId, address indexed editor);
+
+  /// @notice Emitted when a proposal is rejected by an editor.
+  /// @param proposalId The ID of the proposal.
+  /// @param editor The editor casting the rejection.
+  event Rejected(uint256 indexed proposalId, address indexed editor);
+
+  /// @notice Emitted when the plugin settings are set.
+  /// @param proposalDuration The amount of time before a non-approved proposal expires.
+  event MultisigSettingsUpdated(uint64 proposalDuration);
+
   /// @notice Thrown when creating a proposal at the same block that the settings were changed.
   error ProposalCreationForbiddenOnSameBlock();
 
@@ -80,20 +94,6 @@ interface IMemberAccessPlugin is IMultisig, IPlugin, IProposal {
 
   /// @notice Thrown when called from an incompatible contract.
   error InvalidInterface();
-
-  /// @notice Emitted when a proposal is approved by an editor.
-  /// @param proposalId The ID of the proposal.
-  /// @param editor The editor casting the approve.
-  event Approved(uint256 indexed proposalId, address indexed editor);
-
-  /// @notice Emitted when a proposal is rejected by an editor.
-  /// @param proposalId The ID of the proposal.
-  /// @param editor The editor casting the rejection.
-  event Rejected(uint256 indexed proposalId, address indexed editor);
-
-  /// @notice Emitted when the plugin settings are set.
-  /// @param proposalDuration The amount of time before a non-approved proposal expires.
-  event MultisigSettingsUpdated(uint64 proposalDuration);
 
   /// @notice The ID of the permission required to call the `addAddresses` functions.
   /// @return updateMultisigSettingsPermissionId The ID of the update-multisig-settings permission.
