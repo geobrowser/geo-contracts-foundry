@@ -40,9 +40,7 @@ contract SpacePlugin is PluginUUPSUpgradeable, ISpacePlugin {
     });
   }
 
-  /// @notice Checks if this or the parent contract supports an interface by its ID.
-  /// @param _interfaceId The ID of the interface.
-  /// @return Returns `true` if the interface is supported.
+  /// @inheritdoc PluginUUPSUpgradeable
   function supportsInterface(bytes4 _interfaceId) public view override returns (bool) {
     return _interfaceId == type(ISpacePlugin).interfaceId || super.supportsInterface(_interfaceId);
   }

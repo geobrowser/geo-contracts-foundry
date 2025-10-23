@@ -49,9 +49,7 @@ contract MemberAccessPlugin is PluginUUPSUpgradeable, ProposalUpgradeable, IMemb
     _updateMultisigSettings(_multisigSettings);
   }
 
-  /// @notice Checks if this or the parent contract supports an interface by its ID.
-  /// @param _interfaceId The ID of the interface.
-  /// @return Returns `true` if the interface is supported.
+  /// @inheritdoc ProposalUpgradeable
   function supportsInterface(bytes4 _interfaceId)
     public
     view
