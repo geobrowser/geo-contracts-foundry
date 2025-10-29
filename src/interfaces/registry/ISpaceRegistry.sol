@@ -1,34 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {DAO} from '@aragon/osx/core/dao/DAO.sol';
-import {DAOFactory} from '@aragon/osx/framework/dao/DAOFactory.sol';
+import {IEmitter} from 'interfaces/IEmitter.sol';
 
-interface ISpaceRegistry {
+interface ISpaceRegistry is IEmitter {
   // Events
-
-  /// @notice Emitted when the SpaceRegistry is initialized
-  /// @param daoFactory The address of the DAOFactory contract
-  /// @param owner The address of the owner
-  event SpaceRegistryInitialized(address daoFactory, address owner);
 
   /// @notice Emitted when a new space is created
   /// @param spaceId The unique identifier of the created space
   /// @param dao The address of the DAO contract deployed for this space
   /// @param creator The address that created the space
   event SpaceRegistrySpaceCreated(bytes16 indexed spaceId, address indexed dao, address indexed creator);
-
-  /// @notice Emitted when a user requests a space to become their home space
-  /// @param user The address of the user making the request
-  /// @param spaceId The space ID being requested as home
-  /// @param dao The current DAO address of the requested space
-  event SpaceRegistryHomeSpaceUpdatePending(address indexed user, bytes16 indexed spaceId, address indexed dao);
-
-  /// @notice Emitted when a user's home space is updated
-  /// @param user The address of the user whose home space changed
-  /// @param previousSpaceId The previous home space ID (bytes16(0) if none)
-  /// @param newSpaceId The new home space ID
-  event SpaceRegistryHomeSpaceSet(address indexed user, bytes16 indexed previousSpaceId, bytes16 indexed newSpaceId);
 
   /// @notice Emitted when a space migrates from one DAO contract to another while keeping its space ID
   /// @param spaceId The space ID that remains constant through the migration
@@ -53,104 +35,58 @@ interface ISpaceRegistry {
   /// @param spaceId The already existing space ID
   error SpaceRegistrySpaceIdAlreadyExists(bytes16 spaceId);
 
-  /// @notice Thrown when a DAO tries to accept a home space request that was never made
-  /// @param user The user address for which no pending request exists
-  error SpaceRegistryNoPendingRequest(address user);
+  // Functions
 
-  /// @notice Thrown when a user tries to request a space that is already their home space
-  /// @param spaceId The space ID that is already the user's home space
-  error SpaceRegistryAlreadyHomeSpace(bytes16 spaceId);
-
-  /// @notice The DAOFactory contract used to deploy new DAO instances
-  /// @return daoFactory The DAOFactory contract
-  function daoFactory() external view returns (DAOFactory daoFactory);
-
-  /// @notice Maps each unique space ID to its current DAO contract address
+  /// @notice Maps each unique space ID to its current address
   /// @param _spaceId The ID of the space
-  /// @return dao The address of the DAO
-  function daoAddressBySpaceId(bytes16 _spaceId) external view returns (address dao);
+  /// @return account The address of the space
+  function spaceIdToAddress(bytes16 _spaceId) external view returns (address account);
 
-  /// @notice Reverse mapping: DAO address to its space ID
-  /// @param _dao The address of the DAO
+  /// @notice Reverse mapping: address to its space ID
+  /// @param _account The address of the space
   /// @return spaceId The ID of the space
-  function spacesByDAOAddress(address _dao) external view returns (bytes16 spaceId);
-
-  /// @notice The home space ID for each user address (bytes16(0) if none)
-  /// @param _user The address of the user
-  /// @return spaceId The ID of the home space
-  function homeSpaceByAddress(address _user) external view returns (bytes16 spaceId);
-
-  /// @notice Pending home space requests: user address to requested space ID
-  /// @dev When a user wants to set an existing space as home, the space ID is stored here
-  ///      until the space's DAO accepts. Using space IDs (not DAO addresses) ensures
-  ///      requests remain valid if the space migrates to a new DAO contract.
-  /// @param _user The address of the user
-  /// @return spaceId The ID of the pending home space
-  function pendingHomeSpaceId(address _user) external view returns (bytes16 spaceId);
+  function addressToSpaceId(address _account) external view returns (bytes16 spaceId);
 
   /// @notice Initializes the SpaceRegistry contract
   /// @param _owner The address that will own this registry contract
-  /// @param _daoFactory The address of the DAOFactory contract used to deploy spaces
-  function initialize(address _owner, address _daoFactory) external;
+  function initialize(address _owner) external;
 
   /**
-   * @notice Creates a new space by deploying a DAO, optionally setting it as the home space for the caller.
-   * @dev see AragonOSX docs for more details on the DAOFactory.DAOSettings and DAOFactory.PluginSettings
-   * @param _daoSettings The settings for the DAO to be created
-   * @param _pluginSettings The settings for the plugins to be installed on the DAO
-   * @param _isHomeSpace Whether to set the DAO as the home space for the caller
-   * @return createdDao The DAO that was created
-   * @return spaceId The ID of the space that was created
+   * @notice Generalized entry point for all users across all spaces
+   * @param _from The space contract on which to call the verify function
+   * @param _to The space contract on which to call the write function
+   * @param _action The action that is passed to the space contract
+   * @param _topic The topic that is passed to the space contract
+   * @param _data The arbitrary data for space contract execution
+   * @param _signature The signature for account verification
    */
-  function createSpace(
-    DAOFactory.DAOSettings calldata _daoSettings,
-    DAOFactory.PluginSettings[] calldata _pluginSettings,
-    bool _isHomeSpace
-  ) external returns (DAO createdDao, bytes16 spaceId);
+  function enter(
+    address _from,
+    address _to,
+    bytes32 _action,
+    bytes32 _topic,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external;
 
   /**
-   * @notice Called by the user to set their home space,
-   * but sets it as pending until the DAO accepts it
-   * @param _spaceId The ID of the space to set as the home space
+   * @notice Creates a new space by registering a space ID for a given address
+   * @param _account The address to register a space ID for
    */
-  function setHomeSpace(bytes16 _spaceId) external;
+  function registerSpaceId(address _account) external;
 
   /**
-   * @notice Called by a DAO to accept being the home space for a user
-   * @param _user The user for whom to set the DAO as the home space
+   * @notice Allows an address to migrate its space ID to a new address
+   * @dev Can only be called by an existing address in the registry
+   * @param _spaceId The ID of the space to migrate
+   * @param _newAccount The new address of the space
    */
-  function acceptHomeSpace(address _user) external;
+  function migrateSpaceAddress(bytes16 _spaceId, address _newAccount) external;
 
   /**
-   * @notice Creates a new space by deploying a DAO, with a specific space ID. This function can only be called by Geo governance to migrate existing spaces.
-   * @dev See AragonOSX docs for more details on the DAOFactory.DAOSettings and DAOFactory.PluginSettings
-   * @param _daoSettings The settings for the DAO to be created
-   * @param _pluginSettings The settings for the plugins to be installed on the DAO
-   * @param _spaceId The ID of the space to create
-   * @return createdDao The DAO that was created
-   */
-  function createSpaceWithId(
-    DAOFactory.DAOSettings calldata _daoSettings,
-    DAOFactory.PluginSettings[] calldata _pluginSettings,
-    bytes16 _spaceId
-  ) external returns (DAO createdDao);
-
-  /**
-   * @notice Allows a DAO to migrate its space ID to a new DAO instance
-   * @dev Can only be called by an existing DAO in the registry
-   * @param _daoSettings The settings for the new DAO to be created
-   * @param _pluginSettings The settings for the plugins to be installed on the new DAO
-   * @return newDao The new DAO that was created with the same space ID
-   */
-  function migrateSpace(
-    DAOFactory.DAOSettings calldata _daoSettings,
-    DAOFactory.PluginSettings[] calldata _pluginSettings
-  ) external returns (DAO newDao);
-
-  /**
-   * @notice Generates a space ID for a given DAO address
-   * @param _dao The address of the DAO to generate a space ID for
+   * @notice Generates a space ID for a given address
+   * @param _account The address to generate a space ID for
    * @return spaceId The ID of the space that was generated
    */
-  function generateSpaceId(address _dao) external view returns (bytes16 spaceId);
+  function generateSpaceId(address _account) external view returns (bytes16 spaceId);
 }
