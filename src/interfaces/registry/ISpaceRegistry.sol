@@ -78,10 +78,9 @@ interface ISpaceRegistry is IEmitter {
   /**
    * @notice Allows an address to migrate its space ID to a new address
    * @dev Can only be called by an existing address in the registry
-   * @param _spaceId The ID of the space to migrate
    * @param _newAccount The new address of the space
    */
-  function migrateSpaceAddress(bytes16 _spaceId, address _newAccount) external;
+  function migrateSpaceAddress(address _newAccount) external;
 
   /**
    * @notice Generates a space ID for a given address

@@ -67,18 +67,18 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function migrateSpaceAddress(bytes16 _spaceId, address _newAccount) external {
-    // REVIEW: Why send `_spaceId`?
+  function migrateSpaceAddress(address _newAccount) external {
     // Must be called by the space itself
-    require(spaceIdToAddress[_spaceId] == msg.sender);
+    bytes16 spaceId = addressToSpaceId[msg.sender];
+    if (spaceId == bytes16(0)) revert SpaceRegistryInvalidCaller(msg.sender);
 
     // REVIEW: What if new address gets frontrun?
     // New address must not be registered
     require(addressToSpaceId[_newAccount] == bytes16(0));
 
-    spaceIdToAddress[_spaceId] = _newAccount;
+    spaceIdToAddress[spaceId] = _newAccount;
     addressToSpaceId[msg.sender] = bytes16(0);
-    addressToSpaceId[_newAccount] = _spaceId;
+    addressToSpaceId[_newAccount] = spaceId;
 
     // REVIEW: Do we need to emit a Ping here?
   }
