@@ -4,7 +4,6 @@ pragma solidity 0.8.17;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
-import {IAccount} from 'interfaces/IAccount.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 
@@ -46,7 +45,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
 
     // If msg.sender is not the from
     // Then pass the to, action, topic, data, and signature for verification
-    if (msg.sender != _from) IAccount(_from).verify(_to, _action, _topic, _data, _signature);
+    if (msg.sender != _from) ISpace(_from).verify(_to, _action, _topic, _data, _signature);
 
     // If msg.sender is not the to
     // Then pass the from, action, topic, and data to the space
