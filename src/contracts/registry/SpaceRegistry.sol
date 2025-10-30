@@ -20,6 +20,9 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   mapping(address => bytes16) public addressToSpaceId;
 
+  /// @notice The nonce used to generate a space ID for registration
+  uint256 private _spaceIdNonce;
+
   /// @inheritdoc ISpaceRegistry
   function initialize(address _owner) external initializer {
     _transferOwnership(_owner);
@@ -54,8 +57,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     // Account must not be registered
     require(addressToSpaceId[_account] == bytes16(0));
 
-    // REVIEW: After migration, old addresses will keep generating the same `spaceId`, rendering them unusable upon re-registration
-    bytes16 spaceId = generateSpaceId(_account);
+    bytes16 spaceId = generateSpaceId(_account, _spaceIdNonce++);
 
     // Space id must not be being used
     require(spaceIdToAddress[spaceId] == address(0));
@@ -84,8 +86,8 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function generateSpaceId(address _account) public view returns (bytes16 spaceId) {
-    spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, block.chainid)));
+  function generateSpaceId(address _account, uint256 _nonce) public view returns (bytes16 spaceId) {
+    spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
   }
 
   /// @inheritdoc UUPSUpgradeable

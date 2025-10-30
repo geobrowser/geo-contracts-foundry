@@ -83,9 +83,10 @@ interface ISpaceRegistry is IEmitter {
   function migrateSpaceAddress(address _newAccount) external;
 
   /**
-   * @notice Generates a space ID for a given address
+   * @notice Generates a space ID for a given address and nonce
    * @param _account The address to generate a space ID for
+   * @param _nonce The nonce to generate a space ID for
    * @return spaceId The ID of the space that was generated
    */
-  function generateSpaceId(address _account) external view returns (bytes16 spaceId);
+  function generateSpaceId(address _account, uint256 _nonce) external view returns (bytes16 spaceId);
 }
