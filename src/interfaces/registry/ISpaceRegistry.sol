@@ -6,6 +6,11 @@ import {IEmitter} from 'interfaces/IEmitter.sol';
 interface ISpaceRegistry is IEmitter {
   // Events
 
+  /// @notice Emitted when the SpaceRegistry is initialized
+  /// @param daoFactory The address of the DAOFactory contract
+  /// @param owner The address of the owner
+  event SpaceRegistryInitialized(address daoFactory, address owner);
+
   /// @notice Emitted when a new space is created
   /// @param spaceId The unique identifier of the created space
   /// @param dao The address of the DAO contract deployed for this space
@@ -21,19 +26,13 @@ interface ISpaceRegistry is IEmitter {
   // Errors
 
   /// @notice Thrown when attempting to initialize with a zero address
-  error SpaceRegistryInvalidZeroAddress();
-
-  /// @notice Thrown when referencing a space ID that doesn't exist
-  /// @param spaceId The invalid space ID
-  error SpaceRegistryInvalidSpaceId(bytes16 spaceId);
+  error InvalidZeroAddress();
 
   /// @notice Thrown when the caller is not authorized for the operation
-  /// @param caller The unauthorized caller's address
-  error SpaceRegistryInvalidCaller(address caller);
+  error InvalidCaller();
 
-  /// @notice Thrown when trying to create a space with a space ID that's already assigned to another DAO
-  /// @param spaceId The already existing space ID
-  error SpaceRegistrySpaceIdAlreadyExists(bytes16 spaceId);
+  /// @notice Thrown when trying to register or migrate a space with an address that's already assigned to another space
+  error SpaceAlreadyRegistered();
 
   // Functions
 

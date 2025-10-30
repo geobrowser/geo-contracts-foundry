@@ -25,6 +25,8 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function initialize(address _owner) external initializer {
+    if (_owner == address(0)) revert InvalidZeroAddress();
+
     _transferOwnership(_owner);
   }
 
@@ -55,12 +57,9 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   function registerSpaceId(address _account) external {
     // REVIEW: What if an address gets frontrun?
     // Account must not be registered
-    require(addressToSpaceId[_account] == bytes16(0));
+    if (addressToSpaceId[_account] != bytes16(0)) revert SpaceAlreadyRegistered();
 
     bytes16 spaceId = generateSpaceId(_account, _spaceIdNonce++);
-
-    // Space id must not be being used
-    require(spaceIdToAddress[spaceId] == address(0));
 
     addressToSpaceId[_account] = spaceId;
     spaceIdToAddress[spaceId] = _account;
@@ -72,11 +71,11 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   function migrateSpaceAddress(address _newAccount) external {
     // Must be called by the space itself
     bytes16 spaceId = addressToSpaceId[msg.sender];
-    if (spaceId == bytes16(0)) revert SpaceRegistryInvalidCaller(msg.sender);
+    if (spaceId == bytes16(0)) revert InvalidCaller();
 
     // REVIEW: What if new address gets frontrun?
     // New address must not be registered
-    require(addressToSpaceId[_newAccount] == bytes16(0));
+    if (addressToSpaceId[_newAccount] != bytes16(0)) revert SpaceAlreadyRegistered();
 
     spaceIdToAddress[spaceId] = _newAccount;
     addressToSpaceId[msg.sender] = bytes16(0);
