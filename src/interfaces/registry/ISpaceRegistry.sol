@@ -6,31 +6,15 @@ interface ISpaceRegistry {
 
   /**
    * @notice Emitted when a user calls the enter function
-   * @param spaces The spaces involved
-   *        bytes16: from space
-   *        bytes16: to space
+   * @param fromId The from space ID involved
+   * @param toId The to space ID involved
    * @param action An action, which is passed to the space contract
    * @param topic A topic, which is passed to the space contract
    * @param data Some arbitrary data for space contract execution
    */
-  event Ping(bytes32 indexed spaces, bytes32 indexed action, bytes32 indexed topic, bytes data);
-
-  /// @notice Emitted when the SpaceRegistry is initialized
-  /// @param daoFactory The address of the DAOFactory contract
-  /// @param owner The address of the owner
-  event SpaceRegistryInitialized(address daoFactory, address owner);
-
-  /// @notice Emitted when a new space is created
-  /// @param spaceId The unique identifier of the created space
-  /// @param dao The address of the DAO contract deployed for this space
-  /// @param creator The address that created the space
-  event SpaceRegistrySpaceCreated(bytes16 indexed spaceId, address indexed dao, address indexed creator);
-
-  /// @notice Emitted when a space migrates from one DAO contract to another while keeping its space ID
-  /// @param spaceId The space ID that remains constant through the migration
-  /// @param oldDao The address of the previous DAO contract
-  /// @param newDao The address of the new DAO contract
-  event SpaceRegistrySpaceMigrated(bytes16 indexed spaceId, address indexed oldDao, address indexed newDao);
+  event Ping(
+    bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
+  ) anonymous;
 
   // Errors
 
@@ -39,6 +23,9 @@ interface ISpaceRegistry {
 
   /// @notice Thrown when the caller is not authorized for the operation
   error InvalidCaller();
+
+  /// @notice Thrown when trying to enter a space with an address that's not assigned to a space
+  error SpaceNotRegistered();
 
   /// @notice Thrown when trying to register or migrate a space with an address that's already assigned to another space
   error SpaceAlreadyRegistered();

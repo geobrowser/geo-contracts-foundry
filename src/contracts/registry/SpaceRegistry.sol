@@ -38,10 +38,14 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     bytes calldata _data,
     bytes calldata _signature
   ) external {
-    // Translate addresses into space ids
-    // Some check here that the space Ids exist? Maybe it's fine if it isn't registered?
-    bytes32 spaces = bytes32(addressToSpaceId[_from] | addressToSpaceId[_to] >> 128);
-    emit Ping(spaces, _action, _topic, _data);
+    // Translate addresses into space IDs
+    bytes16 fromId = addressToSpaceId[_from];
+    bytes16 toId = addressToSpaceId[_to];
+
+    // Check that the space IDs exist
+    if (fromId == bytes16(0) || toId == bytes16(0)) revert SpaceNotRegistered();
+
+    emit Ping(fromId, toId, _action, _topic, _data);
 
     // If msg.sender is not the from
     // Then pass the to, action, topic, data, and signature for verification
