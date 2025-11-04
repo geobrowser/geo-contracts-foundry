@@ -66,13 +66,13 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
     // Actions
     if (_action == CREATE_PROPOSAL) {
-      _createProposal(_fromSpace, _topic, _data);
+      _createProposal(_fromSpace, _data);
     } else if (_action == VOTE) {
-      _vote(_fromSpace, _topic, _data);
+      _vote(_fromSpace, _data);
     } else if (_action == EXECUTE_PROPOSAL) {
-      _executeProposal(_fromSpace, _topic, _data);
+      _executeProposal(_data);
     } else if (_action == LEAVE) {
-      _leave(_fromSpace, _topic, _data);
+      _leave(_fromSpace);
     } else {
       // Must attempt to write in some way
       revert InvalidAction();
@@ -168,7 +168,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * set based on the voting settings, and the snapshot block is set to block.number - 1 to
    * protect against backrunning transactions causing census changes.
    */
-  function _createProposal(address _fromSpace, bytes32, bytes calldata _data) internal {
+  function _createProposal(address _fromSpace, bytes calldata _data) internal {
     // Only members or editors can create a proposal
     if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidCaller();
     // Decode data to construct proposal
@@ -197,7 +197,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * @dev This function can only be called by editors. If vote replacement is enabled and the
    * editor has already voted, the previous vote is removed before adding the new vote.
    */
-  function _vote(address _fromSpace, bytes32, bytes calldata _data) internal {
+  function _vote(address _fromSpace, bytes calldata _data) internal {
     // Only editors can vote
     if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
     // Decode data to construct vote
@@ -231,7 +231,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * @dev Anyone can call this function. All actions in the proposal are executed sequentially.
    * If any action reverts, the entire execution reverts.
    */
-  function _executeProposal(address, bytes32, bytes calldata _data) internal {
+  function _executeProposal(bytes calldata _data) internal {
     // Anyone can call
     // Check if proposal can be settled
     uint256 _proposalId = abi.decode(_data, (uint256));
@@ -255,9 +255,14 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * @dev If the address is a member, removes them as a member. If they are an editor, removes
    * them as an editor.
    */
-  function _leave(address _fromSpace, bytes32, bytes calldata) internal {
-    if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidCaller();
-    hasRole(MEMBER, _fromSpace) ? _removeMember(_fromSpace) : _removeEditor(_fromSpace);
+  function _leave(address _fromSpace) internal {
+    if (hasRole(MEMBER, _fromSpace)) {
+      _removeMember(_fromSpace);
+    } else if (hasRole(EDITOR, _fromSpace)) {
+      _removeEditor(_fromSpace);
+    } else {
+      revert InvalidCaller();
+    }
   }
 
   /**
@@ -300,6 +305,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * @dev Grants the MEMBER role and notifies the space registry.
    */
   function _addMember(address _newMember) internal {
+    if (hasRole(MEMBER, _newMember)) revert InvalidAddress();
     _grantRole(MEMBER, _newMember);
     spaceRegistry.enter(address(this), address(this), keccak256('ADD_MEMBER'), bytes32(bytes20(_newMember)), '', '');
   }
@@ -310,6 +316,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * @dev Revokes the MEMBER role and notifies the space registry.
    */
   function _removeMember(address _oldMember) internal {
+    if (!hasRole(MEMBER, _oldMember)) revert InvalidAddress();
     _revokeRole(MEMBER, _oldMember);
     spaceRegistry.enter(address(this), address(this), keccak256('REMOVE_MEMBER'), bytes32(bytes20(_oldMember)), '', '');
   }
@@ -352,10 +359,10 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     if (proposal_.executed) return false;
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    if (block.timestamp > proposal_.parameters.startDate) {
+    if (block.timestamp > proposal_.parameters.startDate && block.timestamp < proposal_.parameters.endDate) {
       // Early execution
       if (!isSupportThresholdReachedEarly(_proposalId)) return false;
-    } else {
+    } else if (block.timestamp >= proposal_.parameters.endDate) {
       // Normal execution
       if (!isSupportThresholdReached(_proposalId)) return false;
     }
