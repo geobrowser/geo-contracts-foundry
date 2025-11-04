@@ -71,14 +71,14 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Represents an action to be executed when a proposal passes
-   * @param _to The target address for the action
-   * @param _value The amount of native currency to send with the action
-   * @param _data The call data for the action
+   * @param to The target address for the action
+   * @param value The amount of native currency to send with the action
+   * @param data The call data for the action
    */
   struct Action {
-    address _to;
-    uint256 _value;
-    bytes _data;
+    address to;
+    uint256 value;
+    bytes data;
   }
 
   /**
@@ -210,6 +210,30 @@ interface IDAOSpace is ISpace {
    * @custom:throws InvalidCaller if called by non-DAO address
    */
   function removeMember(address _oldMember) external;
+
+  /**
+   * @notice Space Registry contract
+   * @return The address of the space registry singleton
+   */
+  function spaceRegistry() external view returns (ISpaceRegistry);
+
+  /**
+   * @notice Proposal counter
+   * @return The current proposal counter value
+   */
+  function proposalCounter() external view returns (uint256);
+
+  /**
+   * @notice Stores the voting settings used for proposals
+   * @return votingMode The voting mode
+   * @return thresholdMode The threshold mode
+   * @return supportThreshold The support threshold value
+   * @return duration The duration of proposals in seconds
+   */
+  function votingSettings()
+    external
+    view
+    returns (VotingMode votingMode, ThresholdMode thresholdMode, uint256 supportThreshold, uint256 duration);
 
   /**
    * @notice Checks if an account was an editor at a specific block

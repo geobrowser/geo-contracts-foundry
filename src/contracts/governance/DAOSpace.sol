@@ -22,17 +22,17 @@ import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpaceConstants, IDAOSpace {
   using CheckpointsUpgradeable for CheckpointsUpgradeable.History;
 
-  /// @notice Space Registry contract
-  ISpaceRegistry private spaceRegistry;
+  /// @inheritdoc IDAOSpace
+  ISpaceRegistry public spaceRegistry;
 
-  /// @notice Proposal counter
-  uint256 private proposalCounter;
+  /// @inheritdoc IDAOSpace
+  uint256 public proposalCounter;
 
-  /// @notice Stores the voting settings used for proposals
-  VotingSettings private votingSettings;
+  /// @inheritdoc IDAOSpace
+  VotingSettings public votingSettings;
 
   /// @notice Stores information about a proposal by its ID
-  mapping(uint256 => Proposal) private proposals;
+  mapping(uint256 => Proposal) private _proposals;
 
   /// @notice Checkpoints tracking editor membership at different block numbers
   mapping(address => CheckpointsUpgradeable.History) private _editorsCheckpoints;
@@ -120,7 +120,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
 
   /// @inheritdoc IDAOSpace
   function getSupportThresholdPercentage(uint256 _proposalId) public view returns (uint256) {
-    Proposal storage proposal_ = proposals[_proposalId];
+    Proposal storage proposal_ = _proposals[_proposalId];
     // If the threshold value is zero, return zero
     if (proposal_.parameters.supportThreshold == 0) return 0;
     // Require the support threshold value to be in the interval [0, 10^6-1], because `>` comparison is used in the support criterion and >100% could never be reached.
@@ -140,7 +140,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
 
   /// @inheritdoc IDAOSpace
   function isSupportThresholdReached(uint256 _proposalId) public view returns (bool) {
-    Proposal storage proposal_ = proposals[_proposalId];
+    Proposal storage proposal_ = _proposals[_proposalId];
     uint256 supportThresholdPercentage = getSupportThresholdPercentage(_proposalId);
     // Calculates outcome
     return
@@ -149,7 +149,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
 
   /// @inheritdoc IDAOSpace
   function isSupportThresholdReachedEarly(uint256 _proposalId) public view returns (bool) {
-    Proposal storage proposal_ = proposals[_proposalId];
+    Proposal storage proposal_ = _proposals[_proposalId];
     // Return false if early execution not enabled.
     if (proposal_.parameters.votingMode != VotingMode.EarlyExecution) return false;
     uint256 supportThresholdPercentage = getSupportThresholdPercentage(_proposalId);
@@ -175,7 +175,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     (bytes memory uri, Action[] memory actions) = abi.decode(_data, (bytes, Action[]));
     uint256 proposalId = proposalCounter++;
     // Update proposal storage
-    Proposal storage proposal_ = proposals[proposalId];
+    Proposal storage proposal_ = _proposals[proposalId];
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
     // The snapshot block must be mined already to protect the transaction against backrunning transactions causing census changes.
@@ -204,7 +204,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     (uint256 _proposalId, VoteOption _voteOption) = abi.decode(_data, (uint256, VoteOption));
     // Ensure editor can vote
     if (!_canVote(_fromSpace, _proposalId, _voteOption)) revert CanNotVote();
-    Proposal storage proposal_ = proposals[_proposalId];
+    Proposal storage proposal_ = _proposals[_proposalId];
     // Remove the previous vote.
     VoteOption state = proposal_.voters[_fromSpace];
     if (state == VoteOption.Yes) {
@@ -237,14 +237,14 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     uint256 _proposalId = abi.decode(_data, (uint256));
     if (!_canExecuteProposal(_proposalId)) revert CanNotSettle();
     // Set proposal as executed
-    proposals[_proposalId].executed = true;
+    _proposals[_proposalId].executed = true;
     /// loop over actions
-    Action[] memory actions = proposals[_proposalId].actions;
+    Action[] memory actions = _proposals[_proposalId].actions;
     uint256 actionsLength = actions.length;
     Action memory action;
     for (uint256 i; i < actionsLength; i++) {
       action = actions[i];
-      (bool success,) = (action._to).call{value: action._value}(action._data);
+      (bool success,) = (action.to).call{value: action.value}(action.data);
       if (!success) revert ActionReverted();
     }
   }
@@ -324,7 +324,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * vote replacement is not allowed and the account has already voted, or the vote option is None.
    */
   function _canVote(address _account, uint256 _proposalId, VoteOption _voteOption) internal view returns (bool) {
-    Proposal storage proposal_ = proposals[_proposalId];
+    Proposal storage proposal_ = _proposals[_proposalId];
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
     // The proposal vote has already ended.
@@ -347,8 +347,8 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
    * calculations.
    */
   function _canExecuteProposal(uint256 _proposalId) internal view returns (bool) {
-    Proposal storage proposal_ = proposals[_proposalId];
-    // Verify that the vote has not been executed already.
+    Proposal storage proposal_ = _proposals[_proposalId];
+    // Verify that the proposal has not been executed already.
     if (proposal_.executed) return false;
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;

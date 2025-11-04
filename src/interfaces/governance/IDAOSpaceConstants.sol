@@ -33,18 +33,25 @@ interface IDAOSpaceConstants {
   /**
    * @notice Returns the action constant for creating a governance proposal
    * @return _createProposal The create proposal action constant
+   * @dev When this action is used, the topic should be empty and the data should contain:
+   * bytes(abi.encode(bytes(uri), Action[], VoteOption)) - URI + Onchain Operations + Vote option
    */
   function CREATE_PROPOSAL() external view returns (bytes32 _createProposal);
 
   /**
    * @notice Returns the action constant for voting on a proposal
    * @return _vote The vote action constant
+   * @dev When this action is used, the topic should be empty and the data should contain:
+   * bytes(abi.encode(uint256(proposalId), VoteOption))
+   * Vote Options: 0 - None, 1 - Abstain, 2 - Yes, 3 - No
    */
   function VOTE() external view returns (bytes32 _vote);
 
   /**
    * @notice Returns the action constant for executing a proposal
    * @return _executeProposal The execute proposal action constant
+   * @dev When this action is used, the topic should be empty and the data should contain:
+   * bytes(abi.encode(uint256(proposalId)))
    */
   function EXECUTE_PROPOSAL() external view returns (bytes32 _executeProposal);
 
