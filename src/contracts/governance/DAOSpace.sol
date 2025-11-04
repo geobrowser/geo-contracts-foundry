@@ -359,10 +359,10 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     if (proposal_.executed) return false;
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    if (block.timestamp > proposal_.parameters.startDate && block.timestamp < proposal_.parameters.endDate) {
+    if (block.timestamp < proposal_.parameters.endDate) {
       // Early execution
       if (!isSupportThresholdReachedEarly(_proposalId)) return false;
-    } else if (block.timestamp >= proposal_.parameters.endDate) {
+    } else {
       // Normal execution
       if (!isSupportThresholdReached(_proposalId)) return false;
     }
