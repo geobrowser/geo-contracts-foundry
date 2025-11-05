@@ -1,0 +1,56 @@
+UnitSpaceRegistry::constructor
+└── when called
+    └── it disables initializers
+
+UnitSpaceRegistry::initialize
+├── when delegate called
+│   ├── when owner is not zero address
+│   │   ├── it sets owner
+│   │   └── when delegate called again
+│   │       └── it reverts with InitializableContractIsAlreadyInitialized
+│   └── when owner is zero address
+│       └── it reverts with InvalidZeroAddress
+└── when called
+    └── it reverts with InitializableContractIsAlreadyInitialized
+
+UnitSpaceRegistry::enter
+├── when spaces are registered
+│   ├── it emits Ping
+│   ├── when caller is not fromSpace
+│   │   └── it calls fromSpace to verify
+│   └── when caller is not toSpace
+│       └── it calls toSpace to write
+└── when space is not registered
+    └── it reverts with SpaceNotRegistered
+
+UnitSpaceRegistry::registerSpaceId
+├── when space is not registered
+│   ├── it increments _spaceIdNonce
+│   ├── it sets addressToSpaceId
+│   └── it sets spaceIdToAddress
+└── when space is registered
+    └── it reverts with SpaceAlreadyRegistered
+
+UnitSpaceRegistry::migrateSpaceAddress
+├── when caller is migrating space
+│   ├── when new space address is not registered
+│   │   ├── it updates spaceIdToAddress
+│   │   └── it updates addressToSpaceId
+│   └── when new space address is registered
+│       └── it reverts with SpaceAlreadyRegistered
+└── when caller is not migrating space
+    └── it reverts with InvalidCaller
+
+UnitSpaceRegistry::generateSpaceId
+└── when called
+    └── it returns spaceId
+
+UnitSpaceRegistry::version
+└── when called
+    └── it returns semantic version
+
+UnitSpaceRegistry::_authorizeUpgrade
+├── when called by owner
+│   └── it does not revert
+└── when called by non-owner
+    └── it reverts with OwnableCallerIsNotTheOwner

@@ -13,8 +13,6 @@ env:
 jobs:
   unit-tests:
     name: Run Unit Tests
-    # Remove the following line if you wish to run unit tests
-    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo

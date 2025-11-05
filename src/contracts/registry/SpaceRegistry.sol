@@ -4,14 +4,17 @@ pragma solidity 0.8.17;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
+import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 
-/// @title SpaceRegistry
-/// @notice Central registry for managing spaces
-/// @dev This contract serves as the entry point for creating new spaces.
-///      Each space has a unique ID that maps to an address.
-///      Spaces can migrate to new addresses while keeping their ID.
+/**
+ * @title SpaceRegistry
+ * @notice Central registry for managing spaces
+ * @dev This contract serves as the entry point for creating new spaces.
+ *      Each space has a unique ID that maps to an address.
+ *      Spaces can migrate to new addresses while keeping their ID.
+ */
 contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   mapping(bytes16 => address) public spaceIdToAddress;
@@ -20,7 +23,12 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   mapping(address => bytes16) public addressToSpaceId;
 
   /// @notice The nonce used to generate a space ID for registration
-  uint256 private _spaceIdNonce;
+  uint256 internal _spaceIdNonce;
+
+  /// @notice Constructor
+  constructor() {
+    _disableInitializers();
+  }
 
   /// @inheritdoc ISpaceRegistry
   function initialize(address _owner) external initializer {
@@ -90,6 +98,11 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   function generateSpaceId(address _account, uint256 _nonce) public view returns (bytes16 spaceId) {
     spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
+  }
+
+  /// @inheritdoc ISemver
+  function version() public pure returns (string memory version) {
+    version = '1.0.0';
   }
 
   /// @inheritdoc UUPSUpgradeable

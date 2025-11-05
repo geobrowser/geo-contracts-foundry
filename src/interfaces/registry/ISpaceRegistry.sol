@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-interface ISpaceRegistry {
+import {ISemver} from 'interfaces/ISemver.sol';
+
+interface ISpaceRegistry is ISemver {
   // Events
 
   /**
