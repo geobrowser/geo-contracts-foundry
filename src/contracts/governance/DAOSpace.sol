@@ -108,6 +108,13 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     _removeMember(_oldMember);
   }
 
+  /// @inheritdoc ISpace
+  function fetch(bytes32 _action) public view returns (bytes32 _topic) {
+    if (_action == CREATE_PROPOSAL) {
+      return bytes32(proposalCounter);
+    }
+  }
+
   /// @inheritdoc IDAOSpace
   function isEditorAtBlock(address _account, uint256 _blockNumber) public view returns (bool) {
     return _editorsCheckpoints[_account].getAtBlock(_blockNumber) == 1;
@@ -172,10 +179,9 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     // Only members or editors can create a proposal
     if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidCaller();
     // Decode data to construct proposal
-    (bytes memory uri, Action[] memory actions) = abi.decode(_data, (bytes, Action[]));
-    uint256 proposalId = proposalCounter++;
+    (, Action[] memory actions) = abi.decode(_data, (bytes, Action[]));
     // Update proposal storage
-    Proposal storage proposal_ = _proposals[proposalId];
+    Proposal storage proposal_ = _proposals[proposalCounter++];
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
     // The snapshot block must be mined already to protect the transaction against backrunning transactions causing census changes.
@@ -186,8 +192,6 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     for (uint256 i; i < actions.length; i++) {
       proposal_.actions.push(actions[i]);
     }
-    // Emit the proposal id and uri
-    spaceRegistry.enter(address(this), address(this), keccak256('PROPOSAL_ID'), bytes32(proposalId), uri, '');
   }
 
   /**
