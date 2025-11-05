@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {Test} from 'forge-std/Test.sol';
+import {TestHelper} from 'test/unit/helpers/TestHelper.sol';
 
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
@@ -10,7 +10,7 @@ import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
 
-contract UnitSpaceRegistry is Test {
+contract UnitSpaceRegistry is TestHelper {
   MockSpaceRegistry public spaceRegistry;
   MockSpaceRegistry public spaceRegistryProxy;
 
@@ -295,10 +295,12 @@ contract UnitSpaceRegistry is Test {
     bytes calldata _data,
     bytes calldata _signature
   ) internal {
-    vm.expectCall(_fromSpace, abi.encodeCall(ISpace.verify, (_space, _action, _topic, _data, _signature)), 1);
+    _mockAndExpect(
+      _fromSpace, abi.encodeCall(ISpace.verify, (_space, _action, _topic, _data, _signature)), abi.encode()
+    );
   }
 
   function _mockWrite(address _space, bytes32 _action, bytes32 _topic, bytes calldata _data) internal {
-    vm.expectCall(_toSpace, abi.encodeCall(ISpace.write, (_space, _action, _topic, _data)), 1);
+    _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, _action, _topic, _data)), abi.encode());
   }
 }
