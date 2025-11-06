@@ -171,8 +171,8 @@ contract UnitSpaceRegistry is TestHelper {
   function test_Enter_WhenSpaceIsNotRegistered(
     address _from,
     address _to,
-    bytes32 _action,
-    bytes32 _topic,
+    bytes32 __action,
+    bytes32 __topic,
     bytes calldata _data,
     bytes calldata _signature
   ) external {
@@ -181,7 +181,7 @@ contract UnitSpaceRegistry is TestHelper {
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
 
-    spaceRegistryProxy.enter(_from, _to, _action, _topic, _data, _signature);
+    spaceRegistryProxy.enter(_from, _to, __action, __topic, _data, _signature);
   }
 
   function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external {
