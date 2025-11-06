@@ -109,10 +109,8 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32 _action) public view returns (bytes32 _topic) {
-    if (_action == CREATE_PROPOSAL) {
-      return bytes32(proposalCounter);
-    }
+  function fetch(bytes32 _action) public view returns (bytes32 _topicOutput) {
+    if (_action == CREATE_PROPOSAL) return bytes32(proposalCounter);
   }
 
   /// @inheritdoc IDAOSpace
