@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-import {TestHelper} from 'test/unit/helpers/TestHelper.sol';
+import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
@@ -165,8 +165,8 @@ contract UnitSpaceRegistry is TestHelper {
   function test_Enter_WhenSpaceIsNotRegistered(
     address _from,
     address _to,
-    bytes32 _action,
-    bytes32 _topic,
+    bytes32 __action,
+    bytes32 __topic,
     bytes calldata _data,
     bytes calldata _signature
   ) external {
@@ -175,7 +175,7 @@ contract UnitSpaceRegistry is TestHelper {
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
 
-    spaceRegistryProxy.enter(_from, _to, _action, _topic, _data, _signature);
+    spaceRegistryProxy.enter(_from, _to, __action, __topic, _data, _signature);
   }
 
   function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external {
@@ -212,10 +212,10 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  function test_MigrateSpaceAddress_WhenNewSpaceAddressIsNotRegistered(
-    address _newAccount,
-    address _caller
-  ) external whenCallerIsMigratingSpace {
+  function test_MigrateSpaceAddress_WhenNewSpaceAddressIsNotRegistered(address _newAccount)
+    external
+    whenCallerIsMigratingSpace
+  {
     // when new space address is not registered
     vm.assume(_newAccount != _fromSpace);
 
@@ -251,14 +251,14 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.migrateSpaceAddress(_newAccount);
   }
 
-  function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external {
+  function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external view {
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
 
     // it returns spaceId
     assertEq(spaceRegistryProxy.generateSpaceId(_account, _nonce), _spaceId);
   }
 
-  function test_Version_WhenCalled() external {
+  function test_Version_WhenCalled() external view {
     // when called
 
     // it returns semantic version
@@ -290,17 +290,18 @@ contract UnitSpaceRegistry is TestHelper {
 
   function _mockVerify(
     address _space,
-    bytes32 _action,
-    bytes32 _topic,
+    bytes32 __action,
+    bytes32 __topic,
     bytes calldata _data,
     bytes calldata _signature
   ) internal {
     _mockAndExpect(
-      _fromSpace, abi.encodeCall(ISpace.verify, (_space, _action, _topic, _data, _signature)), abi.encode()
+      _fromSpace, abi.encodeCall(ISpace.verify, (_space, __action, __topic, _data, _signature)), abi.encode()
     );
   }
 
-  function _mockWrite(address _space, bytes32 _action, bytes32 _topic, bytes calldata _data) internal {
-    _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, _action, _topic, _data)), abi.encode());
+  function _mockWrite(address _space, bytes32 __action, bytes32 __topic, bytes calldata _data) internal {
+    //
+    _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, __action, __topic, _data)), abi.encode());
   }
 }

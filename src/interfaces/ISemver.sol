@@ -8,7 +8,7 @@ pragma solidity 0.8.17;
 interface ISemver {
   /**
    * @notice Returns the semantic version of the contract
-   * @return version The semantic version string
+   * @return _version The semantic version string
    */
-  function version() external pure returns (string memory version);
+  function version() external pure returns (string memory _version);
 }

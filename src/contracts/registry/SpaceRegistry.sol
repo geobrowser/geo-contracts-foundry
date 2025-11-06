@@ -101,8 +101,8 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISemver
-  function version() public pure returns (string memory version) {
-    version = '1.0.0';
+  function version() public pure returns (string memory _version) {
+    _version = '1.0.0';
   }
 
   /// @inheritdoc UUPSUpgradeable
