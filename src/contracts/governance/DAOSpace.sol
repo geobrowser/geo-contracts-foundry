@@ -124,6 +124,23 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
   }
 
   /// @inheritdoc IDAOSpace
+  function getProposalInformation(uint256 _proposalId)
+    external
+    view
+    returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions)
+  {
+    _executed = _proposals[_proposalId].executed;
+    _parameters = _proposals[_proposalId].parameters;
+    _tally = _proposals[_proposalId].tally;
+    _actions = _proposals[_proposalId].actions;
+  }
+
+  /// @inheritdoc IDAOSpace
+  function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption) {
+    return _proposals[_proposalId].voters[_account];
+  }
+
+  /// @inheritdoc IDAOSpace
   function getSupportThresholdPercentage(uint256 _proposalId) public view returns (uint256) {
     Proposal storage proposal_ = _proposals[_proposalId];
     // If the threshold value is zero, return zero

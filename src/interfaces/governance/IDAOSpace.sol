@@ -251,6 +251,27 @@ interface IDAOSpace is ISpace {
   function editorsLengthAtBlock(uint256 _blockNumber) external view returns (uint256);
 
   /**
+   * @notice Gets the information for a proposal
+   * @param _proposalId The ID of the proposal
+   * @return _executed Whether the proposal has been executed
+   * @return _parameters The proposal parameters at the time of creation
+   * @return _tally The current vote tally for the proposal
+   * @return _actions The actions to be executed when the proposal passes
+   */
+  function getProposalInformation(uint256 _proposalId)
+    external
+    view
+    returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions);
+
+  /**
+   * @notice Gets the vote option cast by a given account on a proposal
+   * @param _proposalId The ID of the proposal
+   * @param _account The address of the account to check
+   * @return _voteOption The vote option cast by the account (None if not voted)
+   */
+  function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption);
+
+  /**
    * @notice Gets the support threshold percentage for a proposal
    * @param _proposalId The ID of the proposal
    * @return The support threshold percentage

@@ -119,7 +119,8 @@ contract UnitSpaceRegistry is TestHelper {
     bytes32 _topicInput,
     bytes32 _topicOutput,
     bytes calldata _data,
-    bytes calldata _signature
+    bytes calldata _signature,
+    address _caller
   ) external whenSpacesAreRegistered {
     vm.startPrank(_randomCaller);
 
@@ -143,8 +144,10 @@ contract UnitSpaceRegistry is TestHelper {
     // when caller is not fromSpace
     vm.startPrank(_toSpace);
 
-    vm.mockCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
-    vm.expectCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)));
+    if (_caller != _toSpace) {
+      vm.mockCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
+      vm.expectCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)));
+    }
 
     // it calls fromSpace to verify
     _mockVerify(_fromSpace, _toSpace, _action, _topic, _data, _signature);
