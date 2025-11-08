@@ -36,8 +36,13 @@ interface ISpaceRegistry is ISemver {
 
   /// @notice Maps each unique space ID to its current address
   /// @param _spaceId The ID of the space
-  /// @return account The address of the space
+  /// @return account The current address of the space
   function spaceIdToAddress(bytes16 _spaceId) external view returns (address account);
+
+  /// @notice Maps each unique space ID to its proposed address
+  /// @param _spaceId The ID of the space
+  /// @return account The proposed address of the space
+  function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address account);
 
   /// @notice Reverse mapping: address to its space ID
   /// @param _account The address of the space
@@ -67,17 +72,23 @@ interface ISpaceRegistry is ISemver {
   ) external;
 
   /**
-   * @notice Creates a new space by registering a space ID for a given address
-   * @param _account The address to register a space ID for
+   * @notice Creates a new space by registering a space ID for the caller address
    */
-  function registerSpaceId(address _account) external;
+  function registerSpaceId() external;
 
   /**
-   * @notice Allows an address to migrate its space ID to a new address
+   * @notice Allows an address to propose to migrate its space ID to a new address
    * @dev Can only be called by an existing address in the registry
-   * @param _newAccount The new address of the space
+   * @param _newAccount The proposed address of the space
    */
-  function migrateSpaceAddress(address _newAccount) external;
+  function proposeSpaceMigration(address _newAccount) external;
+
+  /**
+   * @notice Allows an address to accept to migrate a space ID to itself
+   * @dev Can only be called by an existing proposed address in the registry
+   * @param _spaceId The ID of the space
+   */
+  function acceptSpaceMigration(bytes16 _spaceId) external;
 
   /**
    * @notice Generates a space ID for a given address and nonce

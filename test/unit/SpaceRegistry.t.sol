@@ -15,15 +15,13 @@ contract UnitSpaceRegistry is TestHelper {
   MockSpaceRegistry public spaceRegistryProxy;
 
   address internal _owner = makeAddr('_owner');
+  address internal _randomCaller = makeAddr('_randomCaller');
 
   address internal _fromSpace = makeAddr('_fromSpace');
   address internal _toSpace = makeAddr('_toSpace');
 
   bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
-
-  bytes32 internal _action = keccak256('_action');
-  bytes32 internal _topic = keccak256('_topic');
 
   event Initialized(uint8 version);
   event Ping(
@@ -122,6 +120,8 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_Enter_WhenSpacesAreRegistered(
+    bytes32 _action,
+    bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
@@ -133,13 +133,13 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_Enter_WhenCallerIsNotFromSpace(
+    bytes32 _action,
+    bytes32 _topic,
     bytes calldata _data,
-    bytes calldata _signature,
-    address _caller
+    bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not fromSpace
-    vm.assume(_caller != _fromSpace);
-    vm.startPrank(_caller);
+    vm.startPrank(_randomCaller);
 
     // it calls fromSpace to verify
     _mockVerify(_toSpace, _action, _topic, _data, _signature);
@@ -148,13 +148,13 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_Enter_WhenCallerIsNotToSpace(
+    bytes32 _action,
+    bytes32 _topic,
     bytes calldata _data,
-    bytes calldata _signature,
-    address _caller
+    bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not toSpace
-    vm.assume(_caller != _toSpace);
-    vm.startPrank(_caller);
+    vm.startPrank(_randomCaller);
 
     // it calls toSpace to write
     _mockWrite(_fromSpace, _action, _topic, _data);
@@ -165,8 +165,8 @@ contract UnitSpaceRegistry is TestHelper {
   function test_Enter_WhenSpaceIsNotRegistered(
     address _from,
     address _to,
-    bytes32 __action,
-    bytes32 __topic,
+    bytes32 _action,
+    bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
   ) external {
@@ -175,7 +175,7 @@ contract UnitSpaceRegistry is TestHelper {
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
 
-    spaceRegistryProxy.enter(_from, _to, __action, __topic, _data, _signature);
+    spaceRegistryProxy.enter(_from, _to, _action, _topic, _data, _signature);
   }
 
   function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external {
@@ -184,7 +184,8 @@ contract UnitSpaceRegistry is TestHelper {
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
-    spaceRegistryProxy.registerSpaceId(_account);
+    vm.startPrank(_account);
+    spaceRegistryProxy.registerSpaceId();
 
     // it increments _spaceIdNonce
     assertEq(spaceRegistryProxy.exposed__spaceIdNonce(), _spaceIdNonce + 1);
@@ -202,53 +203,72 @@ contract UnitSpaceRegistry is TestHelper {
     // it reverts with SpaceAlreadyRegistered
     vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
 
-    spaceRegistryProxy.registerSpaceId(_account);
+    vm.startPrank(_account);
+    spaceRegistryProxy.registerSpaceId();
   }
 
-  modifier whenCallerIsMigratingSpace() {
-    // when caller is migrating space
-    vm.startPrank(_fromSpace);
+  function test_ProposeSpaceMigration_WhenCallerIsSpace(address _newAccount) external {
+    // when caller is space
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
-    _;
+    vm.startPrank(_fromSpace);
+
+    spaceRegistryProxy.proposeSpaceMigration(_newAccount);
+
+    // it updates spaceIdToProposedAddress
+    assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), _newAccount);
   }
 
-  function test_MigrateSpaceAddress_WhenNewSpaceAddressIsNotRegistered(address _newAccount)
-    external
-    whenCallerIsMigratingSpace
-  {
-    // when new space address is not registered
-    vm.assume(_newAccount != _fromSpace);
-
-    spaceRegistryProxy.migrateSpaceAddress(_newAccount);
-
-    // it updates spaceIdToAddress
-    assertEq(spaceRegistryProxy.spaceIdToAddress(_fromSpaceId), _newAccount);
-    // it updates addressToSpaceId
-    assertEq(spaceRegistryProxy.addressToSpaceId(_newAccount), _fromSpaceId);
-  }
-
-  function test_MigrateSpaceAddress_WhenNewSpaceAddressIsRegistered(
-    address _newAccount,
-    bytes16 _spaceId
-  ) external whenCallerIsMigratingSpace {
-    // when new space address is registered
-    vm.assume(_spaceId != bytes16(0));
-    _mockAddressToSpaceId(_newAccount, _spaceId);
-
-    // it reverts with SpaceAlreadyRegistered
-    vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
-
-    spaceRegistryProxy.migrateSpaceAddress(_newAccount);
-  }
-
-  function test_MigrateSpaceAddress_WhenCallerIsNotMigratingSpace(address _newAccount, address _caller) external {
-    // when caller is not migrating space
-    vm.startPrank(_caller);
+  function test_ProposeSpaceMigration_WhenCallerIsNotSpace(address _newAccount) external {
+    // when caller is not space
+    vm.startPrank(_randomCaller);
 
     // it reverts with InvalidCaller
     vm.expectRevert(ISpaceRegistry.InvalidCaller.selector);
 
-    spaceRegistryProxy.migrateSpaceAddress(_newAccount);
+    spaceRegistryProxy.proposeSpaceMigration(_newAccount);
+  }
+
+  modifier whenCallerIsProposedSpace() {
+    // when caller is proposed space
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockSpaceIdToProposedAddress(_fromSpaceId, _toSpace);
+    vm.startPrank(_toSpace);
+    _;
+  }
+
+  function test_AcceptSpaceMigration_WhenProposedSpaceIsNotRegistered() external whenCallerIsProposedSpace {
+    // when proposed space is not registered
+
+    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
+
+    // it updates spaceIdToProposedAddress
+    assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
+    // it updates spaceIdToAddress
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_fromSpaceId), _toSpace);
+    // it updates addressToSpaceId
+    assertEq(spaceRegistryProxy.addressToSpaceId(_fromSpace), bytes16(0));
+    assertEq(spaceRegistryProxy.addressToSpaceId(_toSpace), _fromSpaceId);
+  }
+
+  function test_AcceptSpaceMigration_WhenProposedSpaceIsRegistered() external whenCallerIsProposedSpace {
+    // when proposed space is registered
+    _mockAddressToSpaceId(_toSpace, _toSpaceId);
+
+    // it reverts with SpaceAlreadyRegistered
+    vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
+
+    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
+  }
+
+  function test_AcceptSpaceMigration_WhenCallerIsNotProposedSpace(bytes16 _spaceId) external {
+    // when caller is not proposed space
+    vm.startPrank(_randomCaller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(ISpaceRegistry.InvalidCaller.selector);
+
+    spaceRegistryProxy.acceptSpaceMigration(_spaceId);
   }
 
   function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external view {
@@ -273,15 +293,22 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.exposed__authorizeUpgrade(_newImplementation);
   }
 
-  function test__authorizeUpgrade_WhenCalledByNon_owner(address _newImplementation, address _caller) external {
+  function test__authorizeUpgrade_WhenCalledByNon_owner(address _newImplementation) external {
     // when called by non-owner
-    vm.assume(_caller != _owner);
-    vm.startPrank(_caller);
+    vm.startPrank(_randomCaller);
 
     // it reverts with OwnableCallerIsNotTheOwner
     vm.expectRevert('Ownable: caller is not the owner');
 
     spaceRegistryProxy.exposed__authorizeUpgrade(_newImplementation);
+  }
+
+  function _mockSpaceIdToAddress(bytes16 _spaceId, address _account) internal {
+    spaceRegistryProxy.workaround_setSpaceIdToAddress(_spaceId, _account);
+  }
+
+  function _mockSpaceIdToProposedAddress(bytes16 _spaceId, address _account) internal {
+    spaceRegistryProxy.workaround_setSpaceIdToProposedAddress(_spaceId, _account);
   }
 
   function _mockAddressToSpaceId(address _account, bytes16 _spaceId) internal {

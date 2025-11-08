@@ -20,6 +20,9 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   mapping(bytes16 => address) public spaceIdToAddress;
 
   /// @inheritdoc ISpaceRegistry
+  mapping(bytes16 => address) public spaceIdToProposedAddress;
+
+  /// @inheritdoc ISpaceRegistry
   mapping(address => bytes16) public addressToSpaceId;
 
   /// @notice The nonce used to generate a space ID for registration
@@ -65,32 +68,44 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function registerSpaceId(address _account) external {
-    // REVIEW: What if an address gets frontrun?
+  function registerSpaceId() external {
     // Account must not be registered
-    if (addressToSpaceId[_account] != bytes16(0)) revert SpaceAlreadyRegistered();
+    if (addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
 
-    bytes16 spaceId = generateSpaceId(_account, _spaceIdNonce++);
+    bytes16 spaceId = generateSpaceId(msg.sender, _spaceIdNonce++);
 
-    addressToSpaceId[_account] = spaceId;
-    spaceIdToAddress[spaceId] = _account;
+    addressToSpaceId[msg.sender] = spaceId;
+    spaceIdToAddress[spaceId] = msg.sender;
 
     // REVIEW: Do we need to emit a Ping here?
   }
 
   /// @inheritdoc ISpaceRegistry
-  function migrateSpaceAddress(address _newAccount) external {
+  function proposeSpaceMigration(address _newAccount) external {
     // Must be called by the space itself
     bytes16 spaceId = addressToSpaceId[msg.sender];
     if (spaceId == bytes16(0)) revert InvalidCaller();
 
-    // REVIEW: What if new address gets frontrun?
-    // New address must not be registered
-    if (addressToSpaceId[_newAccount] != bytes16(0)) revert SpaceAlreadyRegistered();
+    spaceIdToProposedAddress[spaceId] = _newAccount;
 
-    spaceIdToAddress[spaceId] = _newAccount;
-    addressToSpaceId[msg.sender] = bytes16(0);
-    addressToSpaceId[_newAccount] = spaceId;
+    // REVIEW: Do we need to emit a Ping here?
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function acceptSpaceMigration(bytes16 _spaceId) external {
+    // Must be called by the proposed space itself
+    if (spaceIdToProposedAddress[_spaceId] != msg.sender) revert InvalidCaller();
+
+    // New address must not be registered
+    if (addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
+
+    address oldAccount = spaceIdToAddress[_spaceId];
+
+    // Update the bi-directional mappings and reset the proposal
+    spaceIdToProposedAddress[_spaceId] = address(0);
+    spaceIdToAddress[_spaceId] = msg.sender;
+    addressToSpaceId[oldAccount] = bytes16(0);
+    addressToSpaceId[msg.sender] = _spaceId;
 
     // REVIEW: Do we need to emit a Ping here?
   }

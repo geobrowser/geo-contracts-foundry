@@ -8,6 +8,14 @@ import {SpaceRegistry} from 'contracts/registry/SpaceRegistry.sol';
  * @notice Mock contract for testing SpaceRegistry with additional test helper functions
  */
 contract MockSpaceRegistry is SpaceRegistry {
+  function workaround_setSpaceIdToAddress(bytes16 _spaceId, address _account) external {
+    spaceIdToAddress[_spaceId] = _account;
+  }
+
+  function workaround_setSpaceIdToProposedAddress(bytes16 _spaceId, address _account) external {
+    spaceIdToProposedAddress[_spaceId] = _account;
+  }
+
   function workaround_setAddressToSpaceId(address _account, bytes16 _spaceId) external {
     addressToSpaceId[_account] = _spaceId;
   }

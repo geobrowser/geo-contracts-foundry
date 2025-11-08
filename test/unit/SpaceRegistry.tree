@@ -31,14 +31,21 @@ UnitSpaceRegistry::registerSpaceId
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
-UnitSpaceRegistry::migrateSpaceAddress
-├── when caller is migrating space
-│   ├── when new space address is not registered
+UnitSpaceRegistry::proposeSpaceMigration
+├── when caller is space
+│   └── it updates spaceIdToProposedAddress
+└── when caller is not space
+    └── it reverts with InvalidCaller
+
+UnitSpaceRegistry::acceptSpaceMigration
+├── when caller is proposed space
+│   ├── when proposed space is not registered
+│   │   ├── it updates spaceIdToProposedAddress
 │   │   ├── it updates spaceIdToAddress
 │   │   └── it updates addressToSpaceId
-│   └── when new space address is registered
+│   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
-└── when caller is not migrating space
+└── when caller is not proposed space
     └── it reverts with InvalidCaller
 
 UnitSpaceRegistry::generateSpaceId
