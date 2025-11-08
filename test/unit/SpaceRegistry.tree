@@ -44,8 +44,12 @@ UnitSpaceRegistry::acceptSpaceMigration
 │   ├── when proposed space is not registered
 │   │   ├── it updates spaceIdToProposedAddress
 │   │   ├── it updates spaceIdToAddress
+<<<<<<< HEAD
 │   │   ├── it updates addressToSpaceId
 │   │   └── it emits Action
+=======
+│   │   └── it updates addressToSpaceId
+>>>>>>> 266cb97 (fix: protect against address frontrun in the registry)
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space
