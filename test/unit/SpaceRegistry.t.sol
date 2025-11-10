@@ -10,6 +10,8 @@ import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
 import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
 
+import 'src/ActionsConstants.sol' as ActionsConstants;
+
 contract UnitSpaceRegistry is TestHelper {
   MockSpaceRegistry public spaceRegistry;
   MockSpaceRegistry public spaceRegistryProxy;
@@ -38,15 +40,6 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy = MockSpaceRegistry(
       address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner))))
     );
-  }
-
-  function test_Constants_WhenDeployed() external view {
-    // when deployed
-
-    // it sets SPACE_ID_REGISTERED to keccak256('SPACE_ID_REGISTERED')
-    assertEq(spaceRegistryProxy.SPACE_ID_REGISTERED(), keccak256('SPACE_ID_REGISTERED'));
-    // it sets SPACE_ID_MIGRATED to keccak256('SPACE_ID_MIGRATED')
-    assertEq(spaceRegistryProxy.SPACE_ID_MIGRATED(), keccak256('SPACE_ID_MIGRATED'));
   }
 
   function test_Constructor_WhenCalled() external {
@@ -195,7 +188,7 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(bytes16(0), _spaceId, spaceRegistryProxy.SPACE_ID_REGISTERED(), bytes32(bytes20(_account)), '');
+    emit Action(bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), '');
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
@@ -255,7 +248,7 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(_fromSpaceId, _fromSpaceId, spaceRegistryProxy.SPACE_ID_MIGRATED(), bytes32(bytes20(_toSpace)), '');
+    emit Action(_fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), '');
 
     spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
 

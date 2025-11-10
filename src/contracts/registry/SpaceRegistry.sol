@@ -4,10 +4,11 @@ pragma solidity 0.8.17;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
-import {ActionConstants} from 'contracts/ActionConstants.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+
+import 'src/ActionsConstants.sol' as ActionsConstants;
 
 /**
  * @title SpaceRegistry
@@ -16,7 +17,7 @@ import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
  *      Each space has a unique ID that maps to an address.
  *      Spaces can migrate to new addresses while keeping their ID.
  */
-contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ActionConstants, ISpaceRegistry {
+contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   mapping(bytes16 => address) public spaceIdToAddress;
 
@@ -78,7 +79,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ActionConstants, 
     addressToSpaceId[msg.sender] = spaceId;
     spaceIdToAddress[spaceId] = msg.sender;
 
-    emit Action(bytes16(0), spaceId, SPACE_ID_REGISTERED, bytes32(bytes20(msg.sender)), '');
+    emit Action(bytes16(0), spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -106,7 +107,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ActionConstants, 
     addressToSpaceId[oldAccount] = bytes16(0);
     addressToSpaceId[msg.sender] = _spaceId;
 
-    emit Action(_spaceId, _spaceId, SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
+    emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
