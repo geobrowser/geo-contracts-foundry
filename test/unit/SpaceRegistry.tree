@@ -1,8 +1,3 @@
-UnitSpaceRegistry::constants
-└── when deployed
-    ├── it sets SPACE_ID_REGISTERED to keccak256('SPACE_ID_REGISTERED')
-    └── it sets SPACE_ID_MIGRATED to keccak256('SPACE_ID_MIGRATED')
-
 UnitSpaceRegistry::constructor
 └── when called
     └── it disables initializers
