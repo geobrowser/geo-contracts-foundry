@@ -144,9 +144,8 @@ contract UnitSpaceRegistry is TestHelper {
     // when caller is not fromSpace
     vm.startPrank(_toSpace);
 
-    if (_caller != _toSpace) {
-      vm.mockCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
-      vm.expectCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action)));
+    if (_randomCaller != _toSpace) {
+      _mockAndExpect(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
     }
 
     // it calls fromSpace to verify
