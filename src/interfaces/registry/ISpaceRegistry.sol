@@ -14,7 +14,7 @@ interface ISpaceRegistry is ISemver {
    * @param topic A topic, which is passed to the space contract
    * @param data Some arbitrary data for space contract execution
    */
-  event Ping(
+  event Action(
     bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
   ) anonymous;
 
@@ -34,23 +34,43 @@ interface ISpaceRegistry is ISemver {
 
   // Functions
 
-  /// @notice Maps each unique space ID to its current address
-  /// @param _spaceId The ID of the space
-  /// @return account The current address of the space
+  /**
+   * @notice The ID of the action to register a space
+   * @return spaceIdRegistered The ID of the space registration action
+   */
+  function SPACE_ID_REGISTERED() external view returns (bytes32 spaceIdRegistered);
+
+  /**
+   * @notice The ID of the action to migrate a space
+   * @return spaceIdMigrated The ID of the space migration action
+   */
+  function SPACE_ID_MIGRATED() external view returns (bytes32 spaceIdMigrated);
+
+  /**
+   * @notice Maps each unique space ID to its current address
+   * @param _spaceId The ID of the space
+   * @return account The current address of the space
+   */
   function spaceIdToAddress(bytes16 _spaceId) external view returns (address account);
 
-  /// @notice Maps each unique space ID to its proposed address
-  /// @param _spaceId The ID of the space
-  /// @return account The proposed address of the space
+  /**
+   * @notice Maps each unique space ID to its proposed address
+   * @param _spaceId The ID of the space
+   * @return account The proposed address of the space
+   */
   function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address account);
 
-  /// @notice Reverse mapping: address to its space ID
-  /// @param _account The address of the space
-  /// @return spaceId The ID of the space
+  /**
+   * @notice Reverse mapping: address to its space ID
+   * @param _account The address of the space
+   * @return spaceId The ID of the space
+   */
   function addressToSpaceId(address _account) external view returns (bytes16 spaceId);
 
-  /// @notice Initializes the SpaceRegistry contract
-  /// @param _owner The address that will own this registry contract
+  /**
+   * @notice Initializes the SpaceRegistry contract
+   * @param _owner The address that will own this registry contract
+   */
   function initialize(address _owner) external;
 
   /**

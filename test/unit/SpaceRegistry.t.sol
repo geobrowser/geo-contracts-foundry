@@ -24,7 +24,7 @@ contract UnitSpaceRegistry is TestHelper {
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
   event Initialized(uint8 version);
-  event Ping(
+  event Action(
     bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
   ) anonymous;
 
@@ -38,6 +38,15 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy = MockSpaceRegistry(
       address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner))))
     );
+  }
+
+  function test_Constants_WhenDeployed() external view {
+    // when deployed
+
+    // it sets SPACE_ID_REGISTERED to keccak256('SPACE_ID_REGISTERED')
+    assertEq(spaceRegistryProxy.SPACE_ID_REGISTERED(), keccak256('SPACE_ID_REGISTERED'));
+    // it sets SPACE_ID_MIGRATED to keccak256('SPACE_ID_MIGRATED')
+    assertEq(spaceRegistryProxy.SPACE_ID_MIGRATED(), keccak256('SPACE_ID_MIGRATED'));
   }
 
   function test_Constructor_WhenCalled() external {
@@ -125,9 +134,9 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
-    // it emits Ping
+    // it emits Action
     vm.expectEmit();
-    emit Ping(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+    emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topic, _data, _signature);
   }
@@ -184,6 +193,10 @@ contract UnitSpaceRegistry is TestHelper {
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
+    // it emits Action
+    vm.expectEmit();
+    emit Action(bytes16(0), _spaceId, spaceRegistryProxy.SPACE_ID_REGISTERED(), bytes32(bytes20(_account)), '');
+
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
 
@@ -239,6 +252,10 @@ contract UnitSpaceRegistry is TestHelper {
 
   function test_AcceptSpaceMigration_WhenProposedSpaceIsNotRegistered() external whenCallerIsProposedSpace {
     // when proposed space is not registered
+
+    // it emits Action
+    vm.expectEmit();
+    emit Action(_fromSpaceId, _fromSpaceId, spaceRegistryProxy.SPACE_ID_MIGRATED(), bytes32(bytes20(_toSpace)), '');
 
     spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
 

@@ -1,3 +1,8 @@
+UnitSpaceRegistry::constants
+└── when deployed
+    ├── it sets SPACE_ID_REGISTERED to keccak256('SPACE_ID_REGISTERED')
+    └── it sets SPACE_ID_MIGRATED to keccak256('SPACE_ID_MIGRATED')
+
 UnitSpaceRegistry::constructor
 └── when called
     └── it disables initializers
@@ -15,7 +20,7 @@ UnitSpaceRegistry::initialize
 
 UnitSpaceRegistry::enter
 ├── when spaces are registered
-│   ├── it emits Ping
+│   ├── it emits Action
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
@@ -27,7 +32,8 @@ UnitSpaceRegistry::registerSpaceId
 ├── when space is not registered
 │   ├── it increments _spaceIdNonce
 │   ├── it sets addressToSpaceId
-│   └── it sets spaceIdToAddress
+│   ├── it sets spaceIdToAddress
+│   └── it emits Action
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
@@ -42,7 +48,8 @@ UnitSpaceRegistry::acceptSpaceMigration
 │   ├── when proposed space is not registered
 │   │   ├── it updates spaceIdToProposedAddress
 │   │   ├── it updates spaceIdToAddress
-│   │   └── it updates addressToSpaceId
+│   │   ├── it updates addressToSpaceId
+│   │   └── it emits Action
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space

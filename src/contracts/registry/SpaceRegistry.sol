@@ -17,6 +17,12 @@ import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
  */
 contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
+  bytes32 public constant SPACE_ID_REGISTERED = keccak256('SPACE_ID_REGISTERED');
+
+  /// @inheritdoc ISpaceRegistry
+  bytes32 public constant SPACE_ID_MIGRATED = keccak256('SPACE_ID_MIGRATED');
+
+  /// @inheritdoc ISpaceRegistry
   mapping(bytes16 => address) public spaceIdToAddress;
 
   /// @inheritdoc ISpaceRegistry
@@ -56,7 +62,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     // Check that the space IDs exist
     if (fromId == bytes16(0) || toId == bytes16(0)) revert SpaceNotRegistered();
 
-    emit Ping(fromId, toId, _action, _topic, _data);
+    emit Action(fromId, toId, _action, _topic, _data);
 
     // If msg.sender is not the from
     // Then pass the to, action, topic, data, and signature for verification
@@ -77,7 +83,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     addressToSpaceId[msg.sender] = spaceId;
     spaceIdToAddress[spaceId] = msg.sender;
 
-    // REVIEW: Do we need to emit a Ping here?
+    emit Action(bytes16(0), spaceId, SPACE_ID_REGISTERED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -87,8 +93,6 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     if (spaceId == bytes16(0)) revert InvalidCaller();
 
     spaceIdToProposedAddress[spaceId] = _newAccount;
-
-    // REVIEW: Do we need to emit a Ping here?
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -107,7 +111,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
     addressToSpaceId[oldAccount] = bytes16(0);
     addressToSpaceId[msg.sender] = _spaceId;
 
-    // REVIEW: Do we need to emit a Ping here?
+    emit Action(_spaceId, _spaceId, SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
