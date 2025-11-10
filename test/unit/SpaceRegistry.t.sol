@@ -35,6 +35,15 @@ contract UnitSpaceRegistry is TestHelper {
     );
   }
 
+  function test_Constants_WhenDeployed() external view {
+    // when deployed
+
+    // it sets SPACE_ID_REGISTERED to keccak256('SPACE_ID_REGISTERED')
+    assertEq(spaceRegistryProxy.SPACE_ID_REGISTERED(), keccak256('SPACE_ID_REGISTERED'));
+    // it sets SPACE_ID_MIGRATED to keccak256('SPACE_ID_MIGRATED')
+    assertEq(spaceRegistryProxy.SPACE_ID_MIGRATED(), keccak256('SPACE_ID_MIGRATED'));
+  }
+
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
