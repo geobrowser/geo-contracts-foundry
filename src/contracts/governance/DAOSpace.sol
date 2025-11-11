@@ -7,10 +7,10 @@ import {
 } from '@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol';
 import {CheckpointsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/CheckpointsUpgradeable.sol';
 
-import {DAOSpaceConstants} from 'contracts/governance/DAOSpaceConstants.sol';
-
 import {IDAOSpace, ISpace} from 'interfaces/governance/IDAOSpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+
+import 'src/ActionsConstants.sol' as ActionsConstants;
 
 /**
  * @title DAOSpace
@@ -19,8 +19,20 @@ import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
  * It implements a majority voting system with configurable voting modes and threshold settings.
  * The contract uses checkpointing to track editor membership over time for snapshot-based voting.
  */
-contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpaceConstants, IDAOSpace {
+contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSpace {
   using CheckpointsUpgradeable for CheckpointsUpgradeable.History;
+
+  /// @inheritdoc IDAOSpace
+  uint256 public constant RATIO_BASE = 10e6;
+
+  /// @inheritdoc IDAOSpace
+  bytes32 public constant EDITOR = keccak256('EDITOR');
+
+  /// @inheritdoc IDAOSpace
+  bytes32 public constant MEMBER = keccak256('MEMBER');
+
+  /// @inheritdoc IDAOSpace
+  bytes32 public constant DAO = keccak256('DAO');
 
   /// @inheritdoc IDAOSpace
   ISpaceRegistry public spaceRegistry;
@@ -65,13 +77,13 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     // Only Space Registry can call
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
     // Actions
-    if (_action == CREATE_PROPOSAL) {
+    if (_action == ActionsConstants.CREATE_PROPOSAL) {
       _createProposal(_fromSpace, _data);
-    } else if (_action == VOTE) {
+    } else if (_action == ActionsConstants.VOTE) {
       _vote(_fromSpace, _data);
-    } else if (_action == EXECUTE_PROPOSAL) {
+    } else if (_action == ActionsConstants.EXECUTE_PROPOSAL) {
       _executeProposal(_data);
-    } else if (_action == LEAVE) {
+    } else if (_action == ActionsConstants.LEAVE) {
       _leave(_fromSpace);
     } else {
       // Must attempt to write in some way
@@ -110,7 +122,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
 
   /// @inheritdoc ISpace
   function fetch(bytes32 _action) public view returns (bytes32 _topicOutput) {
-    if (_action == CREATE_PROPOSAL) return bytes32(proposalCounter);
+    if (_action == ActionsConstants.CREATE_PROPOSAL) return bytes32(proposalCounter);
   }
 
   /// @inheritdoc IDAOSpace
@@ -298,7 +310,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     _editorsCheckpoints[_newEditor].push(1);
     _editorsLengthCheckpoints.push(1);
     // Ping the registry
-    spaceRegistry.enter(address(this), address(this), keccak256('ADD_EDITOR'), bytes32(bytes20(_newEditor)), '', '');
+    spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_EDITOR, bytes32(bytes20(_newEditor)), '', '');
   }
 
   /**
@@ -315,7 +327,9 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
     _editorsCheckpoints[_oldEditor].push(0);
     _editorsLengthCheckpoints.push(1);
     // Ping the registry
-    spaceRegistry.enter(address(this), address(this), keccak256('REMOVE_EDITOR'), bytes32(bytes20(_oldEditor)), '', '');
+    spaceRegistry.enter(
+      address(this), address(this), ActionsConstants.REMOVE_EDITOR, bytes32(bytes20(_oldEditor)), '', ''
+    );
   }
 
   /**
@@ -326,7 +340,7 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
   function _addMember(address _newMember) internal {
     if (hasRole(MEMBER, _newMember)) revert InvalidAddress();
     _grantRole(MEMBER, _newMember);
-    spaceRegistry.enter(address(this), address(this), keccak256('ADD_MEMBER'), bytes32(bytes20(_newMember)), '', '');
+    spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_MEMBER, bytes32(bytes20(_newMember)), '', '');
   }
 
   /**
@@ -337,7 +351,9 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, DAOSpa
   function _removeMember(address _oldMember) internal {
     if (!hasRole(MEMBER, _oldMember)) revert InvalidAddress();
     _revokeRole(MEMBER, _oldMember);
-    spaceRegistry.enter(address(this), address(this), keccak256('REMOVE_MEMBER'), bytes32(bytes20(_oldMember)), '', '');
+    spaceRegistry.enter(
+      address(this), address(this), ActionsConstants.REMOVE_MEMBER, bytes32(bytes20(_oldMember)), '', ''
+    );
   }
 
   /**

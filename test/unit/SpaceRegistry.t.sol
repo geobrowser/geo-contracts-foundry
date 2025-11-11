@@ -130,7 +130,11 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+
+    if (_caller != _toSpace) {
+      _mockAndExpect(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
+    }
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
   }
@@ -144,9 +148,7 @@ contract UnitSpaceRegistry is TestHelper {
     // when caller is not fromSpace
     vm.startPrank(_toSpace);
 
-    if (_randomCaller != _toSpace) {
-      _mockAndExpect(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
-    }
+    _mockFetch(_toSpace, _action, _topic);
 
     // it calls fromSpace to verify
     _mockVerify(_fromSpace, _toSpace, _action, _topic, _data, _signature);
@@ -164,11 +166,11 @@ contract UnitSpaceRegistry is TestHelper {
     // when caller is not toSpace
     vm.startPrank(_fromSpace);
 
-    // it calls toSpace to fetch _topicOutput
-    _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
+    // it calls toSpace to fetch
+    _mockAndExpect(_toSpace, abi.encodeCall(ISpace.fetch, (_action)), abi.encode(_topic));
 
     // it calls toSpace to write
-    _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
+    _mockWrite(_fromSpace, _action, _topic, _data);
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
   }
@@ -343,25 +345,18 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function _mockVerify(
-    address __fromSpace,
-    address __toSpace,
-    bytes32 _action,
-    bytes32 _topic,
+    address _space,
+    bytes32 __action,
+    bytes32 __topic,
     bytes calldata _data,
     bytes calldata _signature
   ) internal {
     _mockAndExpect(
-      __fromSpace, abi.encodeCall(ISpace.verify, (__toSpace, _action, _topic, _data, _signature)), abi.encode()
+      _fromSpace, abi.encodeCall(ISpace.verify, (_space, __action, __topic, _data, _signature)), abi.encode()
     );
   }
 
-  function _mockWrite(
-    address __fromSpace,
-    address __toSpace,
-    bytes32 _action,
-    bytes32 _topic,
-    bytes calldata _data
-  ) internal {
-    _mockAndExpect(__toSpace, abi.encodeCall(ISpace.write, (__fromSpace, _action, _topic, _data)), abi.encode());
+  function _mockWrite(address _space, bytes32 __action, bytes32 __topic, bytes calldata _data) internal {
+    _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, __action, __topic, _data)), abi.encode());
   }
 }

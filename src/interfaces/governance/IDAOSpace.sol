@@ -300,4 +300,28 @@ interface IDAOSpace is ISpace {
    * * yes votes > supportThresholdPercentage * worstCaseNoVotes.
    */
   function isSupportThresholdReachedEarly(uint256 _proposalId) external view returns (bool);
+
+  /**
+   * @notice Returns the ratio base used for percentage calculations
+   * @return The ratio base (10^6)
+   */
+  function RATIO_BASE() external view returns (uint256);
+
+  /**
+   * @notice Returns the editor role identifier
+   * @return The editor role identifier
+   */
+  function EDITOR() external view returns (bytes32);
+
+  /**
+   * @notice Returns the member role identifier
+   * @return The member role identifier
+   */
+  function MEMBER() external view returns (bytes32);
+
+  /**
+   * @notice Returns the DAO role identifier
+   * @return The DAO role identifier
+   */
+  function DAO() external view returns (bytes32);
 }
