@@ -26,9 +26,6 @@ contract UnitSpaceRegistry is TestHelper {
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
   function setUp() external {
-    vm.etch(_fromSpace, '_fromSpace');
-    vm.etch(_toSpace, '_toSpace');
-
     // when deployed
     spaceRegistry = new MockSpaceRegistry();
     // when delegate called
@@ -122,6 +119,11 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
+    vm.startPrank(_randomCaller);
+
+    _mockVerify(_toSpace, _action, _topic, _data, _signature);
+    _mockWrite(_fromSpace, _action, _topic, _data);
+
     // it emits Action
     vm.expectEmit();
     emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
@@ -136,7 +138,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not fromSpace
-    vm.startPrank(_randomCaller);
+    vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
     _mockVerify(_toSpace, _action, _topic, _data, _signature);
@@ -151,7 +153,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not toSpace
-    vm.startPrank(_randomCaller);
+    vm.startPrank(_fromSpace);
 
     // it calls toSpace to write
     _mockWrite(_fromSpace, _action, _topic, _data);
@@ -337,7 +339,6 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function _mockWrite(address _space, bytes32 __action, bytes32 __topic, bytes calldata _data) internal {
-    //
     _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, __action, __topic, _data)), abi.encode());
   }
 }
