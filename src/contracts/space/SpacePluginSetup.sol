@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
@@ -70,7 +70,7 @@ contract SpacePluginSetup is PluginSetup, ISpacePluginSetup {
   function prepareUninstallation(
     address _dao,
     SetupPayload calldata _payload
-  ) external view returns (PermissionLib.MultiTargetPermission[] memory permissionChanges) {
+  ) external pure returns (PermissionLib.MultiTargetPermission[] memory permissionChanges) {
     permissionChanges = new PermissionLib.MultiTargetPermission[](2);
 
     // The DAO can make it emit content

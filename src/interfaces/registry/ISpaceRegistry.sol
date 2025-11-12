@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {ISemver} from 'interfaces/ISemver.sol';
 
@@ -37,23 +37,23 @@ interface ISpaceRegistry is ISemver {
   /**
    * @notice Maps each unique space ID to its current address
    * @param _spaceId The ID of the space
-   * @return account The current address of the space
+   * @return _account The current address of the space
    */
-  function spaceIdToAddress(bytes16 _spaceId) external view returns (address account);
+  function spaceIdToAddress(bytes16 _spaceId) external view returns (address _account);
 
   /**
    * @notice Maps each unique space ID to its proposed address
    * @param _spaceId The ID of the space
-   * @return account The proposed address of the space
+   * @return _account The proposed address of the space
    */
-  function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address account);
+  function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address _account);
 
   /**
    * @notice Reverse mapping: address to its space ID
    * @param _account The address of the space
-   * @return spaceId The ID of the space
+   * @return _spaceId The ID of the space
    */
-  function addressToSpaceId(address _account) external view returns (bytes16 spaceId);
+  function addressToSpaceId(address _account) external view returns (bytes16 _spaceId);
 
   /**
    * @notice Initializes the SpaceRegistry contract
@@ -102,7 +102,7 @@ interface ISpaceRegistry is ISemver {
    * @notice Generates a space ID for a given address and nonce
    * @param _account The address to generate a space ID for
    * @param _nonce The nonce to generate a space ID for
-   * @return spaceId The ID of the space that was generated
+   * @return _spaceId The ID of the space that was generated
    */
-  function generateSpaceId(address _account, uint256 _nonce) external view returns (bytes16 spaceId);
+  function generateSpaceId(address _account, uint256 _nonce) external view returns (bytes16 _spaceId);
 }

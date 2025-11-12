@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
@@ -25,11 +25,6 @@ contract UnitSpaceRegistry is TestHelper {
   bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
-  event Initialized(uint8 version);
-  event Action(
-    bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
-  ) anonymous;
-
   function setUp() external {
     vm.etch(_fromSpace, '_fromSpace');
     vm.etch(_toSpace, '_toSpace');
@@ -45,7 +40,7 @@ contract UnitSpaceRegistry is TestHelper {
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
-    emit Initialized(type(uint8).max);
+    emit Initializable.Initialized(type(uint8).max);
 
     // when called
     new MockSpaceRegistry();
@@ -129,7 +124,7 @@ contract UnitSpaceRegistry is TestHelper {
   ) external whenSpacesAreRegistered {
     // it emits Action
     vm.expectEmit();
-    emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topic, _data, _signature);
   }
@@ -188,7 +183,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), '');
+    emit ISpaceRegistry.Action(
+      bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), ''
+    );
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
@@ -248,7 +245,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(_fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), '');
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), ''
+    );
 
     spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
 

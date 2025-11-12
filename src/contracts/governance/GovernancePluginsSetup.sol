@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
-import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
@@ -11,6 +10,7 @@ import {MainVotingPlugin} from 'contracts/governance/MainVotingPlugin.sol';
 import {IMemberAccessPlugin, MemberAccessPlugin} from 'contracts/governance/MemberAccessPlugin.sol';
 import {IGovernancePluginsSetup} from 'interfaces/governance/IGovernancePluginsSetup.sol';
 import {IMajorityVoting} from 'interfaces/governance/base/IMajorityVoting.sol';
+import {EXECUTE_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title GovernancePluginsSetup
 /// @dev Release 1, Build 1
@@ -70,7 +70,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       where: _dao,
       who: mainVotingPlugin,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      permissionId: EXECUTE_PERMISSION_ID
     });
     // The DAO can update the main voting plugin settings
     permissions[1] = PermissionLib.MultiTargetPermission({
@@ -105,7 +105,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       who: _memberAccessPlugin,
       // Conditional execution
       condition: _memberAccessExecuteCondition,
-      permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      permissionId: EXECUTE_PERMISSION_ID
     });
     // The DAO needs to be able to update the member access plugin settings
     permissions[5] = PermissionLib.MultiTargetPermission({
@@ -146,7 +146,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       where: _dao,
       who: _payload.plugin,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      permissionId: EXECUTE_PERMISSION_ID
     });
     // The DAO can no longer update the plugin settings
     permissionChanges[1] = PermissionLib.MultiTargetPermission({
@@ -182,7 +182,7 @@ contract GovernancePluginsSetup is PluginSetup, IGovernancePluginsSetup {
       where: _dao,
       who: _memberAccessPlugin,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      permissionId: EXECUTE_PERMISSION_ID
     });
     // The DAO can no longer update the plugin settings
     permissionChanges[5] = PermissionLib.MultiTargetPermission({

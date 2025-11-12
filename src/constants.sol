@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 /// @dev The ID of the permission required to contribute content to Personal Space proposals.
 bytes32 constant MEMBER_PERMISSION_ID = keccak256('MEMBER_PERMISSION');
@@ -15,3 +15,6 @@ bytes32 constant CONTENT_PERMISSION_ID = keccak256('CONTENT_PERMISSION');
 
 /// @dev The ID of the permission to accept a space as a subspace.
 bytes32 constant SUBSPACE_PERMISSION_ID = keccak256('SUBSPACE_PERMISSION');
+
+/// @dev The ID of the permission required to call the `execute` function.
+bytes32 constant EXECUTE_PERMISSION_ID = keccak256('EXECUTE_PERMISSION');

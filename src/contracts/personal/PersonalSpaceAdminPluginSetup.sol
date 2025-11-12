@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
-import {DAO} from '@aragon/osx/core/dao/DAO.sol';
 import {IDAO} from '@aragon/osx/core/dao/IDAO.sol';
 import {PermissionLib} from '@aragon/osx/core/permission/PermissionLib.sol';
 import {IPluginSetup, PluginSetup} from '@aragon/osx/framework/plugin/setup/PluginSetup.sol';
@@ -9,7 +8,7 @@ import {Clones} from '@openzeppelin/contracts/proxy/Clones.sol';
 
 import {PersonalSpaceAdminPlugin} from 'contracts/personal/PersonalSpaceAdminPlugin.sol';
 import {IPersonalSpaceAdminPluginSetup} from 'interfaces/personal/IPersonalSpaceAdminPluginSetup.sol';
-import {EDITOR_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
+import {EDITOR_PERMISSION_ID, EXECUTE_PERMISSION_ID, MEMBER_PERMISSION_ID} from 'src/constants.sol';
 
 /// @title PersonalSpaceAdminPluginSetup
 /// @notice The setup contract of the `PersonalSpaceAdminPlugin` plugin.
@@ -61,11 +60,7 @@ contract PersonalSpaceAdminPluginSetup is PluginSetup, IPersonalSpaceAdminPlugin
 
     // Grant `EXECUTE_PERMISSION` on the DAO to the plugin.
     permissions[permissionsLength - 1] = PermissionLib.MultiTargetPermission(
-      PermissionLib.Operation.Grant,
-      _dao,
-      plugin,
-      PermissionLib.NO_CONDITION,
-      DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      PermissionLib.Operation.Grant, _dao, plugin, PermissionLib.NO_CONDITION, EXECUTE_PERMISSION_ID
     );
 
     preparedSetupData.permissions = permissions;
@@ -78,17 +73,13 @@ contract PersonalSpaceAdminPluginSetup is PluginSetup, IPersonalSpaceAdminPlugin
   function prepareUninstallation(
     address _dao,
     SetupPayload calldata _payload
-  ) external view returns (PermissionLib.MultiTargetPermission[] memory permissions) {
+  ) external pure returns (PermissionLib.MultiTargetPermission[] memory permissions) {
     // Prepare permissions
     permissions = new PermissionLib.MultiTargetPermission[](1);
 
     // Revoke EXECUTE on the DAO
     permissions[0] = PermissionLib.MultiTargetPermission(
-      PermissionLib.Operation.Revoke,
-      _dao,
-      _payload.plugin,
-      PermissionLib.NO_CONDITION,
-      DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+      PermissionLib.Operation.Revoke, _dao, _payload.plugin, PermissionLib.NO_CONDITION, EXECUTE_PERMISSION_ID
     );
   }
 
