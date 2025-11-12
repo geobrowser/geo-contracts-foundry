@@ -3,8 +3,9 @@ pragma solidity 0.8.30;
 
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
@@ -30,14 +31,14 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistry = new MockSpaceRegistry();
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner)))
     );
   }
 
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
-    emit Initializable.Initialized(type(uint8).max);
+    emit Initializable.Initialized(type(uint64).max);
 
     // when called
     new MockSpaceRegistry();
@@ -61,7 +62,7 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
 
     // it sets owner
@@ -75,11 +76,11 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
 
-    // it reverts with InitializableContractIsAlreadyInitialized
-    vm.expectRevert('Initializable: contract is already initialized');
+    // it reverts with InvalidInitialization
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
     spaceRegistryProxy.initialize(__owner);
@@ -89,18 +90,18 @@ contract UnitSpaceRegistry is TestHelper {
     // when owner is zero address
     address __owner = address(0);
 
-    // it reverts with InvalidZeroAddress
-    vm.expectRevert(ISpaceRegistry.InvalidZeroAddress.selector);
+    // it reverts with OwnableInvalidOwner
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableInvalidOwner.selector, __owner));
 
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
   }
 
   function test_Initialize_WhenCalled() external {
-    // it reverts with InitializableContractIsAlreadyInitialized
-    vm.expectRevert('Initializable: contract is already initialized');
+    // it reverts with InvalidInitialization
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
     spaceRegistry.initialize(_owner);
@@ -308,8 +309,8 @@ contract UnitSpaceRegistry is TestHelper {
     // when called by non-owner
     vm.startPrank(_randomCaller);
 
-    // it reverts with OwnableCallerIsNotTheOwner
-    vm.expectRevert('Ownable: caller is not the owner');
+    // it reverts with OwnableUnauthorizedAccount
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
 
     spaceRegistryProxy.exposed__authorizeUpgrade(_newImplementation);
   }

@@ -20,9 +20,6 @@ interface ISpaceRegistry is ISemver {
 
   // Errors
 
-  /// @notice Thrown when attempting to initialize with a zero address
-  error InvalidZeroAddress();
-
   /// @notice Thrown when the caller is not authorized for the operation
   error InvalidCaller();
 

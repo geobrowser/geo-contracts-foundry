@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import {Script} from 'forge-std/Script.sol';
 
-import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {SpaceRegistry} from 'contracts/registry/SpaceRegistry.sol';
 import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
@@ -24,11 +24,8 @@ contract DeployGEOBrowser is Script {
 
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
-      address(
-        new ERC1967Proxy(
-          address(spaceRegistry),
-          abi.encodeCall(ISpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
-        )
+      UnsafeUpgrades.deployUUPSProxy(
+        address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
       )
     );
 

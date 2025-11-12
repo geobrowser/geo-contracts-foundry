@@ -37,9 +37,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function initialize(address _owner) external initializer {
-    if (_owner == address(0)) revert InvalidZeroAddress();
-
-    _transferOwnership(_owner);
+    __Ownable_init(_owner);
   }
 
   /// @inheritdoc ISpaceRegistry
