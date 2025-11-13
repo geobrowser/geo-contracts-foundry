@@ -8,7 +8,7 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;

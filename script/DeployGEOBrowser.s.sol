@@ -5,8 +5,8 @@ import {Script} from 'forge-std/Script.sol';
 
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
-import {SpaceRegistry} from 'contracts/registry/SpaceRegistry.sol';
-import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 import 'script/Constants.s.sol' as Constants;
 
