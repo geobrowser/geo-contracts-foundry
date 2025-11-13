@@ -7,11 +7,11 @@ UnitSpaceRegistry::initialize
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
 │   │   └── when delegate called again
-│   │       └── it reverts with InitializableContractIsAlreadyInitialized
+│   │       └── it reverts with InvalidInitialization
 │   └── when owner is zero address
-│       └── it reverts with InvalidZeroAddress
+│       └── it reverts with OwnableInvalidOwner
 └── when called
-    └── it reverts with InitializableContractIsAlreadyInitialized
+    └── it reverts with InvalidInitialization
 
 UnitSpaceRegistry::enter
 ├── when spaces are registered
@@ -67,4 +67,4 @@ UnitSpaceRegistry::_authorizeUpgrade
 ├── when called by owner
 │   └── it does not revert
 └── when called by non-owner
-    └── it reverts with OwnableCallerIsNotTheOwner
+    └── it reverts with OwnableUnauthorizedAccount
