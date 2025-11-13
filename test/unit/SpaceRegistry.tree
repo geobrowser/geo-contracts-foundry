@@ -7,11 +7,11 @@ UnitSpaceRegistry::initialize
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
 │   │   └── when delegate called again
-│   │       └── it reverts with InvalidInitialization
+│   │       └── it reverts with InitializableContractIsAlreadyInitialized
 │   └── when owner is zero address
-│       └── it reverts with OwnableInvalidOwner
+│       └── it reverts with InvalidZeroAddress
 └── when called
-    └── it reverts with InvalidInitialization
+    └── it reverts with InitializableContractIsAlreadyInitialized
 
 UnitSpaceRegistry::enter
 ├── when spaces are registered
@@ -48,17 +48,8 @@ UnitSpaceRegistry::acceptSpaceMigration
 │   ├── when proposed space is not registered
 │   │   ├── it updates spaceIdToProposedAddress
 │   │   ├── it updates spaceIdToAddress
-<<<<<<< HEAD
-<<<<<<< HEAD
 │   │   ├── it updates addressToSpaceId
 │   │   └── it emits Action
-=======
-│   │   └── it updates addressToSpaceId
->>>>>>> 266cb97 (fix: protect against address frontrun in the registry)
-=======
-│   │   ├── it updates addressToSpaceId
-│   │   └── it emits Action
->>>>>>> 74647ee (refactor: rename event Ping to Action)
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space
@@ -76,4 +67,4 @@ UnitSpaceRegistry::_authorizeUpgrade
 ├── when called by owner
 │   └── it does not revert
 └── when called by non-owner
-    └── it reverts with OwnableUnauthorizedAccount
+    └── it reverts with OwnableCallerIsNotTheOwner
