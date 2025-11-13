@@ -148,8 +148,6 @@ contract UnitSpaceRegistry is TestHelper {
     // when caller is not fromSpace
     vm.startPrank(_toSpace);
 
-    _mockFetch(_toSpace, _action, _topic);
-
     // it calls fromSpace to verify
     _mockVerify(_fromSpace, _toSpace, _action, _topic, _data, _signature);
 

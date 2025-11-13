@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import {
-  ERC1967UpgradeUpgradeable
-} from '@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol';
-import {CheckpointsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/CheckpointsUpgradeable.sol';
+import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
 
-import {IDAOSpace, ISpace} from 'interfaces/governance/IDAOSpace.sol';
-import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+import {IDAOSpace, ISpace} from 'interfaces/IDAOSpace.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
@@ -19,8 +17,8 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  * It implements a majority voting system with configurable voting modes and threshold settings.
  * The contract uses checkpointing to track editor membership over time for snapshot-based voting.
  */
-contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSpace {
-  using CheckpointsUpgradeable for CheckpointsUpgradeable.History;
+contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
+  using Checkpoints for Checkpoints.Trace224;
 
   /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
@@ -47,10 +45,10 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSp
   mapping(uint256 => Proposal) private _proposals;
 
   /// @notice Checkpoints tracking editor membership at different block numbers
-  mapping(address => CheckpointsUpgradeable.History) private _editorsCheckpoints;
+  mapping(address => Checkpoints.Trace224) private _editorsCheckpoints;
 
   /// @notice Checkpoints tracking the total number of editors at different block numbers
-  CheckpointsUpgradeable.History private _editorsLengthCheckpoints;
+  Checkpoints.Trace224 private _editorsLengthCheckpoints;
 
   /// @inheritdoc IDAOSpace
   function initialize(
@@ -127,12 +125,12 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSp
 
   /// @inheritdoc IDAOSpace
   function isEditorAtBlock(address _account, uint256 _blockNumber) public view returns (bool) {
-    return _editorsCheckpoints[_account].getAtBlock(_blockNumber) == 1;
+    return _editorsCheckpoints[_account].at(uint32(_blockNumber))._value == 1;
   }
 
   /// @inheritdoc IDAOSpace
   function editorsLengthAtBlock(uint256 _blockNumber) public view returns (uint256) {
-    return _editorsLengthCheckpoints.getAtBlock(_blockNumber);
+    return uint256(_editorsLengthCheckpoints.at(uint32(_blockNumber))._value);
   }
 
   /// @inheritdoc IDAOSpace
@@ -307,8 +305,9 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSp
     // Grant the role for access control
     _grantRole(EDITOR, _newEditor);
     // Mark the address as an editor for votes
-    _editorsCheckpoints[_newEditor].push(1);
-    _editorsLengthCheckpoints.push(1);
+    _editorsCheckpoints[_newEditor].push(uint32(block.number), 1);
+    /// @dev double check this, shouldn't it be the length, not 1
+    _editorsLengthCheckpoints.push(uint32(block.number), 1);
     // Ping the registry
     spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_EDITOR, bytes32(bytes20(_newEditor)), '', '');
   }
@@ -324,8 +323,9 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSp
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
     // Mark the address as no longer an editor for votes
-    _editorsCheckpoints[_oldEditor].push(0);
-    _editorsLengthCheckpoints.push(1);
+    _editorsCheckpoints[_oldEditor].push(uint32(block.number), 0);
+    /// @dev double check this too
+    _editorsLengthCheckpoints.push(uint32(block.number), 1);
     // Ping the registry
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_EDITOR, bytes32(bytes20(_oldEditor)), '', ''
@@ -354,6 +354,11 @@ contract DAOSpace is ERC1967UpgradeUpgradeable, AccessControlUpgradeable, IDAOSp
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_MEMBER, bytes32(bytes20(_oldMember)), '', ''
     );
+  }
+
+  /// @inheritdoc UUPSUpgradeable
+  function _authorizeUpgrade(address newImplementation) internal override {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
   }
 
   /**
