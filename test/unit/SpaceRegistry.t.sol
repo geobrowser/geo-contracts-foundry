@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import {ERC1967Proxy} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol';
+import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -25,27 +26,19 @@ contract UnitSpaceRegistry is TestHelper {
   bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
-  event Initialized(uint8 version);
-  event Action(
-    bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
-  ) anonymous;
-
   function setUp() external {
-    vm.etch(_fromSpace, '_fromSpace');
-    vm.etch(_toSpace, '_toSpace');
-
     // when deployed
     spaceRegistry = new MockSpaceRegistry();
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner)))
     );
   }
 
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
-    emit Initialized(type(uint8).max);
+    emit Initializable.Initialized(type(uint64).max);
 
     // when called
     new MockSpaceRegistry();
@@ -69,7 +62,7 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
 
     // it sets owner
@@ -83,11 +76,11 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
 
-    // it reverts with InitializableContractIsAlreadyInitialized
-    vm.expectRevert('Initializable: contract is already initialized');
+    // it reverts with InvalidInitialization
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
     spaceRegistryProxy.initialize(__owner);
@@ -97,18 +90,18 @@ contract UnitSpaceRegistry is TestHelper {
     // when owner is zero address
     address __owner = address(0);
 
-    // it reverts with InvalidZeroAddress
-    vm.expectRevert(ISpaceRegistry.InvalidZeroAddress.selector);
+    // it reverts with OwnableInvalidOwner
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableInvalidOwner.selector, __owner));
 
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      address(new ERC1967Proxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner))))
+      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
     );
   }
 
   function test_Initialize_WhenCalled() external {
-    // it reverts with InitializableContractIsAlreadyInitialized
-    vm.expectRevert('Initializable: contract is already initialized');
+    // it reverts with InvalidInitialization
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
     spaceRegistry.initialize(_owner);
@@ -127,9 +120,14 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
+    vm.startPrank(_randomCaller);
+
+    _mockVerify(_toSpace, _action, _topic, _data, _signature);
+    _mockWrite(_fromSpace, _action, _topic, _data);
+
     // it emits Action
     vm.expectEmit();
-    emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topic, _data, _signature);
   }
@@ -141,7 +139,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not fromSpace
-    vm.startPrank(_randomCaller);
+    vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
     _mockVerify(_toSpace, _action, _topic, _data, _signature);
@@ -156,7 +154,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
     // when caller is not toSpace
-    vm.startPrank(_randomCaller);
+    vm.startPrank(_fromSpace);
 
     // it calls toSpace to write
     _mockWrite(_fromSpace, _action, _topic, _data);
@@ -188,7 +186,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), '');
+    emit ISpaceRegistry.Action(
+      bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), ''
+    );
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
@@ -248,7 +248,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it emits Action
     vm.expectEmit();
-    emit Action(_fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), '');
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), ''
+    );
 
     spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
 
@@ -307,8 +309,8 @@ contract UnitSpaceRegistry is TestHelper {
     // when called by non-owner
     vm.startPrank(_randomCaller);
 
-    // it reverts with OwnableCallerIsNotTheOwner
-    vm.expectRevert('Ownable: caller is not the owner');
+    // it reverts with OwnableUnauthorizedAccount
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
 
     spaceRegistryProxy.exposed__authorizeUpgrade(_newImplementation);
   }
@@ -338,7 +340,6 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function _mockWrite(address _space, bytes32 __action, bytes32 __topic, bytes calldata _data) internal {
-    //
     _mockAndExpect(_toSpace, abi.encodeCall(ISpace.write, (_space, __action, __topic, _data)), abi.encode());
   }
 }

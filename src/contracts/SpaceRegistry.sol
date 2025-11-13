@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/registry/ISpaceRegistry.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
@@ -19,13 +19,13 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  */
 contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
-  mapping(bytes16 => address) public spaceIdToAddress;
+  mapping(bytes16 _spaceId => address _account) public spaceIdToAddress;
 
   /// @inheritdoc ISpaceRegistry
-  mapping(bytes16 => address) public spaceIdToProposedAddress;
+  mapping(bytes16 _spaceId => address _account) public spaceIdToProposedAddress;
 
   /// @inheritdoc ISpaceRegistry
-  mapping(address => bytes16) public addressToSpaceId;
+  mapping(address _account => bytes16 _spaceId) public addressToSpaceId;
 
   /// @notice The nonce used to generate a space ID for registration
   uint256 internal _spaceIdNonce;
@@ -37,9 +37,7 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function initialize(address _owner) external initializer {
-    if (_owner == address(0)) revert InvalidZeroAddress();
-
-    _transferOwnership(_owner);
+    __Ownable_init(_owner);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -111,8 +109,8 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function generateSpaceId(address _account, uint256 _nonce) public view returns (bytes16 spaceId) {
-    spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
+  function generateSpaceId(address _account, uint256 _nonce) public view returns (bytes16 _spaceId) {
+    _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
   }
 
   /// @inheritdoc ISemver
