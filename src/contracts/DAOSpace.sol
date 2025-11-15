@@ -306,8 +306,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     _grantRole(EDITOR, _newEditor);
     // Mark the address as an editor for votes
     _editorsCheckpoints[_newEditor].push(uint32(block.number), 1);
-    /// @dev double check this, shouldn't it be the length, not 1
-    _editorsLengthCheckpoints.push(uint32(block.number), 1);
+    _editorsLengthCheckpoints.push(uint32(block.number), _editorsLengthCheckpoints.at(uint32(block.number))._value + 1);
     // Ping the registry
     spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_EDITOR, bytes32(bytes20(_newEditor)), '', '');
   }
@@ -324,8 +323,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     _revokeRole(EDITOR, _oldEditor);
     // Mark the address as no longer an editor for votes
     _editorsCheckpoints[_oldEditor].push(uint32(block.number), 0);
-    /// @dev double check this too
-    _editorsLengthCheckpoints.push(uint32(block.number), 1);
+    _editorsLengthCheckpoints.push(uint32(block.number), _editorsLengthCheckpoints.at(uint32(block.number))._value - 1);
     // Ping the registry
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_EDITOR, bytes32(bytes20(_oldEditor)), '', ''
