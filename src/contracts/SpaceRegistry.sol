@@ -56,6 +56,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // Check that the space IDs exist
     if (fromId == bytes16(0) || toId == bytes16(0)) revert SpaceNotRegistered();
 
+    // Fetch future output variable and update `_topic` for emission if relevant
+    if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic);
+
     emit Action(fromId, toId, _action, _topic, _data);
 
     // If msg.sender is not the from
