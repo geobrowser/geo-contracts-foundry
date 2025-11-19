@@ -99,12 +99,12 @@ contract UnitSpaceRegistry is TestHelper {
     );
   }
 
-  function test_Initialize_WhenCalled() external {
+  function test_Initialize_WhenCalled(address __owner) external {
     // it reverts with InvalidInitialization
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    spaceRegistry.initialize(_owner);
+    spaceRegistry.initialize(__owner);
   }
 
   modifier whenSpacesAreRegistered() {

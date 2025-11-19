@@ -7,7 +7,6 @@ import {SignatureChecker} from '@openzeppelin/contracts/utils/cryptography/Signa
 
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 
 /**
@@ -18,10 +17,10 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
  */
 contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
   /// @inheritdoc IVerifierSpace
-  ISpaceRegistry public spaceRegistry;
+  address public spaceRegistry;
 
   /// @inheritdoc IVerifierSpace
-  mapping(address _account => bool _valid) public validCallers;
+  mapping(address _account => bool _valid) public validWriters;
 
   /// @inheritdoc IVerifierSpace
   uint256 public replayNonce;
@@ -32,17 +31,17 @@ contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc IVerifierSpace
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
+  function initialize(address _spaceRegistry, address _owner) external initializer {
     __Ownable_init(_owner);
 
     spaceRegistry = _spaceRegistry;
-    validCallers[_owner] = true;
-    validCallers[address(this)] = true;
+    validWriters[_owner] = true;
+    validWriters[address(this)] = true;
   }
 
   /// @inheritdoc IVerifierSpace
-  function setValidCallers(address _caller, bool _valid) external onlyOwner {
-    validCallers[_caller] = _valid;
+  function setValidWriters(address _caller, bool _valid) external onlyOwner {
+    validWriters[_caller] = _valid;
   }
 
   /// @inheritdoc ISpace
@@ -64,8 +63,8 @@ contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
   function write(address _fromSpace, bytes32, bytes32, bytes calldata) external view {
     // Only space registry can call
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
-    // From space must be valid caller
-    if (!validCallers[_fromSpace]) revert InvalidCaller();
+    // From space must be valid writer
+    if (!validWriters[_fromSpace]) revert InvalidWriter();
   }
 
   /// @inheritdoc ISpace
