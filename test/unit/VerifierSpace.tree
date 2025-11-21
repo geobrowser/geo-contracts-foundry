@@ -1,0 +1,52 @@
+UnitVerifierSpace::constructor
+└── when called
+    └── it disables initializers
+
+UnitVerifierSpace::initialize
+├── when delegate called
+│   ├── when owner is not zero address
+│   │   ├── it sets owner
+│   │   ├── it sets spaceRegistry
+│   │   ├── it sets validWriters
+│   │   └── when delegate called again
+│   │       └── it reverts with InvalidInitialization
+│   └── when owner is zero address
+│       └── it reverts with OwnableInvalidOwner
+└── when called
+    └── it reverts with InvalidInitialization
+
+UnitVerifierSpace::setValidWriters
+├── when called by owner
+│   ├── it updates validWriters
+│   └── it emits ValidWriterSet
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitVerifierSpace::verify
+├── when signature is valid
+│   └── it increments replayNonce
+└── when signature is not valid
+    └── it reverts with InvalidSignature
+
+UnitVerifierSpace::write
+├── when caller is spaceRegistry
+│   ├── when writer is valid
+│   │   └── it does not revert
+│   └── when writer is not valid
+│       └── it reverts with InvalidWriter
+└── when caller is not spaceRegistry
+    └── it reverts with InvalidCaller
+
+UnitVerifierSpace::fetch
+└── when called
+    └── it returns _topicInput
+
+UnitVerifierSpace::version
+└── when called
+    └── it returns semantic version
+
+UnitVerifierSpace::_authorizeUpgrade
+├── when called by owner
+│   └── it does not revert
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

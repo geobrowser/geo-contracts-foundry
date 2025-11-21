@@ -13,11 +13,11 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
 /**
  * @title SpaceRegistry
  * @notice Central registry for managing spaces
- * @dev This contract serves as the entry point for creating new spaces.
- *      Each space has a unique ID that maps to an address.
- *      Spaces can migrate to new addresses while keeping their ID.
+ * @dev This contract serves as the entry point for creating new spaces
+ *      Each space has a unique ID that maps to an address
+ *      Spaces can migrate to new addresses while keeping their ID
  */
-contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
+contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   mapping(bytes16 _spaceId => address _account) public spaceIdToAddress;
 
@@ -55,6 +55,9 @@ contract SpaceRegistry is OwnableUpgradeable, UUPSUpgradeable, ISpaceRegistry {
 
     // Check that the space IDs exist
     if (fromId == bytes16(0) || toId == bytes16(0)) revert SpaceNotRegistered();
+
+    // Fetch future output variable and update `_topic` for emission if relevant
+    if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic);
 
     emit Action(fromId, toId, _action, _topic, _data);
 

@@ -3,9 +3,11 @@ pragma solidity 0.8.30;
 
 import {ISemver} from 'interfaces/ISemver.sol';
 
+/**
+ * @title ISpaceRegistry
+ * @notice Central registry for managing spaces
+ */
 interface ISpaceRegistry is ISemver {
-  // Events
-
   /**
    * @notice Emitted when a user calls the enter function
    * @param fromId The from space ID involved
@@ -18,8 +20,6 @@ interface ISpaceRegistry is ISemver {
     bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
   ) anonymous;
 
-  // Errors
-
   /// @notice Thrown when the caller is not authorized for the operation
   error InvalidCaller();
 
@@ -28,8 +28,6 @@ interface ISpaceRegistry is ISemver {
 
   /// @notice Thrown when trying to register or migrate a space with an address that's already assigned to another space
   error SpaceAlreadyRegistered();
-
-  // Functions
 
   /**
    * @notice Maps each unique space ID to its current address
@@ -53,8 +51,8 @@ interface ISpaceRegistry is ISemver {
   function addressToSpaceId(address _account) external view returns (bytes16 _spaceId);
 
   /**
-   * @notice Initializes the SpaceRegistry contract
-   * @param _owner The address that will own this registry contract
+   * @notice Initializes the contract
+   * @param _owner The address of the owner
    */
   function initialize(address _owner) external;
 
