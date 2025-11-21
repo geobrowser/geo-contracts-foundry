@@ -9,6 +9,13 @@ import {ISpace} from 'interfaces/ISpace.sol';
  * @notice Manages writing verification for a verifier space
  */
 interface IVerifierSpace is ISpace, ISemver {
+  /**
+   * @notice Emitted when a writer validity status is set
+   * @param account The address of the writer
+   * @param valid Whether the writer is valid or not
+   */
+  event ValidWriterSet(address account, bool valid);
+
   /// @notice Thrown when the caller is not authorized for the operation
   error InvalidCaller();
 
@@ -46,6 +53,7 @@ interface IVerifierSpace is ISpace, ISemver {
 
   /**
    * @notice Sets the writer validity status of an address
+   * @dev Must be called by the owner
    * @param _account The address of the writer
    * @param _valid Whether the writer will be valid
    */

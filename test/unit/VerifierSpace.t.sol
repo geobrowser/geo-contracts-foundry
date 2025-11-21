@@ -122,6 +122,10 @@ contract UnitVerifierSpace is TestHelper {
     // when called by owner
     vm.startPrank(_owner);
 
+    // it emits ValidWriterSet
+    vm.expectEmit();
+    emit IVerifierSpace.ValidWriterSet(_account, _valid);
+
     verifierSpaceProxy.setValidWriters(_account, _valid);
 
     // it updates validWriters

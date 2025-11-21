@@ -35,13 +35,14 @@ contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
     __Ownable_init(_owner);
 
     spaceRegistry = _spaceRegistry;
-    validWriters[_owner] = true;
-    validWriters[address(this)] = true;
+
+    _setValidWriters(_owner, true);
+    _setValidWriters(address(this), true);
   }
 
   /// @inheritdoc IVerifierSpace
-  function setValidWriters(address _caller, bool _valid) external onlyOwner {
-    validWriters[_caller] = _valid;
+  function setValidWriters(address _account, bool _valid) external onlyOwner {
+    _setValidWriters(_account, _valid);
   }
 
   /// @inheritdoc ISpace
@@ -75,6 +76,16 @@ contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
   /// @inheritdoc ISemver
   function version() public pure returns (string memory _version) {
     _version = '1.0.0';
+  }
+
+  /**
+   * @notice Sets the writer validity status of an address
+   * @param _account The address of the writer
+   * @param _valid Whether the writer will be valid
+   */
+  function _setValidWriters(address _account, bool _valid) internal {
+    validWriters[_account] = _valid;
+    emit ValidWriterSet(_account, _valid);
   }
 
   /// @inheritdoc UUPSUpgradeable

@@ -17,7 +17,8 @@ UnitVerifierSpace::initialize
 
 UnitVerifierSpace::setValidWriters
 ├── when called by owner
-│   └── it updates validWriters
+│   ├── it updates validWriters
+│   └── it emits ValidWriterSet
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 
