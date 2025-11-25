@@ -7,15 +7,16 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 /**
  * @title DAO Space Interface
  * @notice Manages governance proposals and voting for a DAO Space
+ * @dev Dual-path governance: fast path (threshold-based, immediate execution) and slow path
+ * (majority voting with voting window). Fast path escalates to slow path on "No" vote.
  */
 interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
-   * @param None The default option state of a voter indicating the absence from the vote.
-   * This option neither influences support nor participation.
-   * @param Abstain This option does not influence the support but counts towards participation.
-   * @param Yes This option increases the support and counts towards participation.
-   * @param No This option decreases the support and counts towards participation.
+   * @param None Default state, cannot be cast
+   * @param Abstain Counts towards participation but doesn't influence support
+   * @param Yes Increases support; fast path executes immediately when threshold met
+   * @param No Decreases support; escalates fast path to slow path
    */
   enum VoteOption {
     None,
@@ -25,86 +26,64 @@ interface IDAOSpace is ISpace {
   }
 
   /**
-   * @notice The different voting modes available
-   * @param Standard In standard mode, early execution and vote replacement are disabled.
-   * @param EarlyExecution In early execution mode, a proposal can be executed early before
-   * the end date if the vote outcome cannot mathematically change by more voters voting.
-   * @param VoteReplacement In vote replacement mode, voters can change their vote multiple
-   * times and only the latest vote option is tallied.
+   * @notice Voting modes for proposals
+   * @param Slow Majority voting with voting window (percentage threshold)
+   * @param Fast Threshold-based voting with immediate execution (flat count)
    */
   enum VotingMode {
-    Standard,
-    EarlyExecution,
-    VoteReplacement
+    Slow,
+    Fast /// flat
   }
 
   /**
-   * @notice The different threshold modes available
-   * @param Percentage The percentage-based threshold system (e.g., 60% = 6e5).
-   * @param Flat The flat threshold system (e.g., 2 votes = 2).
-   */
-  enum ThresholdMode {
-    Percentage,
-    Flat
-  }
-
-  /**
-   * @notice A container for the majority voting settings that will be applied as parameters on proposal creation
-   * @param votingMode A parameter to select the vote mode. In standard mode (0), early execution
-   * and vote replacement are disabled. In early execution mode (1), a proposal can be executed
-   * early before the end date if the vote outcome cannot mathematically change by more voters
-   * voting. In vote replacement mode (2), voters can change their vote multiple times and only
-   * the latest vote option is tallied.
-   * @param thresholdMode A parameter to select the threshold mode. In percentage mode (0), the
-   * percentage-based threshold system (e.g., 60% = 6e5) is enabled. In flat mode (1), the flat
-   * threshold system (e.g., 2 votes = 2) is enabled.
-   * @param supportThreshold The support threshold value. Its percentage value has to be in the
-   * interval [0, 10^6] defined by `RATIO_BASE = 10e6`.
-   * @param duration The duration of proposals in seconds.
+   * @notice Voting settings configuration for proposals
+   * @param slowPathPercentageThreshold Percentage threshold for slow path (0-10^6, where 10^6 = 100%)
+   * @param fastPathFlatThreshold Flat count threshold for fast path (number of yes votes)
+   * @param duration Voting window duration in seconds (slow path)
    */
   struct VotingSettings {
-    VotingMode votingMode;
-    ThresholdMode thresholdMode;
-    uint256 supportThreshold;
+    uint256 slowPathPercentageThreshold;
+    uint256 fastPathFlatThreshold;
     uint256 duration;
   }
 
   /**
-   * @notice Represents an action to be executed when a proposal passes
-   * @param to The target address for the action
-   * @param value The amount of native currency to send with the action
-   * @param data The call data for the action
-   */
-  struct Action {
-    address to;
-    uint256 value;
-    bytes data;
-  }
-
-  /**
-   * @notice A container for the proposal parameters at the time of proposal creation
-   * @param votingMode A parameter to select the vote mode.
-   * @param thresholdMode A parameter to select the threshold mode.
-   * @param supportThreshold The support threshold value. The percentage value has to be in the
-   * interval [0, 10^6] defined by `RATIO_BASE = 10e6`.
-   * @param startDate The start date of the proposal vote.
-   * @param endDate The end date of the proposal vote.
-   * @param snapshotBlock The number of the block prior to the proposal creation.
+   * @notice Proposal parameters at creation time
+   * @param votingMode Voting mode (Slow or Fast)
+   * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates.
+   * @param startDate Timestamp when voting starts
+   * @param endDate Timestamp when voting ends (slow path execution requires this)
+   * @param snapshotBlock Block number for snapshot voting (block.number - 1)
    */
   struct ProposalParameters {
     VotingMode votingMode;
-    ThresholdMode thresholdMode;
     uint256 supportThreshold;
     uint256 startDate;
     uint256 endDate;
-    uint256 snapshotBlock;
+    uint256 snapshotBlock; // probs don't need now
   }
 
   /**
-   * @notice A container for the proposal vote tally
-   * @param abstain The number of abstain votes casted.
-   * @param yes The number of yes votes casted.
-   * @param no The number of no votes casted.
+   * @notice Proposal information
+   * @param executed Whether proposal has been executed
+   * @param parameters Proposal parameters (may change if fast path escalates)
+   * @param tally Vote tally (yes, no, abstain counts)
+   * @param voters Mapping of editor addresses to vote options
+   * @param actions Actions to execute when proposal passes (fast path: 1 action max)
+   */
+  struct Proposal {
+    bool executed;
+    ProposalParameters parameters;
+    Tally tally;
+    mapping(address => VoteOption) voters;
+    Action[] actions;
+  }
+
+  /**
+   * @notice Proposal vote tally
+   * @param abstain Number of abstain votes
+   * @param yes Number of yes votes
+   * @param no Number of no votes
    */
   struct Tally {
     uint256 abstain;
@@ -113,19 +92,15 @@ interface IDAOSpace is ISpace {
   }
 
   /**
-   * @notice A container for proposal-related information
-   * @param executed Whether the proposal is executed or not.
-   * @param parameters The proposal parameters at the time of the proposal creation.
-   * @param tally The vote tally of the proposal.
-   * @param voters The votes casted by the voters.
-   * @param actions The actions to be executed when the proposal passes.
+   * @notice Action to execute when proposal passes
+   * @param to Target address
+   * @param value Native currency amount to send
+   * @param data Call data
    */
-  struct Proposal {
-    bool executed;
-    ProposalParameters parameters;
-    Tally tally;
-    mapping(address => VoteOption) voters;
-    Action[] actions;
+  struct Action {
+    address to;
+    uint256 value;
+    bytes data;
   }
 
   /**
@@ -150,22 +125,27 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Thrown when a voter cannot vote on a proposal
-   * @dev This error occurs when the voter does not have permission, the proposal doesn't exist,
-   * the voting period has ended, or vote replacement is not allowed.
+   * @dev Voter lacks permission, proposal doesn't exist, voting ended, or not editor at snapshot.
+   * Vote replacement allowed.
    */
   error CanNotVote();
 
   /**
    * @notice Thrown when a proposal cannot be executed/settled
-   * @dev This error occurs when the proposal doesn't meet the execution criteria, has already
-   * been executed, or the execution conditions are not met.
+   * @dev Proposal doesn't meet execution criteria, already executed, or conditions not met.
    */
-  error CanNotSettle();
+  error CanNotExecute();
 
   /**
    * @notice Thrown when an action within a proposal reverts during execution
    */
   error ActionReverted();
+
+  /**
+   * @notice Thrown when a fast path proposal contains more than one action
+   * @dev Fast path limited to single action
+   */
+  error OneActionForFastPath();
 
   /**
    * @notice Initializes the contract
@@ -184,30 +164,24 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Adds a new editor to the space
    * @param _newEditor The address of the new editor
-   * @custom:throws InvalidCaller if called by non-DAO address
-   * @custom:throws InvalidAddress if the editor is already an editor
    */
   function addEditor(address _newEditor) external;
 
   /**
    * @notice Removes an editor from the space
    * @param _oldEditor The address of the editor to remove
-   * @custom:throws InvalidCaller if called by non-DAO address
-   * @custom:throws InvalidAddress if the editor is not an editor
    */
   function removeEditor(address _oldEditor) external;
 
   /**
    * @notice Adds a new member to the space
    * @param _newMember The address of the new member
-   * @custom:throws InvalidCaller if called by non-DAO address
    */
   function addMember(address _newMember) external;
 
   /**
    * @notice Removes a member from the space
    * @param _oldMember The address of the member to remove
-   * @custom:throws InvalidCaller if called by non-DAO address
    */
   function removeMember(address _oldMember) external;
 
@@ -224,31 +198,42 @@ interface IDAOSpace is ISpace {
   function proposalCounter() external view returns (uint256);
 
   /**
-   * @notice Stores the voting settings used for proposals
-   * @return votingMode The voting mode
-   * @return thresholdMode The threshold mode
-   * @return supportThreshold The support threshold value
-   * @return duration The duration of proposals in seconds
+   * @notice Voting settings for proposals
+   * @return slowPathPercentageThreshold Percentage threshold for slow path
+   * @return fastPathFlatThreshold Flat count threshold for fast path
+   * @return duration Voting window duration in seconds
    */
   function votingSettings()
     external
     view
-    returns (VotingMode votingMode, ThresholdMode thresholdMode, uint256 supportThreshold, uint256 duration);
+    returns (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 duration);
 
   /**
-   * @notice Checks if an account was an editor at a specific block
-   * @param _account The address of the account to check
-   * @param _blockNumber The block number to check at
-   * @return True if the account was an editor at the block, false otherwise
+   * @notice Maps action selectors to whether they are valid for fast path proposals
+   * @param _selector Action selector to check
+   * @return True if action selector is valid for fast path
    */
-  function isEditorAtBlock(address _account, uint256 _blockNumber) external view returns (bool);
+  function actionIsFastPathValid(bytes4 _selector) external view returns (bool);
 
   /**
-   * @notice Returns the number of editors at a specific block
-   * @param _blockNumber The block number to check at
-   * @return The number of editors at the block
+   * @notice Maps editor addresses to whether they are flagged (restricted from fast path)
+   * @param _space Editor address to check
+   * @return True if editor is flagged
    */
-  function editorsLengthAtBlock(uint256 _blockNumber) external view returns (uint256);
+  function isEditorFlagged(address _space) external view returns (bool);
+
+  /**
+   * @notice Tracks the total number of editors
+   * @return The total number of editors
+   */
+  function editorsLength() external view returns (uint256);
+
+  /**
+   * @notice Checks if a proposal has reached its support threshold
+   * @param _proposalId ID of the proposal to check
+   * @return True if support threshold is reached
+   */
+  function isSupportThresholdReached(uint256 _proposalId) external view returns (bool);
 
   /**
    * @notice Gets the information for a proposal
@@ -270,36 +255,6 @@ interface IDAOSpace is ISpace {
    * @return _voteOption The vote option cast by the account (None if not voted)
    */
   function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption);
-
-  /**
-   * @notice Gets the support threshold percentage for a proposal
-   * @param _proposalId The ID of the proposal
-   * @return The support threshold percentage
-   * @dev For percentage mode, returns supportThreshold - 1. For flat mode, converts the flat
-   * threshold to a percentage based on the total number of editors at the snapshot block.
-   * Returns 0 if threshold is 0 or no voters exist. Returns RATIO_BASE - 1 if flat threshold
-   * exceeds total voters.
-   */
-  function getSupportThresholdPercentage(uint256 _proposalId) external view returns (uint256);
-
-  /**
-   * @notice Checks if the support threshold is reached for a proposal
-   * @param _proposalId The ID of the proposal to check
-   * @return True if the support threshold is reached, false otherwise
-   * @dev The support threshold is reached when: (RATIO_BASE - supportThresholdPercentage) * yes votes >
-   * supportThresholdPercentage * no votes. This uses `>` comparison, so >100% could never be reached.
-   */
-  function isSupportThresholdReached(uint256 _proposalId) external view returns (bool);
-
-  /**
-   * @notice Checks if the support threshold is reached for early execution
-   * @param _proposalId The ID of the proposal to check
-   * @return True if the support threshold is reached for early execution, false otherwise
-   * @dev Returns false if early execution mode is not enabled. Uses worst-case scenario where
-   * all remaining editors vote no. The support threshold is reached when: (RATIO_BASE - supportThresholdPercentage)
-   * * yes votes > supportThresholdPercentage * worstCaseNoVotes.
-   */
-  function isSupportThresholdReachedEarly(uint256 _proposalId) external view returns (bool);
 
   /**
    * @notice Returns the ratio base used for percentage calculations

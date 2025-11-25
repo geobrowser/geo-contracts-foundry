@@ -3,23 +3,13 @@ pragma solidity 0.8.30;
 
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
 
 import {IDAOSpace, ISpace} from 'interfaces/IDAOSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
-/**
- * @title DAOSpace
- * @notice Manages governance proposals and voting for a DAO Space
- * @dev This contract allows members and editors to create proposals, vote, and execute them.
- * It implements a majority voting system with configurable voting modes and threshold settings.
- * The contract uses checkpointing to track editor membership over time for snapshot-based voting.
- */
 contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
-  using Checkpoints for Checkpoints.Trace224;
-
   /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
 
@@ -36,19 +26,22 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   ISpaceRegistry public spaceRegistry;
 
   /// @inheritdoc IDAOSpace
+  VotingSettings public votingSettings;
+
+  /// @inheritdoc IDAOSpace
   uint256 public proposalCounter;
 
   /// @inheritdoc IDAOSpace
-  VotingSettings public votingSettings;
+  mapping(bytes4 _selector => bool) public actionIsFastPathValid;
+
+  /// @inheritdoc IDAOSpace
+  mapping(address _space => bool) public isEditorFlagged;
+
+  /// @inheritdoc IDAOSpace
+  uint256 public editorsLength;
 
   /// @notice Stores information about a proposal by its ID
   mapping(uint256 => Proposal) private _proposals;
-
-  /// @notice Checkpoints tracking editor membership at different block numbers
-  mapping(address => Checkpoints.Trace224) private _editorsCheckpoints;
-
-  /// @notice Checkpoints tracking the total number of editors at different block numbers
-  Checkpoints.Trace224 private _editorsLengthCheckpoints;
 
   /// @inheritdoc IDAOSpace
   function initialize(
@@ -59,19 +52,21 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   ) external initializer {
     spaceRegistry = _spaceRegistry;
     votingSettings = _votingSettings;
-    uint256 editorsLength = _initialEditors.length;
-    for (uint256 i; i < editorsLength; i++) {
+    uint256 length = _initialEditors.length;
+    for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);
     }
-    uint256 membersLength = _initialMembers.length;
-    for (uint256 j; j < membersLength; j++) {
+    length = _initialMembers.length;
+    for (uint256 j; j < length; j++) {
       _addMember(_initialMembers[j]);
     }
     _grantRole(DAO, address(this));
+    actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
+    actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
   }
 
   /// @inheritdoc ISpace
-  function write(address _fromSpace, bytes32 _action, bytes32 _topic, bytes calldata _data) external {
+  function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external {
     // Only Space Registry can call
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
     // Actions
@@ -83,6 +78,10 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.LEAVE) {
       _leave(_fromSpace);
+    } else if (_action == ActionsConstants.FLAG_EDITOR) {
+      _flagEditor(_fromSpace, _data);
+    } else if (_action == ActionsConstants.UNFLAG_EDITOR) {
+      _unflagEditor(_fromSpace, _data);
     } else {
       // Must attempt to write in some way
       revert InvalidAction();
@@ -125,13 +124,20 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function isEditorAtBlock(address _account, uint256 _blockNumber) public view returns (bool) {
-    return _editorsCheckpoints[_account].at(uint32(_blockNumber))._value == 1;
-  }
-
-  /// @inheritdoc IDAOSpace
-  function editorsLengthAtBlock(uint256 _blockNumber) public view returns (uint256) {
-    return uint256(_editorsLengthCheckpoints.at(uint32(_blockNumber))._value);
+  function isSupportThresholdReached(uint256 _proposalId) public view returns (bool _isSupportReached) {
+    Proposal storage proposal_ = _proposals[_proposalId];
+    uint256 supportThreshold =
+      (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
+    if (proposal_.parameters.votingMode == VotingMode.Slow) {
+      // Slow path
+      if (block.timestamp <= proposal_.parameters.endDate) return false;
+      // Threshold percentage calculation
+      if ((RATIO_BASE - supportThreshold) * proposal_.tally.yes > supportThreshold * proposal_.tally.no) return true;
+    } else {
+      // Fast path
+      // Threshold flat calculation
+      if (proposal_.tally.yes > supportThreshold) return true;
+    }
   }
 
   /// @inheritdoc IDAOSpace
@@ -151,70 +157,39 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     return _proposals[_proposalId].voters[_account];
   }
 
-  /// @inheritdoc IDAOSpace
-  function getSupportThresholdPercentage(uint256 _proposalId) public view returns (uint256) {
-    Proposal storage proposal_ = _proposals[_proposalId];
-    // If the threshold value is zero, return zero
-    if (proposal_.parameters.supportThreshold == 0) return 0;
-    // Require the support threshold value to be in the interval [0, 10^6-1], because `>` comparison is used in the support criterion and >100% could never be reached.
-    if (proposal_.parameters.thresholdMode == ThresholdMode.Percentage) {
-      return proposal_.parameters.supportThreshold - 1;
-    } else {
-      // Fetch total voters to convert flat threshold to a percentage
-      uint256 totalVoters = editorsLengthAtBlock(proposal_.parameters.snapshotBlock);
-      // If no voters exist, return zero
-      if (totalVoters == 0) return 0;
-      // If the flat threshold exceeds the total number of voters, everyone must vote
-      if (uint256(proposal_.parameters.supportThreshold) >= totalVoters) return RATIO_BASE - 1;
-      // Else dynamically determine the threshold percentage
-      return ((proposal_.parameters.supportThreshold * RATIO_BASE) / totalVoters) - 1;
-    }
-  }
-
-  /// @inheritdoc IDAOSpace
-  function isSupportThresholdReached(uint256 _proposalId) public view returns (bool) {
-    Proposal storage proposal_ = _proposals[_proposalId];
-    uint256 supportThresholdPercentage = getSupportThresholdPercentage(_proposalId);
-    // Calculates outcome
-    return
-      (RATIO_BASE - supportThresholdPercentage) * proposal_.tally.yes > supportThresholdPercentage * proposal_.tally.no;
-  }
-
-  /// @inheritdoc IDAOSpace
-  function isSupportThresholdReachedEarly(uint256 _proposalId) public view returns (bool) {
-    Proposal storage proposal_ = _proposals[_proposalId];
-    // Return false if early execution not enabled.
-    if (proposal_.parameters.votingMode != VotingMode.EarlyExecution) return false;
-    uint256 supportThresholdPercentage = getSupportThresholdPercentage(_proposalId);
-    uint256 noVotesWorstCase =
-      editorsLengthAtBlock(proposal_.parameters.snapshotBlock) - proposal_.tally.yes - proposal_.tally.abstain;
-    // Calculates outcome
-    return
-      (RATIO_BASE - supportThresholdPercentage) * proposal_.tally.yes > supportThresholdPercentage * noVotesWorstCase;
-  }
-
   /**
    * @notice Creates a new governance proposal
    * @param _fromSpace The address of the space creating the proposal
-   * @param _data The encoded proposal data containing URI and actions
-   * @dev This function can only be called by members or editors. The proposal parameters are
-   * set based on the voting settings, and the snapshot block is set to block.number - 1 to
-   * protect against backrunning transactions causing census changes.
+   * @param _data The encoded proposal data containing URI, voting mode, and actions
+   * @dev Fast path: only editors can create, creator must not be flagged, single action required,
+   * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal {
     // Only members or editors can create a proposal
     if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidCaller();
     // Decode data to construct proposal
-    (, Action[] memory actions) = abi.decode(_data, (bytes, Action[]));
+    (, VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (bytes, VotingMode, Action[]));
     // Update proposal storage
     Proposal storage proposal_ = _proposals[proposalCounter++];
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
     // The snapshot block must be mined already to protect the transaction against backrunning transactions causing census changes.
     proposal_.parameters.snapshotBlock = block.number - 1;
-    proposal_.parameters.votingMode = votingSettings.votingMode;
-    proposal_.parameters.thresholdMode = votingSettings.thresholdMode;
-    proposal_.parameters.supportThreshold = votingSettings.supportThreshold;
+    proposal_.parameters.votingMode = votingMode;
+    if (votingMode == VotingMode.Slow) {
+      // Slow path
+      proposal_.parameters.supportThreshold = votingSettings.slowPathPercentageThreshold;
+    } else {
+      // Fast path
+      if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
+      // Checks from space is allowed to use fast path
+      if (isEditorFlagged[_fromSpace]) revert InvalidCaller();
+      // limit the actions to one call
+      if (actions.length != 1) revert OneActionForFastPath();
+      bytes4 actionSelector = bytes4(actions[0].data);
+      if (!actionIsFastPathValid[actionSelector]) revert InvalidAction();
+      proposal_.parameters.supportThreshold = votingSettings.fastPathFlatThreshold;
+    }
     for (uint256 i; i < actions.length; i++) {
       proposal_.actions.push(actions[i]);
     }
@@ -224,15 +199,13 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @notice Votes on a proposal
    * @param _fromSpace The address of the space casting the vote
    * @param _data The encoded vote data containing proposal ID and vote option
-   * @dev This function can only be called by editors. If vote replacement is enabled and the
-   * editor has already voted, the previous vote is removed before adding the new vote.
+   * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
+   * Fast path can execute immediately if threshold met; slow path requires voting period to end.
    */
   function _vote(address _fromSpace, bytes calldata _data) internal {
-    // Only editors can vote
-    if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
     // Decode data to construct vote
     (uint256 _proposalId, VoteOption _voteOption) = abi.decode(_data, (uint256, VoteOption));
-    // Ensure editor can vote
+    // Ensure _fromSpace can vote
     if (!_canVote(_fromSpace, _proposalId, _voteOption)) revert CanNotVote();
     Proposal storage proposal_ = _proposals[_proposalId];
     // Remove the previous vote.
@@ -253,19 +226,31 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
     proposal_.voters[_fromSpace] = _voteOption;
+    // fast path to slow path if rejection occurs
+    if (_voteOption == VoteOption.No && proposal_.parameters.votingMode == VotingMode.Fast) {
+      // Update voting mode
+      proposal_.parameters.votingMode = VotingMode.Slow;
+      // Update threshold
+      proposal_.parameters.supportThreshold = votingSettings.slowPathPercentageThreshold;
+      // Reset duration and block times
+      proposal_.parameters.startDate = block.timestamp;
+      proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
+    }
+    // immediate execution if possible
+    // only works on fast path because voting and execution not possible in same block on slow path
+    if (_canExecuteProposal(_proposalId)) _executeProposal(abi.encode(_proposalId));
   }
 
   /**
    * @notice Executes a proposal after it has passed
    * @param _data The encoded execution data containing the proposal ID
-   * @dev Anyone can call this function. All actions in the proposal are executed sequentially.
-   * If any action reverts, the entire execution reverts.
+   * @dev Anyone can call once execution criteria met. Actions executed sequentially. Reverts if any action fails.
    */
-  function _executeProposal(bytes calldata _data) internal {
+  function _executeProposal(bytes memory _data) internal {
     // Anyone can call
     // Check if proposal can be settled
     uint256 _proposalId = abi.decode(_data, (uint256));
-    if (!_canExecuteProposal(_proposalId)) revert CanNotSettle();
+    if (!_canExecuteProposal(_proposalId)) revert CanNotExecute();
     // Set proposal as executed
     _proposals[_proposalId].executed = true;
     /// loop over actions
@@ -296,18 +281,41 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   }
 
   /**
+   * @notice Flags an editor, restricting them from creating fast path proposals
+   * @param _fromSpace The address of the editor performing the flagging
+   * @param _data The encoded data containing the address of the editor to flag
+   * @dev Only editors can flag other editors. Flagged editors cannot create fast path proposals.
+   */
+  function _flagEditor(address _fromSpace, bytes calldata _data) internal {
+    if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
+    address _flaggedEditor = abi.decode(_data, (address));
+    if (!hasRole(EDITOR, _flaggedEditor)) revert InvalidAddress();
+    isEditorFlagged[_flaggedEditor] = true;
+  }
+
+  /**
+   * @notice Unflags an editor, restoring their ability to create fast path proposals
+   * @param _fromSpace The address of the editor performing the unflagging
+   * @param _data The encoded data containing the address of the editor to unflag
+   * @dev Only editors can unflag other editors. Cannot unflag self.
+   */
+  function _unflagEditor(address _fromSpace, bytes calldata _data) internal {
+    if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
+    address _unflaggedEditor = abi.decode(_data, (address));
+    if (_fromSpace == _unflaggedEditor) revert InvalidCaller();
+    if (!hasRole(EDITOR, _unflaggedEditor)) revert InvalidAddress();
+    isEditorFlagged[_unflaggedEditor] = false;
+  }
+
+  /**
    * @notice Internal function to add an editor
    * @param _newEditor The address of the new editor
-   * @dev Grants the EDITOR role and updates checkpoints for snapshot-based voting.
-   * Also notifies the space registry of the editor addition.
+   * @dev Grants EDITOR role and notifies registry.
    */
   function _addEditor(address _newEditor) internal {
-    if (isEditorAtBlock(_newEditor, block.number)) revert InvalidAddress();
     // Grant the role for access control
     _grantRole(EDITOR, _newEditor);
-    // Mark the address as an editor for votes
-    _editorsCheckpoints[_newEditor].push(uint32(block.number), 1);
-    _editorsLengthCheckpoints.push(uint32(block.number), _editorsLengthCheckpoints.at(uint32(block.number))._value + 1);
+    editorsLength += 1;
     // Ping the registry
     spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_EDITOR, bytes32(bytes20(_newEditor)), '', '');
   }
@@ -315,16 +323,12 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to remove an editor
    * @param _oldEditor The address of the editor to remove
-   * @dev Revokes the EDITOR role and updates checkpoints for snapshot-based voting.
-   * Also notifies the space registry of the editor removal.
+   * @dev Revokes EDITOR role and notifies registry.
    */
   function _removeEditor(address _oldEditor) internal {
-    if (!isEditorAtBlock(_oldEditor, block.number)) revert InvalidAddress();
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
-    // Mark the address as no longer an editor for votes
-    _editorsCheckpoints[_oldEditor].push(uint32(block.number), 0);
-    _editorsLengthCheckpoints.push(uint32(block.number), _editorsLengthCheckpoints.at(uint32(block.number))._value - 1);
+    editorsLength -= 1;
     // Ping the registry
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_EDITOR, bytes32(bytes20(_oldEditor)), '', ''
@@ -356,7 +360,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal override {
+  function _authorizeUpgrade(address) internal view override {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
   }
 
@@ -366,8 +370,8 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @param _proposalId The ID of the proposal
    * @param _voteOption The vote option being cast
    * @return True if the account can vote, false otherwise
-   * @dev Returns false if the proposal doesn't exist, has ended, the account has no voting power,
-   * vote replacement is not allowed and the account has already voted, or the vote option is None.
+   * @dev Returns false if proposal doesn't exist, voting ended, vote option is None, or account
+   * wasn't an editor at snapshot block. Vote replacement allowed.
    */
   function _canVote(address _account, uint256 _proposalId, VoteOption _voteOption) internal view returns (bool) {
     Proposal storage proposal_ = _proposals[_proposalId];
@@ -378,9 +382,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     // The voter votes `None` which is not allowed.
     if (_voteOption == VoteOption.None) return false;
     // The voter has no voting power.
-    if (!isEditorAtBlock(_account, proposal_.parameters.snapshotBlock)) return false;
-    // The voter has already voted but vote replacement is not allowed.
-    if (proposal_.voters[_account] != VoteOption.None && proposal_.parameters.votingMode != VotingMode.VoteReplacement) return false;
+    if (!hasRole(EDITOR, _account)) return false;
     return true;
   }
 
@@ -388,9 +390,8 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @notice Checks if a proposal can be executed
    * @param _proposalId The ID of the proposal to check
    * @return True if the proposal can be executed, false otherwise
-   * @dev Returns false if the proposal doesn't exist, has already been executed, or doesn't
-   * meet the execution threshold criteria. For early execution mode, uses worst-case scenario
-   * calculations.
+   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
+   * Slow path requires voting period to end; fast path can execute immediately.
    */
   function _canExecuteProposal(uint256 _proposalId) internal view returns (bool) {
     Proposal storage proposal_ = _proposals[_proposalId];
@@ -398,13 +399,8 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     if (proposal_.executed) return false;
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    if (block.timestamp < proposal_.parameters.endDate) {
-      // Early execution
-      if (!isSupportThresholdReachedEarly(_proposalId)) return false;
-    } else {
-      // Normal execution
-      if (!isSupportThresholdReached(_proposalId)) return false;
-    }
+    // Support threshold not reached
+    if (!isSupportThresholdReached(_proposalId)) return false;
     return true;
   }
 }

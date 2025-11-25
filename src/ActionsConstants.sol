@@ -30,3 +30,9 @@ bytes32 constant ADD_MEMBER = keccak256('ADD_MEMBER');
 
 /// @dev The ID of the action to remove a member
 bytes32 constant REMOVE_MEMBER = keccak256('REMOVE_MEMBER');
+
+/// @dev The ID of the action to flag an editor (restricts fast path access)
+bytes32 constant FLAG_EDITOR = keccak256('FLAG_EDITOR');
+
+/// @dev The ID of the action to unflag an editor (restores fast path access)
+bytes32 constant UNFLAG_EDITOR = keccak256('UNFLAG_EDITOR');
