@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+/**
+ * @title ISpace
+ * @notice Interface for spaces
+ */
 interface ISpace {
   /**
    * @notice Writes to this space from another space
