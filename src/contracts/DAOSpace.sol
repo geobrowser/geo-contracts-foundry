@@ -119,8 +119,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32 _action) public view returns (bytes32 _topicOutput) {
+  function fetch(bytes32 _action, bytes32 _topicInput) public view returns (bytes32) {
     if (_action == ActionsConstants.CREATE_PROPOSAL) return bytes32(proposalCounter);
+    else return _topicInput;
   }
 
   /// @inheritdoc IDAOSpace
