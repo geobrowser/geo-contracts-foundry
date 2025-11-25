@@ -1,0 +1,36 @@
+UnitVerifierSpaceFactory::constructor
+└── when called
+    └── it disables initializers
+
+UnitVerifierSpaceFactory::initialize
+├── when delegate called
+│   ├── when owner is not zero address
+│   │   ├── it sets owner
+│   │   ├── it deploys verifier space implementation
+│   │   ├── it deploys verifier space beacon
+│   │   ├── it sets verifierSpaceBeacon
+│   │   ├── it sets spaceRegistry
+│   │   └── when delegate called again
+│   │       └── it reverts with InvalidInitialization
+│   └── when owner is zero address
+│       └── it reverts with OwnableInvalidOwner
+└── when called
+    └── it reverts with InvalidInitialization
+
+UnitVerifierSpaceFactory::createVerifierSpaceProxy
+├── when owner is not zero address
+│   ├── it deploys and initializes verifier space proxy
+│   ├── it emits VerifierSpaceProxyCreated
+│   └── it returns new verifier space proxy
+└── when owner is zero address
+    └── it reverts with OwnableInvalidOwner
+
+UnitVerifierSpaceFactory::version
+└── when called
+    └── it returns semantic version
+
+UnitVerifierSpaceFactory::_authorizeUpgrade
+├── when called by owner
+│   └── it does not revert
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

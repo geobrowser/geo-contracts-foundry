@@ -11,7 +11,7 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import 'script/Constants.s.sol' as Constants;
 
 contract DeployGEOBrowser is Script {
-  SpaceRegistry public spaceRegistry;
+  SpaceRegistry public spaceRegistryImplementation;
   SpaceRegistry public spaceRegistryProxy;
 
   function setUp() public virtual {}
@@ -20,12 +20,13 @@ contract DeployGEOBrowser is Script {
     vm.startBroadcast();
 
     // Deploy the implementation contracts
-    spaceRegistry = new SpaceRegistry();
+    spaceRegistryImplementation = new SpaceRegistry();
 
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
+        address(spaceRegistryImplementation),
+        abi.encodeCall(ISpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
       )
     );
 
