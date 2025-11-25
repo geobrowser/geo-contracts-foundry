@@ -19,11 +19,7 @@ UnitSpaceRegistry::enter
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
-<<<<<<< HEAD
 │       ├── it calls toSpace to fetch _topicOutput
-=======
-│       ├── it calls toSpace to fetch
->>>>>>> 4aa92c6 (fix: add update space registry unit test tree)
 │       └── it calls toSpace to write
 └── when space is not registered
     └── it reverts with SpaceNotRegistered
