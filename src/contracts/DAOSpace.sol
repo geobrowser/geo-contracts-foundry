@@ -69,7 +69,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external {
     // Only Space Registry can call
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
-    // Actions
+    // Governance Actions
     if (_action == ActionsConstants.CREATE_PROPOSAL) {
       _createProposal(_fromSpace, _data);
     } else if (_action == ActionsConstants.VOTE) {
@@ -80,8 +80,6 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
       _leave(_fromSpace);
     } else if (_action == ActionsConstants.FLAG_EDITOR) {
       _flagEditor(_fromSpace, _data);
-    } else if (_action == ActionsConstants.UNFLAG_EDITOR) {
-      _unflagEditor(_fromSpace, _data);
     } else {
       // Must attempt to write in some way
       revert InvalidAction();
@@ -115,6 +113,15 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   function removeMember(address _oldMember) public {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _removeMember(_oldMember);
+  }
+
+  /// @inheritdoc IDAOSpace
+  function unflagEditor(address _unflaggedEditor) public {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    isEditorFlagged[_unflaggedEditor] = false;
+    spaceRegistry.enter(
+      address(this), address(this), ActionsConstants.UNFLAG_EDITOR, bytes32(bytes20(_unflaggedEditor)), '', ''
+    );
   }
 
   /// @inheritdoc ISpace
@@ -284,27 +291,13 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @notice Flags an editor, restricting them from creating fast path proposals
    * @param _fromSpace The address of the editor performing the flagging
    * @param _data The encoded data containing the address of the editor to flag
-   * @dev Only editors can flag other editors. Flagged editors cannot create fast path proposals.
+   * @dev Only editors can flag other editors.
    */
   function _flagEditor(address _fromSpace, bytes calldata _data) internal {
     if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
     address _flaggedEditor = abi.decode(_data, (address));
     if (!hasRole(EDITOR, _flaggedEditor)) revert InvalidAddress();
     isEditorFlagged[_flaggedEditor] = true;
-  }
-
-  /**
-   * @notice Unflags an editor, restoring their ability to create fast path proposals
-   * @param _fromSpace The address of the editor performing the unflagging
-   * @param _data The encoded data containing the address of the editor to unflag
-   * @dev Only editors can unflag other editors. Cannot unflag self.
-   */
-  function _unflagEditor(address _fromSpace, bytes calldata _data) internal {
-    if (!hasRole(EDITOR, _fromSpace)) revert InvalidCaller();
-    address _unflaggedEditor = abi.decode(_data, (address));
-    if (_fromSpace == _unflaggedEditor) revert InvalidCaller();
-    if (!hasRole(EDITOR, _unflaggedEditor)) revert InvalidAddress();
-    isEditorFlagged[_unflaggedEditor] = false;
   }
 
   /**

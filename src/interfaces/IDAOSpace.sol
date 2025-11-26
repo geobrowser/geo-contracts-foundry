@@ -186,6 +186,12 @@ interface IDAOSpace is ISpace {
   function removeMember(address _oldMember) external;
 
   /**
+   * @notice Unflags an editor, restoring their ability to create fast path proposals
+   * @param _unflaggedEditor The address of the editor to unflag
+   */
+  function unflagEditor(address _unflaggedEditor) external;
+
+  /**
    * @notice Space Registry contract
    * @return The address of the space registry singleton
    */
