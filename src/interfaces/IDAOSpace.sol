@@ -4,12 +4,6 @@ pragma solidity 0.8.30;
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
-/**
- * @title DAO Space Interface
- * @notice Manages governance proposals and voting for a DAO Space
- * @dev Dual-path governance: fast path (threshold-based, immediate execution) and slow path
- * (majority voting with voting window). Fast path escalates to slow path on "No" vote.
- */
 interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
@@ -32,7 +26,7 @@ interface IDAOSpace is ISpace {
    */
   enum VotingMode {
     Slow,
-    Fast /// flat
+    Fast
   }
 
   /**
@@ -60,7 +54,6 @@ interface IDAOSpace is ISpace {
     uint256 supportThreshold;
     uint256 startDate;
     uint256 endDate;
-    uint256 snapshotBlock; // probs don't need now
   }
 
   /**
@@ -95,7 +88,7 @@ interface IDAOSpace is ISpace {
    * @notice Action to execute when proposal passes
    * @param to Target address
    * @param value Native currency amount to send
-   * @param data Call data
+   * @param data Calldata
    */
   struct Action {
     address to;
@@ -146,6 +139,16 @@ interface IDAOSpace is ISpace {
    * @dev Fast path limited to single action
    */
   error OneActionForFastPath();
+
+  /**
+   * @notice Thrown when an editor has been flagged and thus is prevented from using the fast path
+   */
+  error EditorFlagged();
+
+  /**
+   * @notice Thrown when the from space is not an editor
+   */
+  error NotEditor();
 
   /**
    * @notice Initializes the contract
@@ -227,12 +230,6 @@ interface IDAOSpace is ISpace {
    * @return True if editor is flagged
    */
   function isEditorFlagged(address _space) external view returns (bool);
-
-  /**
-   * @notice Tracks the total number of editors
-   * @return The total number of editors
-   */
-  function editorsLength() external view returns (uint256);
 
   /**
    * @notice Checks if a proposal has reached its support threshold
