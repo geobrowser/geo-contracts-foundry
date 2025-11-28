@@ -5,7 +5,6 @@ import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {ERC1967Utils} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol';
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
@@ -79,7 +78,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
     assertEq(verifierSpaceFactoryProxy.owner(), __owner);
 
     // it deploys verifier space implementation
-    assertEq(UUPSUpgradeable(_verifierSpaceImplementation).proxiableUUID(), ERC1967Utils.IMPLEMENTATION_SLOT);
+    assertEq(_verifierSpaceImplementation.code, type(VerifierSpace).runtimeCode);
 
     // it deploys verifier space beacon
     assertEq(UpgradeableBeacon(_verifierSpaceBeacon).implementation(), _verifierSpaceImplementation);

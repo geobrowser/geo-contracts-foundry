@@ -13,6 +13,7 @@ import {MockVerifierSpace} from 'mocks/MockVerifierSpace.sol';
 contract UnitVerifierSpace is TestHelper {
   MockVerifierSpace public verifierSpaceImplementation;
   MockVerifierSpace public verifierSpaceProxy;
+  address public verifierSpaceBeacon;
 
   address internal _owner;
   uint256 internal _ownerPrivateKey;
@@ -27,10 +28,11 @@ contract UnitVerifierSpace is TestHelper {
 
     // when deployed
     verifierSpaceImplementation = new MockVerifierSpace();
+    verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpaceImplementation), abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, _owner))
+      UnsafeUpgrades.deployBeaconProxy(
+        verifierSpaceBeacon, abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, _owner))
       )
     );
   }
@@ -222,24 +224,6 @@ contract UnitVerifierSpace is TestHelper {
 
     // it returns semantic version
     assertEq(verifierSpaceProxy.version(), '1.0.0');
-  }
-
-  function test__authorizeUpgrade_WhenCalledByOwner(address _newImplementation) external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it does not revert
-    verifierSpaceProxy.exposed__authorizeUpgrade(_newImplementation);
-  }
-
-  function test__authorizeUpgrade_WhenCalledByNon_owner(address _newImplementation) external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.exposed__authorizeUpgrade(_newImplementation);
   }
 
   function _mockValidWriters(address _account, bool _valid) internal {

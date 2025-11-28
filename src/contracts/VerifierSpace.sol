@@ -2,7 +2,6 @@
 pragma solidity 0.8.30;
 
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {SignatureChecker} from '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
 
 import {ISemver} from 'interfaces/ISemver.sol';
@@ -15,7 +14,7 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
  * @dev This contract validates off-chain messages passed to the SpaceRegistry when from ≠ msg.sender
  *      An arbitrary number of these contracts allows for an EOA (or a DAO) to control multiple spaces simultaneously
  */
-contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
+contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   /// @inheritdoc IVerifierSpace
   address public spaceRegistry;
 
@@ -87,7 +86,4 @@ contract VerifierSpace is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpace {
     validWriters[_account] = _valid;
     emit ValidWriterSet(_account, _valid);
   }
-
-  /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
