@@ -46,14 +46,14 @@ interface IDAOSpace is ISpace {
    * @param votingMode Voting mode (Slow or Fast)
    * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates.
    * @param startDate Timestamp when voting starts
-   * @param endDate Timestamp when voting ends (slow path execution requires this)
+   * @param lastDate Timestamp when voting ends (slow path execution requires this)
    * @param snapshotBlock Block number for snapshot voting (block.number - 1)
    */
   struct ProposalParameters {
     VotingMode votingMode;
     uint256 supportThreshold;
     uint256 startDate;
-    uint256 endDate;
+    uint256 lastDate;
   }
 
   /**

@@ -67,6 +67,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     _grantRole(DAO, address(this));
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
+    spaceRegistry.registerSpaceId();
   }
 
   /// @inheritdoc ISpace
@@ -138,7 +139,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
       (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
-      if (block.timestamp <= proposal_.parameters.endDate) return false;
+      if (block.timestamp <= proposal_.parameters.lastDate) return false;
       // Threshold percentage calculation
       if ((RATIO_BASE - supportThreshold) * proposal_.tally.yes > supportThreshold * proposal_.tally.no) return true;
     } else {
@@ -174,13 +175,13 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal {
     // Only members or editors can create a proposal
-    if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidCaller();
+    if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidAddress();
     // Decode data to construct proposal
     (, VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (bytes, VotingMode, Action[]));
     // Update proposal storage
     Proposal storage proposal_ = _proposals[proposalCounter++];
     proposal_.parameters.startDate = block.timestamp;
-    proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
+    proposal_.parameters.lastDate = block.timestamp + votingSettings.duration;
     proposal_.parameters.votingMode = votingMode;
     if (votingMode == VotingMode.Slow) {
       // Slow path
@@ -242,7 +243,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
         proposal_.parameters.supportThreshold = votingSettings.slowPathPercentageThreshold;
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
-        proposal_.parameters.endDate = block.timestamp + votingSettings.duration;
+        proposal_.parameters.lastDate = block.timestamp + votingSettings.duration;
       } else if (_voteOption == VoteOption.Yes) {
         // immediate execution if possible
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
@@ -293,7 +294,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     } else if (hasRole(EDITOR, _fromSpace)) {
       _removeEditor(_fromSpace);
     } else {
-      revert InvalidCaller();
+      revert InvalidAddress();
     }
   }
 
@@ -315,6 +316,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @param _unflaggedEditor The address of the editor to be unflaged
    */
   function _unflagEditor(address _unflaggedEditor) internal {
+    if (!hasRole(EDITOR, _unflaggedEditor)) revert NotEditor();
     isEditorFlagged[_unflaggedEditor] = false;
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.UNFLAG_EDITOR, bytes32(bytes20(_unflaggedEditor)), '', ''
@@ -394,7 +396,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
     // The proposal vote has already ended.
-    if ((block.timestamp > proposal_.parameters.endDate || proposal_.executed)) return false;
+    if ((block.timestamp > proposal_.parameters.lastDate || proposal_.executed)) return false;
     // The voter votes `None` which is not allowed.
     if (_voteOption == VoteOption.None) return false;
     // The voter has no voting power.
