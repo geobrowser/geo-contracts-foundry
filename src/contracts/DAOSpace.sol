@@ -2,7 +2,6 @@
 pragma solidity 0.8.30;
 
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
 import {IDAOSpace, ISpace} from 'interfaces/IDAOSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
@@ -16,7 +15,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
  *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
  */
-contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
+contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
 
@@ -372,11 +371,6 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_MEMBER, bytes32(bytes20(_oldMember)), '', ''
     );
-  }
-
-  /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address) internal view override {
-    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
   }
 
   /**
