@@ -11,8 +11,4 @@ contract MockVerifierSpace is VerifierSpace {
   function workaround_setValidWriters(address _account, bool _valid) external {
     validWriters[_account] = _valid;
   }
-
-  function exposed__authorizeUpgrade(address _newImplementation) external {
-    _authorizeUpgrade(_newImplementation);
-  }
 }
