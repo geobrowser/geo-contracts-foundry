@@ -47,7 +47,6 @@ interface IDAOSpace is ISpace {
    * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates.
    * @param startDate Timestamp when voting starts
    * @param lastDate Timestamp when voting ends (slow path execution requires this)
-   * @param snapshotBlock Block number for snapshot voting (block.number - 1)
    */
   struct ProposalParameters {
     VotingMode votingMode;
@@ -112,9 +111,14 @@ interface IDAOSpace is ISpace {
   error InvalidAction();
 
   /**
-   * @notice Thrown when the provided address is invalid
+   * @notice Thrown when the from space attempts to execute a restricted operation
    */
-  error InvalidAddress();
+  error InvalidFromSpace();
+
+  /**
+   * @notice Thrown when attempting to assign/unassign a role to an inappropriate address
+   */
+  error InvalidAddressForRole();
 
   /**
    * @notice Thrown when a voter cannot vote on a proposal

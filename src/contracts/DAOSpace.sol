@@ -82,7 +82,7 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     } else if (_action == ActionsConstants.EXECUTE_PROPOSAL) {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.LEAVE) {
-      _leave(_fromSpace);
+      _leave(_fromSpace, _data);
     } else if (_action == ActionsConstants.FLAG_EDITOR) {
       _flagEditor(_fromSpace, _data);
     } else {
@@ -174,8 +174,6 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal {
-    // Only members or editors can create a proposal
-    if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidAddress();
     // Decode data to construct proposal
     (, VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (bytes, VotingMode, Action[]));
     // Update proposal storage
@@ -185,10 +183,13 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
     proposal_.parameters.votingMode = votingMode;
     if (votingMode == VotingMode.Slow) {
       // Slow path
+      // Only members or editors can create slow path proposals
+      if (!(hasRole(MEMBER, _fromSpace) || hasRole(EDITOR, _fromSpace))) revert InvalidFromSpace();
       proposal_.parameters.supportThreshold = votingSettings.slowPathPercentageThreshold;
     } else {
       // Fast path
-      if (!hasRole(EDITOR, _fromSpace)) revert NotEditor();
+      // Only editors can create fast path proposals
+      if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
       // Checks from space is allowed to use fast path
       if (isEditorFlagged[_fromSpace]) revert EditorFlagged();
       // limit the actions to one call
@@ -285,16 +286,16 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Allows a member or editor to leave the space
    * @param _fromSpace The address of the space leaving
-   * @dev If the address is a member, removes them as a member. If they are an editor, removes
-   * them as an editor.
+   * @param _data The encoded role data used to determine which role a user wants to leave
    */
-  function _leave(address _fromSpace) internal {
-    if (hasRole(MEMBER, _fromSpace)) {
+  function _leave(address _fromSpace, bytes calldata _data) internal {
+    bytes32 role = abi.decode(_data, (bytes32));
+    if (role == MEMBER && hasRole(MEMBER, _fromSpace)) {
       _removeMember(_fromSpace);
-    } else if (hasRole(EDITOR, _fromSpace)) {
+    } else if (role == EDITOR && hasRole(EDITOR, _fromSpace)) {
       _removeEditor(_fromSpace);
     } else {
-      revert InvalidAddress();
+      revert InvalidFromSpace();
     }
   }
 
@@ -305,9 +306,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
    * @dev Only editors can flag other editors.
    */
   function _flagEditor(address _fromSpace, bytes calldata _data) internal {
-    if (!hasRole(EDITOR, _fromSpace)) revert NotEditor();
+    if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
     address _flaggedEditor = abi.decode(_data, (address));
-    if (!hasRole(EDITOR, _flaggedEditor)) revert InvalidAddress();
+    if (!hasRole(EDITOR, _flaggedEditor)) revert NotEditor();
     isEditorFlagged[_flaggedEditor] = true;
   }
 
@@ -326,10 +327,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to add an editor
    * @param _newEditor The address of the new editor
-   * @dev Grants EDITOR role and notifies registry.
    */
   function _addEditor(address _newEditor) internal {
-    if (hasRole(EDITOR, _newEditor)) revert InvalidAddress();
+    if (hasRole(EDITOR, _newEditor)) revert InvalidAddressForRole();
     // Grant the role for access control
     _grantRole(EDITOR, _newEditor);
     // Ping the registry
@@ -339,10 +339,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to remove an editor
    * @param _oldEditor The address of the editor to remove
-   * @dev Revokes EDITOR role and notifies registry.
    */
   function _removeEditor(address _oldEditor) internal {
-    if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddress();
+    if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddressForRole();
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
     // Reset flagged status
@@ -356,10 +355,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to add a member
    * @param _newMember The address of the new member
-   * @dev Grants the MEMBER role and notifies the space registry.
    */
   function _addMember(address _newMember) internal {
-    if (hasRole(MEMBER, _newMember)) revert InvalidAddress();
+    if (hasRole(MEMBER, _newMember)) revert InvalidAddressForRole();
     _grantRole(MEMBER, _newMember);
     spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_MEMBER, bytes32(bytes20(_newMember)), '', '');
   }
@@ -367,10 +365,9 @@ contract DAOSpace is UUPSUpgradeable, AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to remove a member
    * @param _oldMember The address of the member to remove
-   * @dev Revokes the MEMBER role and notifies the space registry.
    */
   function _removeMember(address _oldMember) internal {
-    if (!hasRole(MEMBER, _oldMember)) revert InvalidAddress();
+    if (!hasRole(MEMBER, _oldMember)) revert InvalidAddressForRole();
     _revokeRole(MEMBER, _oldMember);
     spaceRegistry.enter(
       address(this), address(this), ActionsConstants.REMOVE_MEMBER, bytes32(bytes20(_oldMember)), '', ''
