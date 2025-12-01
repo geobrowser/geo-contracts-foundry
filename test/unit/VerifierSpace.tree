@@ -44,9 +44,3 @@ UnitVerifierSpace::fetch
 UnitVerifierSpace::version
 └── when called
     └── it returns semantic version
-
-UnitVerifierSpace::_authorizeUpgrade
-├── when called by owner
-│   └── it does not revert
-└── when called by non-owner
-    └── it reverts with OwnableUnauthorizedAccount

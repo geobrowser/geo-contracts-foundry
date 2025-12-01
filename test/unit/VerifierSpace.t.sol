@@ -11,8 +11,9 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 import {MockVerifierSpace} from 'mocks/MockVerifierSpace.sol';
 
 contract UnitVerifierSpace is TestHelper {
-  MockVerifierSpace public verifierSpace;
+  MockVerifierSpace public verifierSpaceImplementation;
   MockVerifierSpace public verifierSpaceProxy;
+  address public verifierSpaceBeacon;
 
   address internal _owner;
   uint256 internal _ownerPrivateKey;
@@ -26,11 +27,12 @@ contract UnitVerifierSpace is TestHelper {
     (_owner, _ownerPrivateKey) = makeAddrAndKey('_owner');
 
     // when deployed
-    verifierSpace = new MockVerifierSpace();
+    verifierSpaceImplementation = new MockVerifierSpace();
+    verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpace), abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, _owner))
+      UnsafeUpgrades.deployBeaconProxy(
+        verifierSpaceBeacon, abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, _owner))
       )
     );
   }
@@ -62,7 +64,7 @@ contract UnitVerifierSpace is TestHelper {
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpace), abi.encodeCall(IVerifierSpace.initialize, (__spaceRegistry, __owner))
+        address(verifierSpaceImplementation), abi.encodeCall(IVerifierSpace.initialize, (__spaceRegistry, __owner))
       )
     );
 
@@ -70,7 +72,7 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.owner(), __owner);
 
     // it sets spaceRegistry
-    assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
+    assertEq(verifierSpaceProxy.spaceRegistry(), __spaceRegistry);
 
     // it sets validWriters
     assertEq(verifierSpaceProxy.validWriters(__owner), true);
@@ -84,7 +86,7 @@ contract UnitVerifierSpace is TestHelper {
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpace), abi.encodeCall(IVerifierSpace.initialize, (__spaceRegistry, __owner))
+        address(verifierSpaceImplementation), abi.encodeCall(IVerifierSpace.initialize, (__spaceRegistry, __owner))
       )
     );
 
@@ -105,7 +107,7 @@ contract UnitVerifierSpace is TestHelper {
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpace), abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, __owner))
+        address(verifierSpaceImplementation), abi.encodeCall(IVerifierSpace.initialize, (_spaceRegistry, __owner))
       )
     );
   }
@@ -115,7 +117,7 @@ contract UnitVerifierSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    verifierSpace.initialize(__spaceRegistry, __owner);
+    verifierSpaceImplementation.initialize(__spaceRegistry, __owner);
   }
 
   function test_SetValidWriters_WhenCalledByOwner(address _account, bool _valid) external {
@@ -222,24 +224,6 @@ contract UnitVerifierSpace is TestHelper {
 
     // it returns semantic version
     assertEq(verifierSpaceProxy.version(), '1.0.0');
-  }
-
-  function test__authorizeUpgrade_WhenCalledByOwner(address _newImplementation) external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it does not revert
-    verifierSpaceProxy.exposed__authorizeUpgrade(_newImplementation);
-  }
-
-  function test__authorizeUpgrade_WhenCalledByNon_owner(address _newImplementation) external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.exposed__authorizeUpgrade(_newImplementation);
   }
 
   function _mockValidWriters(address _account, bool _valid) internal {

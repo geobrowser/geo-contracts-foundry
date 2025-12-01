@@ -14,7 +14,7 @@ import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
 contract UnitSpaceRegistry is TestHelper {
-  MockSpaceRegistry public spaceRegistry;
+  MockSpaceRegistry public spaceRegistryImplementation;
   MockSpaceRegistry public spaceRegistryProxy;
 
   address internal _owner = makeAddr('_owner');
@@ -28,10 +28,12 @@ contract UnitSpaceRegistry is TestHelper {
 
   function setUp() external {
     // when deployed
-    spaceRegistry = new MockSpaceRegistry();
+    spaceRegistryImplementation = new MockSpaceRegistry();
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (_owner)))
+      UnsafeUpgrades.deployUUPSProxy(
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (_owner))
+      )
     );
   }
 
@@ -62,7 +64,9 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
+      UnsafeUpgrades.deployUUPSProxy(
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+      )
     );
 
     // it sets owner
@@ -76,7 +80,9 @@ contract UnitSpaceRegistry is TestHelper {
   {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
+      UnsafeUpgrades.deployUUPSProxy(
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+      )
     );
 
     // it reverts with InvalidInitialization
@@ -95,7 +101,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(address(spaceRegistry), abi.encodeCall(ISpaceRegistry.initialize, (__owner)))
+      UnsafeUpgrades.deployUUPSProxy(
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+      )
     );
   }
 
@@ -104,7 +112,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    spaceRegistry.initialize(__owner);
+    spaceRegistryImplementation.initialize(__owner);
   }
 
   modifier whenSpacesAreRegistered() {
