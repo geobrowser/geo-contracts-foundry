@@ -46,6 +46,11 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @notice Stores information about a proposal by its ID
   mapping(uint256 _proposalId => Proposal _proposal) private _proposals;
 
+  /// @notice Constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /// @inheritdoc IDAOSpace
   function initialize(
     ISpaceRegistry _spaceRegistry,
