@@ -65,6 +65,8 @@ contract UnitVerifierSpace is TestHelper {
     address __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
+    _assumeFuzzable(__spaceRegistry);
+
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
 
@@ -90,6 +92,7 @@ contract UnitVerifierSpace is TestHelper {
     address __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
+    _assumeFuzzable(__spaceRegistry);
     _mockRegisterSpaceId(__spaceRegistry);
 
     // when delegate called
