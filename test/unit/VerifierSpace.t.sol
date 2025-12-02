@@ -7,6 +7,7 @@ import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 import {MockVerifierSpace} from 'mocks/MockVerifierSpace.sol';
 
@@ -29,6 +30,9 @@ contract UnitVerifierSpace is TestHelper {
     // when deployed
     verifierSpaceImplementation = new MockVerifierSpace();
     verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
+
+    _mockRegisterSpaceId(_spaceRegistry);
+
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployBeaconProxy(
@@ -61,6 +65,9 @@ contract UnitVerifierSpace is TestHelper {
     address __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
+    // it calls spaceRegistry to register space ID
+    _mockRegisterSpaceId(__spaceRegistry);
+
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployUUPSProxy(
@@ -72,7 +79,7 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.owner(), __owner);
 
     // it sets spaceRegistry
-    assertEq(verifierSpaceProxy.spaceRegistry(), __spaceRegistry);
+    assertEq(address(verifierSpaceProxy.spaceRegistry()), __spaceRegistry);
 
     // it sets validWriters
     assertEq(verifierSpaceProxy.validWriters(__owner), true);
@@ -83,6 +90,8 @@ contract UnitVerifierSpace is TestHelper {
     address __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
+    _mockRegisterSpaceId(__spaceRegistry);
+
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
       UnsafeUpgrades.deployUUPSProxy(
@@ -228,5 +237,9 @@ contract UnitVerifierSpace is TestHelper {
 
   function _mockValidWriters(address _account, bool _valid) internal {
     verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
+  }
+
+  function _mockRegisterSpaceId(address __spaceRegistry) internal {
+    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
   }
 }
