@@ -60,6 +60,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   ) external initializer {
     spaceRegistry = _spaceRegistry;
     votingSettings = _votingSettings;
+    spaceRegistry.registerSpaceId();
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);
@@ -71,7 +72,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     _grantRole(DAO, address(this));
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
-    spaceRegistry.registerSpaceId();
   }
 
   /// @inheritdoc ISpace
