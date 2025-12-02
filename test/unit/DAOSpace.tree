@@ -20,3 +20,26 @@ UnitDAOSpace::initializer
 │       └── it reverts with InvalidInitialization
 └── when called
     └── it reverts with InvalidInitialization
+
+UnitDAOSpace::write
+└── when called by spaceRegistry
+    └── when _action equals CREATE_PROPOSAL
+        ├── it incremments the proposal counter
+        ├── it sets the proposal start date to block.timestamp
+        ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+        ├── it sets the proposal voting mode
+        ├── when the voting mode is slow
+        │   ├── when _fromSpace is not a member or editor
+        │   │   └── it reverts with InvalidFromSpace
+        │   └── it sets the proposal support threshold to the slow path percentage threshold
+        ├── when the voting mode is fast
+        │   ├── when _fromSpace is not an editor
+        │   │   └── it reverts with InvalidFromSpace
+        │   ├── when _fromSpace is a flagged editor
+        │   │   └── it reverts with EditorFlagged
+        │   ├── when the decoded proposal action is not limited to one call
+        │   │   └── it reverts with OneActionForFastPath
+        │   ├── when the function selector of the decoded proposal action is not fast path valid
+        │   │   └── it reverts with InvalidAction
+        │   └── it sets the proposal support threshold to the fast path flat threshold
+        └── it stores the decoded proposal actions

@@ -7,4 +7,8 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
  * @title MockDAOSpace
  * @notice Mock contract for testing DAOSpace with additional test helper functions
  */
-contract MockDAOSpace is DAOSpace {}
+contract MockDAOSpace is DAOSpace {
+  function workaround_setEditorToFlagged(address _account, bool _flagged) external {
+    isEditorFlagged[_account] = _flagged;
+  }
+}

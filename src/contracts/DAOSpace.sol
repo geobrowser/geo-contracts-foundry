@@ -173,13 +173,13 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Creates a new governance proposal
    * @param _fromSpace The address of the space creating the proposal
-   * @param _data The encoded proposal data containing URI, voting mode, and actions
+   * @param _data The encoded proposal data containing the voting mode and actions
    * @dev Fast path: only editors can create, creator must not be flagged, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal {
     // Decode data to construct proposal
-    (, VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (bytes, VotingMode, Action[]));
+    (VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (VotingMode, Action[]));
     // Update proposal storage
     Proposal storage proposal_ = _proposals[proposalCounter++];
     proposal_.parameters.startDate = block.timestamp;

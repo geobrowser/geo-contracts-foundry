@@ -33,6 +33,8 @@ contract UnitDAOSpace is TestHelper {
   function setUp() external {
     // set up
     (_owner, _ownerPrivateKey) = makeAddrAndKey('_owner');
+    _votingSettings =
+      IDAOSpace.VotingSettings({slowPathPercentageThreshold: 5e5, fastPathFlatThreshold: 1, duration: 2 days});
     _initialEditors = new address[](1);
     _initialEditors[0] = _initialEditor;
     _initialMembers = new address[](1);
@@ -256,6 +258,161 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.initialize(ISpaceRegistry(_spaceRegistry), _votingSettings, _initialEditors, _initialMembers);
   }
 
+  /// WRITE - CREATE PROPOSAL ///
+
+  modifier whenCalledBySpaceRegistry() {
+    vm.startPrank(_spaceRegistry);
+    _;
+    vm.stopPrank();
+  }
+
+  modifier when_actionEqualsCREATE_PROPOSAL() {
+    _;
+  }
+
+  function test_Write_When_actionEqualsCREATE_PROPOSAL(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+  {
+    // get initial proposal count
+    uint256 initialProposalCounter = daoSpaceProxy.proposalCounter();
+
+    // when called
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+
+    // it incremments the proposal counter
+    assertEq(daoSpaceProxy.proposalCounter(), initialProposalCounter + 1);
+
+    (, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+      daoSpaceProxy.getProposalInformation(initialProposalCounter);
+
+    // it sets the proposal start date to block.timestamp
+    assertEq(parameters.startDate, vm.getBlockTimestamp());
+
+    // it sets the proposal last date to block.timestamp plus votingSettings.duration
+    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets the proposal voting mode
+    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+
+    // it stores the decoded proposal actions
+    assertEq(actions.length, 1);
+    assertEq(actions[0].to, address(daoSpaceProxy));
+    assertEq(actions[0].value, 0);
+    assertEq(actions[0].data, abi.encodeCall(IDAOSpace.addEditor, (_randomCaller)));
+  }
+
+  modifier whenTheVotingModeIsSlow() {
+    _;
+  }
+
+  function test_Write_WhenTheVotingModeIsSlow(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsSlow
+  {
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+
+    (, IDAOSpace.ProposalParameters memory parameters,,) =
+      daoSpaceProxy.getProposalInformation(daoSpaceProxy.proposalCounter() - 1);
+
+    // it sets the proposal support threshold to the slow path percentage threshold
+    assertEq(parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
+  }
+
+  function test_Write_When_fromSpaceIsNotAMemberOrEditor(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsSlow
+  {
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+
+    // it reverts with InvalidFromSpace
+    vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
+    daoSpaceProxy.write(_randomCaller, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+  }
+
+  modifier whenTheVotingModeIsFast() {
+    _;
+  }
+
+  function test_Write_WhenTheVotingModeIsFast(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsFast
+  {
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+
+    (, IDAOSpace.ProposalParameters memory parameters,,) =
+      daoSpaceProxy.getProposalInformation(daoSpaceProxy.proposalCounter() - 1);
+
+    // it sets the proposal support threshold to the fast path flat threshold
+    assertEq(parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
+  }
+
+  function test_Write_When_fromSpaceIsNotAnEditor(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsFast
+  {
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+
+    // it reverts with InvalidFromSpace
+    vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
+    daoSpaceProxy.write(_randomCaller, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+  }
+
+  function test_Write_When_fromSpaceIsAFlaggedEditor(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsFast
+  {
+    daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
+
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+
+    // it reverts with EditorFlagged
+    vm.expectRevert(IDAOSpace.EditorFlagged.selector);
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+  }
+
+  function test_Write_WhenTheDecodedProposalActionIsNotLimitedToOneCall(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsFast
+  {
+    bytes memory _proposalData = _createFastPathProposalToAddTwoMembers();
+
+    // it reverts with OneActionForFastPath
+    vm.expectRevert(IDAOSpace.OneActionForFastPath.selector);
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+  }
+
+  function test_Write_WhenTheFunctionSelectorOfTheDecodedProposalActionIsNotFastPathValid(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsFast
+  {
+    bytes memory _proposalData = _createFastPathProposalToAddEditor();
+
+    // it reverts with InvalidAction
+    vm.expectRevert(IDAOSpace.InvalidAction.selector);
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, _proposalData);
+  }
+
+  /// WRITE - VOTE ///
+
   /// HELPERS ///
 
   function _mockRegisterSpaceId(address __spaceRegistry) internal {
@@ -266,5 +423,47 @@ contract UnitDAOSpace is TestHelper {
     _mockAndExpect(
       __spaceRegistry, abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, '', '')), abi.encode()
     );
+  }
+
+  function _createSlowPathProposalToAddEditor() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Slow;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCaller))
+    });
+    return abi.encode(votingMode, actions);
+  }
+
+  /// @dev valid proposal because action is fast path valid
+  function _createFastPathProposalToAddMember() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCaller))
+    });
+    return abi.encode(votingMode, actions);
+  }
+
+  /// @dev invalid proposal because it attempts to perform two actions
+  function _createFastPathProposalToAddTwoMembers() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](2);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCaller))
+    });
+    actions[1] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCaller))
+    });
+    return abi.encode(votingMode, actions);
+  }
+
+  /// @dev invalid proposal because action is not fast path valid
+  function _createFastPathProposalToAddEditor() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCaller))
+    });
+    return abi.encode(votingMode, actions);
   }
 }
