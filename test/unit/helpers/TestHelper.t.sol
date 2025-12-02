@@ -9,4 +9,11 @@ abstract contract TestHelper is Test {
     vm.mockCall(_target, _call, _returnData);
     vm.expectCall(_target, _call);
   }
+
+  /// @notice Helper function to avoid zero address, forge address and precompile address
+  function _assumeFuzzable(address _address) internal pure {
+    assumeNotForgeAddress(_address);
+    assumeNotZeroAddress(_address);
+    assumeNotPrecompile(_address);
+  }
 }
