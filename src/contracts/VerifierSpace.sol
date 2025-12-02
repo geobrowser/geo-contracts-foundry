@@ -6,6 +6,7 @@ import {SignatureChecker} from '@openzeppelin/contracts/utils/cryptography/Signa
 
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 
 /**
@@ -16,7 +17,7 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
  */
 contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   /// @inheritdoc IVerifierSpace
-  address public spaceRegistry;
+  ISpaceRegistry public spaceRegistry;
 
   /// @inheritdoc IVerifierSpace
   mapping(address _account => bool _valid) public validWriters;
@@ -33,10 +34,12 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   function initialize(address _spaceRegistry, address _owner) external initializer {
     __Ownable_init(_owner);
 
-    spaceRegistry = _spaceRegistry;
+    spaceRegistry = ISpaceRegistry(_spaceRegistry);
 
     _setValidWriters(_owner, true);
     _setValidWriters(address(this), true);
+
+    ISpaceRegistry(_spaceRegistry).registerSpaceId();
   }
 
   /// @inheritdoc IVerifierSpace

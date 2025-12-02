@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 /**
  * @title IVerifierSpace
@@ -29,7 +30,7 @@ interface IVerifierSpace is ISpace, ISemver {
    * @notice Returns the space registry contract address
    * @return _spaceRegistry The address of the space registry contract
    */
-  function spaceRegistry() external view returns (address _spaceRegistry);
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Maps each address to its writer validity status
