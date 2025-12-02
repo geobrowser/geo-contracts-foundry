@@ -7,17 +7,11 @@ UnitDAOSpace::initializer
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings
 │   ├── when initialEditors length is greater than zero
-│   │   ├── when an initialEditor is not the zero address
-│   │   │   ├── it grants the new editor the EDITOR role
-│   │   │   └── it calls enter on the spaceRegistry with the ADD_EDITOR action
-│   │   └── when an initialEditor is the zero address
-│   │       └── it reverts with InvalidAddressForRole
+│   │   ├── it grants the new editor the EDITOR role
+│   │   └── it calls enter on the spaceRegistry with the ADD_EDITOR action
 │   ├── when initialMembers length is greater than zero
-│   │   ├── when an initialMember is not the zero address
-│   │   │   ├── it grants the new member the MEMBER role
-│   │   │   └── it calls enter on the spaceRegistry with the ADD_MEMBER action
-│   │   └── when an initialMember is the zero address
-│   │       └── it reverts with InvalidAddressForRole
+│   │   ├── it grants the new member the MEMBER role
+│   │   └── it calls enter on the spaceRegistry with the ADD_MEMBER action
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action

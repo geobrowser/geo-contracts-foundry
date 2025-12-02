@@ -38,11 +38,11 @@ contract UnitDAOSpace is TestHelper {
     _initialMembers = new address[](1);
     _initialMembers[0] = _initialMember;
 
-    // when deployed
+    // proxy set up
     daoSpaceImplementation = new MockDAOSpace();
     daoSpaceBeacon = UnsafeUpgrades.deployBeacon(address(daoSpaceImplementation), _owner);
 
-    // deploy with owner and fetch future address for external calls and event emissions
+    // deploy with owner to fetch future address for external calls and event emissions
     vm.startPrank(_owner, _owner);
     address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
 
@@ -67,6 +67,7 @@ contract UnitDAOSpace is TestHelper {
       bytes32(bytes20(_initialMember))
     );
 
+    // when deployed
     daoSpaceProxy = MockDAOSpace(
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
@@ -75,7 +76,6 @@ contract UnitDAOSpace is TestHelper {
         )
       )
     );
-
     vm.stopPrank();
   }
 
@@ -101,7 +101,7 @@ contract UnitDAOSpace is TestHelper {
     address __spaceRegistry,
     IDAOSpace.VotingSettings calldata __votingSettings
   ) external whenDelegateCalled {
-    //_assumeFuzzable(__spaceRegistry);
+    _assumeFuzzable(__spaceRegistry);
     address[] memory __initialEditors = new address[](0);
     address[] memory __initialMembers = new address[](0);
 
@@ -138,25 +138,18 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
   }
 
-  modifier whenInitialEditorsLengthIsGreaterThanZero() {
-    _;
-  }
-
-  function test_Initializer_WhenAnInitialEditorIsNotTheZeroAddress(
+  function test_Initializer_WhenInitialEditorsLengthIsGreaterThanZero(
     address __spaceRegistry,
     IDAOSpace.VotingSettings calldata __votingSettings,
-    address __initialEditor,
-    address __initialMember
-  ) external whenDelegateCalled whenInitialEditorsLengthIsGreaterThanZero {
-    //_assumeFuzzable(__spaceRegistry);
-    //_assumeFuzzable(__initialEditor);
-    //_assumeFuzzable(__initialMember);
+    address __initialEditor
+  ) external whenDelegateCalled {
+    _assumeFuzzable(__spaceRegistry);
+    _assumeFuzzable(__initialEditor);
     address[] memory __initialEditors = new address[](1);
     __initialEditors[0] = __initialEditor;
-    address[] memory __initialMembers = new address[](1);
-    __initialMembers[0] = __initialMember;
+    address[] memory __initialMembers = new address[](0);
 
-    // deploy with owner and fetch future address for external calls and event emissions
+    // deploy with owner to fetch future address for external calls and event emissions
     vm.startPrank(_owner, _owner);
     address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
 
@@ -171,6 +164,38 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.ADD_EDITOR,
       bytes32(bytes20(__initialEditor))
     );
+
+    // when delegate called
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
+        )
+      )
+    );
+
+    // it grants the new editor the EDITOR role
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), __initialEditor), true);
+  }
+
+  function test_Initializer_WhenInitialMembersLengthIsGreaterThanZero(
+    address __spaceRegistry,
+    IDAOSpace.VotingSettings calldata __votingSettings,
+    address __initialMember
+  ) external whenDelegateCalled {
+    _assumeFuzzable(__spaceRegistry);
+    _assumeFuzzable(__initialMember);
+    address[] memory __initialEditors = new address[](0);
+    address[] memory __initialMembers = new address[](1);
+    __initialMembers[0] = __initialMember;
+
+    // deploy with owner to fetch future address for external calls and event emissions
+    vm.startPrank(_owner, _owner);
+    address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
+
+    // it calls spaceRegistry to register space ID
+    _mockRegisterSpaceId(__spaceRegistry);
 
     // it calls enter on the spaceRegistry with the ADD_MEMBER action
     _mockEnter(
@@ -191,50 +216,44 @@ contract UnitDAOSpace is TestHelper {
       )
     );
 
-    // it grants the new editor the EDITOR role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), __initialEditor), true);
-  }
-
-  function test_Initializer_WhenAnInitialEditorIsTheZeroAddress()
-    external
-    whenDelegateCalled
-    whenInitialEditorsLengthIsGreaterThanZero
-  {
-    // it reverts with InvalidAddressForRole
-    vm.skip(true);
-  }
-
-  modifier whenInitialMembersLengthIsGreaterThanZero() {
-    _;
-  }
-
-  function test_Initializer_WhenAnInitialMemberIsNotTheZeroAddress()
-    external
-    whenDelegateCalled
-    whenInitialMembersLengthIsGreaterThanZero
-  {
     // it grants the new member the MEMBER role
-    // it calls enter on the spaceRegistry with the ADD_MEMBER action
-    vm.skip(true);
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), __initialMember), true);
   }
 
-  function test_Initializer_WhenAnInitialMemberIsTheZeroAddress()
-    external
-    whenDelegateCalled
-    whenInitialMembersLengthIsGreaterThanZero
-  {
-    // it reverts with InvalidAddressForRole
-    vm.skip(true);
-  }
+  function test_Initializer_WhenDelegateCalledAgain(
+    address __spaceRegistry,
+    IDAOSpace.VotingSettings calldata __votingSettings
+  ) external whenDelegateCalled {
+    _assumeFuzzable(__spaceRegistry);
+    address[] memory __initialEditors = new address[](0);
+    address[] memory __initialMembers = new address[](0);
 
-  function test_Initializer_WhenDelegateCalledAgain() external whenDelegateCalled {
+    // it calls spaceRegistry to register space ID
+    _mockRegisterSpaceId(__spaceRegistry);
+
+    // when delegate called
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
+        )
+      )
+    );
+
     // it reverts with InvalidInitialization
-    vm.skip(true);
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+
+    // when delegate called again
+    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers);
   }
 
   function test_Initializer_WhenCalled() external {
     // it reverts with InvalidInitialization
-    vm.skip(true);
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+
+    // when called again
+    daoSpaceProxy.initialize(ISpaceRegistry(_spaceRegistry), _votingSettings, _initialEditors, _initialMembers);
   }
 
   /// HELPERS ///
