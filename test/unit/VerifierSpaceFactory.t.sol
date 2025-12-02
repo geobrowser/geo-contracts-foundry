@@ -10,6 +10,7 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
 import {MockVerifierSpaceFactory} from 'mocks/MockVerifierSpaceFactory.sol';
 
@@ -142,8 +143,10 @@ contract UnitVerifierSpaceFactory is TestHelper {
     address _verifierSpaceProxy = vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce);
 
     // it emits VerifierSpaceProxyCreated
-    vm.expectEmit();
+    vm.expectEmit(address(verifierSpaceFactoryProxy));
     emit IVerifierSpaceFactory.VerifierSpaceProxyCreated(_verifierSpaceProxy);
+
+    _mockRegisterSpaceId(_spaceRegistry);
 
     // it returns new verifier space proxy
     assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), _verifierSpaceProxy);
@@ -154,7 +157,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
       verifierSpaceFactoryProxy.verifierSpaceBeacon()
     );
     assertEq(VerifierSpace(_verifierSpaceProxy).owner(), __owner);
-    assertEq(VerifierSpace(_verifierSpaceProxy).spaceRegistry(), verifierSpaceFactoryProxy.spaceRegistry());
+    assertEq(address(VerifierSpace(_verifierSpaceProxy).spaceRegistry()), verifierSpaceFactoryProxy.spaceRegistry());
     assertEq(VerifierSpace(_verifierSpaceProxy).validWriters(__owner), true);
     assertEq(VerifierSpace(_verifierSpaceProxy).validWriters(_verifierSpaceProxy), true);
   }
@@ -192,5 +195,9 @@ contract UnitVerifierSpaceFactory is TestHelper {
     vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
 
     verifierSpaceFactoryProxy.exposed__authorizeUpgrade(_newImplementation);
+  }
+
+  function _mockRegisterSpaceId(address __spaceRegistry) internal {
+    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
   }
 }
