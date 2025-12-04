@@ -162,7 +162,7 @@ interface IDAOSpace is ISpace {
    * @param _initialMembers The initial list of member addresses
    */
   function initialize(
-    ISpaceRegistry _spaceRegistry,
+    address _spaceRegistry,
     VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers

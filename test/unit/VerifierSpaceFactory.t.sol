@@ -140,26 +140,27 @@ contract UnitVerifierSpaceFactory is TestHelper {
     whenOwnerIsNotZeroAddress(__owner)
   {
     uint256 _verifierSpaceProxyNonce = vm.getNonce(address(verifierSpaceFactoryProxy));
-    address _verifierSpaceProxy = vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce);
+    VerifierSpace _verifierSpaceProxy =
+      VerifierSpace(vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce));
 
     // it emits VerifierSpaceProxyCreated
     vm.expectEmit(address(verifierSpaceFactoryProxy));
-    emit IVerifierSpaceFactory.VerifierSpaceProxyCreated(_verifierSpaceProxy);
+    emit IVerifierSpaceFactory.VerifierSpaceProxyCreated(address(_verifierSpaceProxy));
 
     _mockRegisterSpaceId(_spaceRegistry);
 
     // it returns new verifier space proxy
-    assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), _verifierSpaceProxy);
+    assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), address(_verifierSpaceProxy));
 
     // it deploys and initializes verifier space proxy
     assertEq(
-      address(uint160(uint256(vm.load(_verifierSpaceProxy, ERC1967Utils.BEACON_SLOT)))),
+      address(uint160(uint256(vm.load(address(_verifierSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
       verifierSpaceFactoryProxy.verifierSpaceBeacon()
     );
-    assertEq(VerifierSpace(_verifierSpaceProxy).owner(), __owner);
-    assertEq(address(VerifierSpace(_verifierSpaceProxy).spaceRegistry()), verifierSpaceFactoryProxy.spaceRegistry());
-    assertEq(VerifierSpace(_verifierSpaceProxy).validWriters(__owner), true);
-    assertEq(VerifierSpace(_verifierSpaceProxy).validWriters(_verifierSpaceProxy), true);
+    assertEq(_verifierSpaceProxy.owner(), __owner);
+    assertEq(address(_verifierSpaceProxy.spaceRegistry()), verifierSpaceFactoryProxy.spaceRegistry());
+    assertEq(_verifierSpaceProxy.validWriters(__owner), true);
+    assertEq(_verifierSpaceProxy.validWriters(address(_verifierSpaceProxy)), true);
   }
 
   function test_CreateVerifierSpaceProxy_WhenOwnerIsZeroAddress() external {

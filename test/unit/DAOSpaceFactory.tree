@@ -1,0 +1,34 @@
+UnitDAOSpaceFactory::constructor
+└── when called
+    └── it disables initializers
+
+UnitDAOSpaceFactory::initialize
+├── when delegate called
+│   ├── when owner is not zero address
+│   │   ├── it sets owner
+│   │   ├── it deploys DAO space implementation
+│   │   ├── it deploys DAO space beacon
+│   │   ├── it sets daoSpaceBeacon
+│   │   ├── it sets spaceRegistry
+│   │   └── when delegate called again
+│   │       └── it reverts with InvalidInitialization
+│   └── when owner is zero address
+│       └── it reverts with OwnableInvalidOwner
+└── when called
+    └── it reverts with InvalidInitialization
+
+UnitDAOSpaceFactory::createDAOSpaceProxy
+└── when called
+    ├── it deploys and initializes DAO space proxy
+    ├── it emits DAOSpaceProxyCreated
+    └── it returns new DAO space proxy
+
+UnitDAOSpaceFactory::version
+└── when called
+    └── it returns semantic version
+
+UnitDAOSpaceFactory::_authorizeUpgrade
+├── when called by owner
+│   └── it does not revert
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
