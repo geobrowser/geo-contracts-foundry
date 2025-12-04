@@ -1,3 +1,3 @@
 # 🤖 Linear
 
-Closes GRT-XXX
+Closes GEO-XXX
