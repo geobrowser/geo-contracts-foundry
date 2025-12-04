@@ -43,4 +43,11 @@ contract MockDAOSpace is DAOSpace {
     }
     proposal_.voters[_account] = _voteOption;
   }
+
+  function workaround_setTally(uint256 _proposalId, uint256 _yes, uint256 _no, uint256 _abstain) external {
+    Proposal storage proposal_ = _proposals[_proposalId];
+    proposal_.tally.yes = _yes;
+    proposal_.tally.no = _no;
+    proposal_.tally.abstain = _abstain;
+  }
 }
