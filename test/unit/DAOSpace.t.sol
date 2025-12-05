@@ -142,13 +142,9 @@ contract UnitDAOSpace is TestHelper {
 
   function test_Initializer_WhenInitialEditorsLengthIsGreaterThanZero(
     address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings,
-    address __initialEditor
+    IDAOSpace.VotingSettings calldata __votingSettings
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
-    _assumeFuzzable(__initialEditor);
-    address[] memory __initialEditors = new address[](1);
-    __initialEditors[0] = __initialEditor;
     address[] memory __initialMembers = new address[](0);
 
     // deploy with owner to fetch future address for external calls and event emissions
@@ -164,7 +160,7 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.ADD_EDITOR,
-      bytes32(bytes20(__initialEditor))
+      bytes32(bytes20(_initialEditor))
     );
 
     // when delegate called
@@ -172,25 +168,21 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, __initialMembers)
         )
       )
     );
 
     // it grants the new editor the EDITOR role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), __initialEditor), true);
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
   }
 
   function test_Initializer_WhenInitialMembersLengthIsGreaterThanZero(
     address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings,
-    address __initialMember
+    IDAOSpace.VotingSettings calldata __votingSettings
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
-    _assumeFuzzable(__initialMember);
     address[] memory __initialEditors = new address[](0);
-    address[] memory __initialMembers = new address[](1);
-    __initialMembers[0] = __initialMember;
 
     // deploy with owner to fetch future address for external calls and event emissions
     vm.startPrank(_owner, _owner);
@@ -205,7 +197,7 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.ADD_MEMBER,
-      bytes32(bytes20(__initialMember))
+      bytes32(bytes20(_initialMember))
     );
 
     // when delegate called
@@ -213,13 +205,13 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, _initialMembers)
         )
       )
     );
 
     // it grants the new member the MEMBER role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), __initialMember), true);
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMember), true);
   }
 
   function test_Initializer_WhenDelegateCalledAgain(
