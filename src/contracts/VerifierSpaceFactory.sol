@@ -8,6 +8,7 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
 
 /**
@@ -19,7 +20,7 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   address public verifierSpaceBeacon;
 
   /// @inheritdoc IVerifierSpaceFactory
-  address public spaceRegistry;
+  ISpaceRegistry public spaceRegistry;
 
   /// @notice Constructor
   constructor() {
@@ -27,7 +28,7 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   }
 
   /// @inheritdoc IVerifierSpaceFactory
-  function initialize(address _spaceRegistry, address _owner) external initializer {
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
     __Ownable_init(_owner);
 
     address verifierSpaceImplementation = address(new VerifierSpace());

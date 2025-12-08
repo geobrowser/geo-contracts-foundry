@@ -50,7 +50,7 @@ interface IVerifierSpace is ISpace, ISemver {
    * @param _spaceRegistry The address of the space registry contract
    * @param _owner The address of the owner
    */
-  function initialize(address _spaceRegistry, address _owner) external;
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external;
 
   /**
    * @notice Sets the writer validity status of an address

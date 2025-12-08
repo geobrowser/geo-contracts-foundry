@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 /**
  * @title IDAOSpaceFactory
@@ -25,14 +26,14 @@ interface IDAOSpaceFactory is ISemver {
    * @notice Returns the space registry contract address
    * @return _spaceRegistry The address of the space registry contract
    */
-  function spaceRegistry() external view returns (address _spaceRegistry);
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Initializes the contract
    * @param _spaceRegistry The address of the space registry contract
    * @param _owner The address of the owner
    */
-  function initialize(address _spaceRegistry, address _owner) external;
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external;
 
   /**
    * @notice Creates a DAO space proxy contract

@@ -53,13 +53,13 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
 
   /// @inheritdoc IDAOSpace
   function initialize(
-    address _spaceRegistry,
+    ISpaceRegistry _spaceRegistry,
     VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
   ) external initializer {
-    spaceRegistry = ISpaceRegistry(_spaceRegistry);
-    ISpaceRegistry(_spaceRegistry).registerSpaceId();
+    spaceRegistry = _spaceRegistry;
+    _spaceRegistry.registerSpaceId();
     votingSettings = _votingSettings;
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {

@@ -28,7 +28,7 @@ contract UnitDAOSpaceFactory is TestHelper {
   address[] internal _initialMembers = new address[](1);
   address internal _initialMember = makeAddr('_initialMember');
 
-  address internal _spaceRegistry = makeAddr('_spaceRegistry');
+  ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
 
   function setUp() external {
     _initialEditors[0] = _initialEditor;
@@ -65,7 +65,7 @@ contract UnitDAOSpaceFactory is TestHelper {
   }
 
   function test_Initialize_WhenOwnerIsNotZeroAddress(
-    address __spaceRegistry,
+    ISpaceRegistry __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     // when delegate called
@@ -96,11 +96,11 @@ contract UnitDAOSpaceFactory is TestHelper {
     assertEq(daoSpaceFactoryProxy.daoSpaceBeacon(), _daoSpaceBeacon);
 
     // it sets spaceRegistry
-    assertEq(daoSpaceFactoryProxy.spaceRegistry(), __spaceRegistry);
+    assertEq(address(daoSpaceFactoryProxy.spaceRegistry()), address(__spaceRegistry));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
-    address __spaceRegistry,
+    ISpaceRegistry __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     // when delegate called
@@ -132,7 +132,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     );
   }
 
-  function test_Initialize_WhenCalled(address __spaceRegistry, address __owner) external {
+  function test_Initialize_WhenCalled(ISpaceRegistry __spaceRegistry, address __owner) external {
     // it reverts with InvalidInitialization
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
@@ -183,7 +183,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       address(uint160(uint256(vm.load(address(_daoSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
-    assertEq(address(_daoSpaceProxy.spaceRegistry()), daoSpaceFactoryProxy.spaceRegistry());
+    assertEq(address(_daoSpaceProxy.spaceRegistry()), address(daoSpaceFactoryProxy.spaceRegistry()));
     assertEq(abi.encode(_votingSettings), abi.encode(__votingSettings));
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.EDITOR(), _initialEditor), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.MEMBER(), _initialMember), true);
@@ -216,7 +216,7 @@ contract UnitDAOSpaceFactory is TestHelper {
   }
 
   function _mockEnter(
-    address __spaceRegistry,
+    ISpaceRegistry __spaceRegistry,
     address _from,
     address _to,
     bytes32 _action,
@@ -225,13 +225,13 @@ contract UnitDAOSpaceFactory is TestHelper {
     bytes memory _signature
   ) internal {
     _mockAndExpect(
-      __spaceRegistry,
+      address(__spaceRegistry),
       abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, _data, _signature)),
       abi.encode()
     );
   }
 
-  function _mockRegisterSpaceId(address __spaceRegistry) internal {
-    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
+    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
   }
 }

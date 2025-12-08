@@ -9,6 +9,7 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 /**
  * @title DAOSpaceFactory
@@ -19,7 +20,7 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   address public daoSpaceBeacon;
 
   /// @inheritdoc IDAOSpaceFactory
-  address public spaceRegistry;
+  ISpaceRegistry public spaceRegistry;
 
   /// @notice Constructor
   constructor() {
@@ -27,7 +28,7 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   }
 
   /// @inheritdoc IDAOSpaceFactory
-  function initialize(address _spaceRegistry, address _owner) external initializer {
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
     __Ownable_init(_owner);
 
     address daoSpaceImplementation = address(new DAOSpace());
