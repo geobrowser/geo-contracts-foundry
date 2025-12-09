@@ -6,12 +6,10 @@ UnitDAOSpace::initializer
 ├── when delegate called
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings
-│   ├── when initialEditors length is greater than zero
-│   │   ├── it grants the new editor the EDITOR role
-│   │   └── it calls enter on the spaceRegistry with the ADD_EDITOR action
-│   ├── when initialMembers length is greater than zero
-│   │   ├── it grants the new member the MEMBER role
-│   │   └── it calls enter on the spaceRegistry with the ADD_MEMBER action
+│   ├── it grants the new editor the EDITOR role
+│   ├── it calls enter on the spaceRegistry with the ADD_EDITOR action
+│   ├── it grants the new member the MEMBER role
+│   ├── it calls enter on the spaceRegistry with the ADD_MEMBER action
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
@@ -24,25 +22,30 @@ UnitDAOSpace::initializer
 UnitDAOSpace::write
 ├── when called by spaceRegistry
 │   ├── when _action equals CREATE_PROPOSAL
-│   │   ├── it incremments the proposal counter
-│   │   ├── it sets the proposal start date to block.timestamp
-│   │   ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │   ├── it sets the proposal voting mode
 │   │   ├── when the voting mode is slow
 │   │   │   ├── when _fromSpace is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
-│   │   │   └── it sets the proposal support threshold to the slow path percentage threshold
-│   │   ├── when the voting mode is fast
-│   │   │   ├── when _fromSpace is not an editor
-│   │   │   │   └── it reverts with InvalidFromSpace
-│   │   │   ├── when _fromSpace is a flagged editor
-│   │   │   │   └── it reverts with EditorFlagged
-│   │   │   ├── when the decoded proposal action is not limited to one call
-│   │   │   │   └── it reverts with OneActionForFastPath
-│   │   │   ├── when the function selector of the decoded proposal action is not fast path valid
-│   │   │   │   └── it reverts with InvalidAction
-│   │   │   └── it sets the proposal support threshold to the fast path flat threshold
-│   │   └── it stores the decoded proposal actions
+│   │   │   ├── it incremments the proposal counter
+│   │   │   ├── it sets the proposal start date to block.timestamp
+│   │   │   ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │   │   ├── it sets the proposal voting mode
+│   │   │   ├── it sets the proposal support threshold to the slow path percentage threshold
+│   │   │   └── it stores the decoded proposal actions
+│   │   └── when the voting mode is fast
+│   │       ├── when _fromSpace is not an editor
+│   │       │   └── it reverts with InvalidFromSpace
+│   │       ├── when _fromSpace is a flagged editor
+│   │       │   └── it reverts with EditorFlagged
+│   │       ├── when the decoded proposal action is not limited to one call
+│   │       │   └── it reverts with OneActionForFastPath
+│   │       ├── when the function selector of the decoded proposal action is not fast path valid
+│   │       │   └── it reverts with InvalidAction
+│   │       ├── it incremments the proposal counter
+│   │       ├── it sets the proposal start date to block.timestamp
+│   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │       ├── it sets the proposal voting mode
+│   │       ├── it sets the proposal support threshold to the fast path flat threshold
+│   │       └── it stores the decoded proposal actions
 │   ├── when _action equals VOTE
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote

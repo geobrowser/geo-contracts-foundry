@@ -44,9 +44,8 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceImplementation = new MockDAOSpace();
     daoSpaceBeacon = UnsafeUpgrades.deployBeacon(address(daoSpaceImplementation), _owner);
 
-    // deploy with owner to fetch future address for external calls and event emissions
-    vm.startPrank(_owner, _owner);
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
+    // get predicted DAO Space address for external calls and event emissions
+    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // when delegate called
     _mockRegisterSpaceId(_spaceRegistry);
@@ -78,7 +77,6 @@ contract UnitDAOSpace is TestHelper {
         )
       )
     );
-    vm.stopPrank();
   }
 
   /// CONSTRUCTOR ///
@@ -104,52 +102,9 @@ contract UnitDAOSpace is TestHelper {
     IDAOSpace.VotingSettings calldata __votingSettings
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
-    address[] memory __initialEditors = new address[](0);
-    address[] memory __initialMembers = new address[](0);
 
-    // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
-
-    // when delegate called
-    daoSpaceProxy = MockDAOSpace(
-      UnsafeUpgrades.deployBeaconProxy(
-        daoSpaceBeacon,
-        abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
-        )
-      )
-    );
-
-    // it sets the spaceRegistry
-    assertEq(address(daoSpaceProxy.spaceRegistry()), __spaceRegistry);
-
-    // it sets the voting settings
-    (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 duration) =
-      daoSpaceProxy.votingSettings();
-    assertEq(slowPathPercentageThreshold, __votingSettings.slowPathPercentageThreshold);
-    assertEq(fastPathFlatThreshold, __votingSettings.fastPathFlatThreshold);
-    assertEq(duration, __votingSettings.duration);
-
-    // it grants itself the DAO role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), address(daoSpaceProxy)), true);
-
-    // it sets addMember as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector), true);
-
-    // it sets removeMember as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
-  }
-
-  function test_Initializer_WhenInitialEditorsLengthIsGreaterThanZero(
-    address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings
-  ) external whenDelegateCalled {
-    _assumeFuzzable(__spaceRegistry);
-    address[] memory __initialMembers = new address[](0);
-
-    // deploy with owner to fetch future address for external calls and event emissions
-    vm.startPrank(_owner, _owner);
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
+    // get predicted DAO Space address for external calls and event emissions
+    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
@@ -162,34 +117,6 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.ADD_EDITOR,
       bytes32(bytes20(_initialEditor))
     );
-
-    // when delegate called
-    daoSpaceProxy = MockDAOSpace(
-      UnsafeUpgrades.deployBeaconProxy(
-        daoSpaceBeacon,
-        abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, __initialMembers)
-        )
-      )
-    );
-
-    // it grants the new editor the EDITOR role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
-  }
-
-  function test_Initializer_WhenInitialMembersLengthIsGreaterThanZero(
-    address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings
-  ) external whenDelegateCalled {
-    _assumeFuzzable(__spaceRegistry);
-    address[] memory __initialEditors = new address[](0);
-
-    // deploy with owner to fetch future address for external calls and event emissions
-    vm.startPrank(_owner, _owner);
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(_owner, vm.getNonce(_owner));
-
-    // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
 
     // it calls enter on the spaceRegistry with the ADD_MEMBER action
     _mockEnter(
@@ -205,13 +132,35 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, _initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers)
         )
       )
     );
 
+    // it sets the spaceRegistry
+    assertEq(address(daoSpaceProxy.spaceRegistry()), __spaceRegistry);
+
+    // it sets the voting settings
+    (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 duration) =
+      daoSpaceProxy.votingSettings();
+    assertEq(slowPathPercentageThreshold, __votingSettings.slowPathPercentageThreshold);
+    assertEq(fastPathFlatThreshold, __votingSettings.fastPathFlatThreshold);
+    assertEq(duration, __votingSettings.duration);
+
+    // it grants the new editor the EDITOR role
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
+
     // it grants the new member the MEMBER role
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMember), true);
+
+    // it grants itself the DAO role
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), address(daoSpaceProxy)), true);
+
+    // it sets addMember as a valid fast path action
+    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector), true);
+
+    // it sets removeMember as a valid fast path action
+    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
   }
 
   function test_Initializer_WhenDelegateCalledAgain(
@@ -219,18 +168,37 @@ contract UnitDAOSpace is TestHelper {
     IDAOSpace.VotingSettings calldata __votingSettings
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
-    address[] memory __initialEditors = new address[](0);
-    address[] memory __initialMembers = new address[](0);
+
+    // get predicted DAO Space address for external calls and event emissions
+    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
+
+    // it calls enter on the spaceRegistry with the ADD_EDITOR action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxy,
+      predictedDAOSpaceProxy,
+      ActionsConstants.ADD_EDITOR,
+      bytes32(bytes20(_initialEditor))
+    );
+
+    // it calls enter on the spaceRegistry with the ADD_MEMBER action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxy,
+      predictedDAOSpaceProxy,
+      ActionsConstants.ADD_MEMBER,
+      bytes32(bytes20(_initialMember))
+    );
 
     // when delegate called
     daoSpaceProxy = MockDAOSpace(
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers)
         )
       )
     );
@@ -239,7 +207,7 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), __votingSettings, __initialEditors, __initialMembers);
+    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers);
   }
 
   function test_Initializer_WhenCalled() external {
@@ -262,10 +230,15 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Write_When_actionEqualsCREATE_PROPOSAL(bytes32 _topic)
+  modifier whenTheVotingModeIsSlow() {
+    _;
+  }
+
+  function test_Write_WhenTheVotingModeIsSlow(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
     when_actionEqualsCREATE_PROPOSAL
+    whenTheVotingModeIsSlow
   {
     // get initial proposal count
     uint256 initialProposalCounter = daoSpaceProxy.proposalCounter();
@@ -289,31 +262,14 @@ contract UnitDAOSpace is TestHelper {
     // it sets the proposal voting mode
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
+    // it sets the proposal support threshold to the slow path percentage threshold
+    assertEq(parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
+
     // it stores the decoded proposal actions
     assertEq(actions.length, 1);
     assertEq(actions[0].to, address(daoSpaceProxy));
     assertEq(actions[0].value, 0);
     assertEq(actions[0].data, abi.encodeCall(IDAOSpace.addEditor, (_randomCaller)));
-  }
-
-  modifier whenTheVotingModeIsSlow() {
-    _;
-  }
-
-  function test_Write_WhenTheVotingModeIsSlow(bytes32 _topic)
-    external
-    whenCalledBySpaceRegistry
-    when_actionEqualsCREATE_PROPOSAL
-    whenTheVotingModeIsSlow
-  {
-    bytes memory proposalData = _createSlowPathProposalToAddEditor();
-    daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, proposalData);
-
-    (, IDAOSpace.ProposalParameters memory parameters,,) =
-      daoSpaceProxy.getProposalInformation(daoSpaceProxy.proposalCounter() - 1);
-
-    // it sets the proposal support threshold to the slow path percentage threshold
-    assertEq(parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
   }
 
   function test_Write_When_fromSpaceIsNotAMemberOrEditor(bytes32 _topic)
@@ -339,14 +295,36 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsCREATE_PROPOSAL
     whenTheVotingModeIsFast
   {
+    // get initial proposal count
+    uint256 initialProposalCounter = daoSpaceProxy.proposalCounter();
+
+    // when called
     bytes memory proposalData = _createFastPathProposalToAddMember();
     daoSpaceProxy.write(_initialEditor, ActionsConstants.CREATE_PROPOSAL, _topic, proposalData);
 
-    (, IDAOSpace.ProposalParameters memory parameters,,) =
-      daoSpaceProxy.getProposalInformation(daoSpaceProxy.proposalCounter() - 1);
+    // it incremments the proposal counter
+    assertEq(daoSpaceProxy.proposalCounter(), initialProposalCounter + 1);
+
+    (, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+      daoSpaceProxy.getProposalInformation(initialProposalCounter);
+
+    // it sets the proposal start date to block.timestamp
+    assertEq(parameters.startDate, vm.getBlockTimestamp());
+
+    // it sets the proposal last date to block.timestamp plus votingSettings.duration
+    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets the proposal voting mode
+    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
 
     // it sets the proposal support threshold to the fast path flat threshold
     assertEq(parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
+
+    // it stores the decoded proposal actions
+    assertEq(actions.length, 1);
+    assertEq(actions[0].to, address(daoSpaceProxy));
+    assertEq(actions[0].value, 0);
+    assertEq(actions[0].data, abi.encodeCall(IDAOSpace.addMember, (_randomCaller)));
   }
 
   function test_Write_When_fromSpaceIsNotAnEditor(bytes32 _topic)
