@@ -25,12 +25,13 @@ UnitDAOSpace::write
 │   │   ├── when the voting mode is slow
 │   │   │   ├── when _fromSpace is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
-│   │   │   ├── it incremments the proposal counter
-│   │   │   ├── it sets the proposal start date to block.timestamp
-│   │   │   ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │   │   ├── it sets the proposal voting mode
-│   │   │   ├── it sets the proposal support threshold to the slow path percentage threshold
-│   │   │   └── it stores the decoded proposal actions
+│   │   │   └── when _createProposal params are valid
+│   │   │       ├── it incremments the proposal counter
+│   │   │       ├── it sets the proposal start date to block.timestamp
+│   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │   │       ├── it sets the proposal voting mode
+│   │   │       ├── it sets the proposal support threshold to the slow path percentage threshold
+│   │   │       └── it stores the decoded proposal actions
 │   │   └── when the voting mode is fast
 │   │       ├── when _fromSpace is not an editor
 │   │       │   └── it reverts with InvalidFromSpace
@@ -40,12 +41,13 @@ UnitDAOSpace::write
 │   │       │   └── it reverts with OneActionForFastPath
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
 │   │       │   └── it reverts with InvalidAction
-│   │       ├── it incremments the proposal counter
-│   │       ├── it sets the proposal start date to block.timestamp
-│   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │       ├── it sets the proposal voting mode
-│   │       ├── it sets the proposal support threshold to the fast path flat threshold
-│   │       └── it stores the decoded proposal actions
+│   │       └── when _createProposal params are valid
+│   │           ├── it incremments the proposal counter
+│   │           ├── it sets the proposal start date to block.timestamp
+│   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │           ├── it sets the proposal voting mode
+│   │           ├── it sets the proposal support threshold to the fast path flat threshold
+│   │           └── it stores the decoded proposal actions
 │   ├── when _action equals VOTE
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote
@@ -57,41 +59,36 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the _fromSpace is not an editor
 │   │   │   └── it reverts with CanNotVote
-│   │   ├── when the former _fromSpace vote equals yes
-│   │   │   └── it decreases the yes vote tally by one
-│   │   ├── when the former _fromSpace vote equals no
-│   │   │   └── it decreases the no vote tally by one
-│   │   ├── when the former _fromSpace vote equals abstain
-│   │   │   └── it decreases the abstain vote tally by one
-│   │   ├── when the current _fromSpace vote equals yes
-│   │   │   └── it increases the yes vote tally by one
-│   │   ├── when the current _fromSpace vote equals no
-│   │   │   └── it increases the no vote tally by one
-│   │   ├── when the current _fromSpace vote equals abstain
-│   │   │   └── it increases the abstain vote tally by one
-│   │   ├── it stores the current _fromSpace vote
-│   │   └── when the proposal voting mode is using the fast path
+│   │   └── when _vote params are valid
+│   │       ├── when the former _fromSpace vote equals yes
+│   │       │   └── it decreases the yes vote tally by one
+│   │       ├── when the former _fromSpace vote equals no
+│   │       │   └── it decreases the no vote tally by one
+│   │       ├── when the former _fromSpace vote equals abstain
+│   │       │   └── it decreases the abstain vote tally by one
+│   │       ├── when the current _fromSpace vote equals yes
+│   │       │   └── it increases the yes vote tally by one
 │   │       ├── when the current _fromSpace vote equals no
-│   │       │   ├── it updates the proposal voting mode to the slow path
-│   │       │   ├── it updates the proposal support threshold to the slow path percentage threshold
-│   │       │   ├── it updates the proposal start date to block.timestamp
-│   │       │   └── it updates the proposal last date to block.timestamp plus votingSettings.duration
-│   │       └── when the current _fromSpace vote equals yes
-│   │           └── when the proposal can be executed
-│   │               └── it loops over the stored proposal actions and performs the external calls
+│   │       │   └── it increases the no vote tally by one
+│   │       ├── when the current _fromSpace vote equals abstain
+│   │       │   └── it increases the abstain vote tally by one
+│   │       ├── it stores the current _fromSpace vote
+│   │       └── when the proposal voting mode is using the fast path
+│   │           ├── when the current _fromSpace vote equals no
+│   │           │   ├── it updates the proposal voting mode to the slow path
+│   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
+│   │           │   ├── it updates the proposal start date to block.timestamp
+│   │           │   └── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │           └── when the current _fromSpace vote equals yes
+│   │               └── when the proposal can be executed
+│   │                   └── it loops over the stored proposal actions and performs the external calls
 │   ├── when _action equals EXECUTE_PROPOSAL
 │   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotExecute
-│   │   ├── when the proposal voting mode is using the slow path
-│   │   │   ├── when the block timestamp is less than or equal to the proposal last date
-│   │   │   │   └── it reverts with CanNotExecute
-│   │   │   └── when the yes votes do not exceed the support threshold
-│   │   │       └── it reverts with CanNotExecute
-│   │   ├── when the proposal voting mode is using the fast path
-│   │   │   └── when the yes votes do not exceed the support threshold
-│   │   │       └── it reverts with CanNotExecute
+│   │   ├── when the support threshold has not been reached
+│   │   │   └── it reverts with CanNotExecute
 │   │   └── when the proposal can be executed
 │   │       ├── it loops over the stored proposal actions and performs the external calls
 │   │       └── when an external call fails
@@ -111,7 +108,8 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with InvalidFromSpace
 │   │   ├── when the to be flagged editor is not an editor
 │   │   │   └── it reverts with NotEditor
-│   │   └── it flags the editor from using the fast path
+│   │   └── when _leave params are valid
+│   │       └── it flags the editor from using the fast path
 │   └── when _action does not equal any expected constant
 │       └── it reverts with InvalidAction
 └── when called by non-spaceRegistry
