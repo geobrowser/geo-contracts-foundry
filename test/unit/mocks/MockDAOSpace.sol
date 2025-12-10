@@ -18,6 +18,7 @@ contract MockDAOSpace is DAOSpace {
     uint256 _lastDate,
     VotingMode _votingMode,
     uint256 _supportThreshold,
+    uint256 _quorum,
     Action[] memory _actions,
     bool _executed
   ) external {
@@ -26,6 +27,7 @@ contract MockDAOSpace is DAOSpace {
     proposal_.parameters.lastDate = _lastDate;
     proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.supportThreshold = _supportThreshold;
+    proposal_.parameters.quorum = _quorum;
     for (uint256 i; i < _actions.length; i++) {
       proposal_.actions.push(_actions[i]);
     }

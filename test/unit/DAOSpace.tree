@@ -180,6 +180,8 @@ UnitDAOSpace::isSupportThresholdReached
 ├── when the proposal voting mode is using the slow path
 │   ├── when the block timestamp is less than or equal to the proposal last date
 │   │   └── it returns false
+│   ├── when the voting quorum has not been reached
+│   │   └── it returns false
 │   ├── when the yes votes are not greater than the percentage support threshold
 │   │   └── it returns false
 │   └── when the yes votes are greater than the percentage support threshold
