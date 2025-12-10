@@ -1396,6 +1396,13 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.isSupportThresholdReached(0), true);
   }
 
+  /// VERSION ///
+
+  function test_Version_WhenCalled() external {
+    // it returns semantic version
+    assertEq(daoSpaceProxy.version(), '1.0.0');
+  }
+
   /// HELPERS ///
 
   function _mockRegisterSpaceId(address __spaceRegistry) internal {
