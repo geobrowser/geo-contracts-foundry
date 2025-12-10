@@ -44,7 +44,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   mapping(address _editor => bool _isFlagged) public isEditorFlagged;
 
   /// @notice Stores information about a proposal by its ID
-  mapping(uint256 _proposalId => Proposal _proposal) private _proposals;
+  mapping(uint256 _proposalId => Proposal _proposal) internal _proposals;
 
   /// @notice Constructor
   constructor() {
@@ -173,13 +173,13 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Creates a new governance proposal
    * @param _fromSpace The address of the space creating the proposal
-   * @param _data The encoded proposal data containing URI, voting mode, and actions
+   * @param _data The encoded proposal data containing the voting mode and actions
    * @dev Fast path: only editors can create, creator must not be flagged, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal {
     // Decode data to construct proposal
-    (, VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (bytes, VotingMode, Action[]));
+    (VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (VotingMode, Action[]));
     // Update proposal storage
     Proposal storage proposal_ = _proposals[proposalCounter++];
     proposal_.parameters.startDate = block.timestamp;
@@ -391,8 +391,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     Proposal storage proposal_ = _proposals[_proposalId];
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    // The proposal vote has already ended.
-    if ((block.timestamp > proposal_.parameters.lastDate || proposal_.executed)) return false;
+    // The proposal voting period has already ended.
+    if (block.timestamp > proposal_.parameters.lastDate) return false;
+    // The proposal has already been executed.
+    if (proposal_.executed) return false;
     // The voter votes `None` which is not allowed.
     if (_voteOption == VoteOption.None) return false;
     // The voter has no voting power.
