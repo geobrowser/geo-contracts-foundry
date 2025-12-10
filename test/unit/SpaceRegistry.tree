@@ -18,9 +18,12 @@ UnitSpaceRegistry::enter
 │   ├── it emits Action
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
-│   └── when caller is not toSpace and the _action is not permissionless
-│       ├── it calls toSpace to fetch _topicOutput
-│       └── it calls toSpace to write
+│   └── when caller is not toSpace
+│       ├── when _action is not permissionless
+│       │   ├── it calls toSpace to fetch _topicOutput
+│       │   └── it calls toSpace to write
+│       └── when _action is permissionless
+│           └── it does not call toSpace to fetch or write
 └── when space is not registered
     └── it reverts with SpaceNotRegistered
 

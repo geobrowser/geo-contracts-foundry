@@ -169,17 +169,22 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topic, _data, _signature);
   }
 
-  function test_Enter_WhenCallerIsNotToSpaceAndThe_actionIsNotPermissionless(
+  modifier whenCallerIsNotToSpace() {
+    // when caller is not toSpace
+    vm.startPrank(_fromSpace);
+    _;
+    vm.stopPrank();
+  }
+
+  function test_Enter_When_actionIsNotPermissionless(
     bytes32 _action,
     bytes32 _topicInput,
     bytes32 _topicOutput,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpacesAreRegistered {
+  ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
+    // when _action is not permissionless
     vm.assume(_action != _permissionlessAction);
-
-    // when caller is not toSpace
-    vm.startPrank(_fromSpace);
 
     // it calls toSpace to fetch _topicOutput
     _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
@@ -188,6 +193,15 @@ contract UnitSpaceRegistry is TestHelper {
     _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
+  }
+
+  function test_Enter_When_actionIsPermissionless(
+    bytes32 _topicInput,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
+    // it does not call toSpace to fetch or write
+    spaceRegistryProxy.enter(_fromSpace, _toSpace, _permissionlessAction, _topicInput, _data, _signature);
   }
 
   function test_Enter_WhenSpaceIsNotRegistered(
