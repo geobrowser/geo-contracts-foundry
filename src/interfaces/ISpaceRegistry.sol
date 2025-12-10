@@ -51,6 +51,13 @@ interface ISpaceRegistry is ISemver {
   function addressToSpaceId(address _account) external view returns (bytes16 _spaceId);
 
   /**
+   * @notice Records each permissionless action
+   * @param _action The action identifier
+   * @return _isPermissionless The boolean of whether or not the action is permissionless
+   */
+  function permissionlessActions(bytes32 _action) external view returns (bool _isPermissionless);
+
+  /**
    * @notice Initializes the contract
    * @param _owner The address of the owner
    */
@@ -92,6 +99,14 @@ interface ISpaceRegistry is ISemver {
    * @param _spaceId The ID of the space
    */
   function acceptSpaceMigration(bytes16 _spaceId) external;
+
+  /**
+   * @notice Allows the owner to add or remove permissionless actions
+   * @param _action The action identifier
+   * @param _set The boolean of whether or not the action is permissionless (true if it is, no otherwise)
+   * @dev Permissionless actions are those where, even if the the caller is not the toSpace, fetch and write do not occur
+   */
+  function setPermissionlessAction(bytes32 _action, bool _set) external;
 
   /**
    * @notice Generates a space ID for a given address and nonce

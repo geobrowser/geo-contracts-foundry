@@ -26,6 +26,8 @@ contract UnitSpaceRegistry is TestHelper {
   bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
+  bytes32 internal _permissionlessAction = bytes32(keccak256('_permissionlessAction'));
+
   function setUp() external {
     // when deployed
     spaceRegistryImplementation = new MockSpaceRegistry();
@@ -35,6 +37,9 @@ contract UnitSpaceRegistry is TestHelper {
         address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (_owner))
       )
     );
+    // set one permissionless action
+    vm.prank(_owner);
+    spaceRegistryProxy.setPermissionlessAction(_permissionlessAction, true);
   }
 
   function test_Constructor_WhenCalled() external {
@@ -131,13 +136,20 @@ contract UnitSpaceRegistry is TestHelper {
   ) external whenSpacesAreRegistered {
     vm.startPrank(_randomCaller);
 
-    _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
-    _mockVerify(_fromSpace, _toSpace, _action, _topicOutput, _data, _signature);
-    _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
+    _mockVerify(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
+    if (_action != _permissionlessAction) {
+      _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
+      _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
+    }
 
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
+
+    if (_action != _permissionlessAction) {
+      emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
+    } else {
+      emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicInput, _data);
+    }
 
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
   }
@@ -157,13 +169,15 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topic, _data, _signature);
   }
 
-  function test_Enter_WhenCallerIsNotToSpace(
+  function test_Enter_WhenCallerIsNotToSpaceAndThe_actionIsNotPermissionless(
     bytes32 _action,
     bytes32 _topicInput,
     bytes32 _topicOutput,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
+    vm.assume(_action != _permissionlessAction);
+
     // when caller is not toSpace
     vm.startPrank(_fromSpace);
 
@@ -295,6 +309,29 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectRevert(ISpaceRegistry.InvalidCaller.selector);
 
     spaceRegistryProxy.acceptSpaceMigration(_spaceId);
+  }
+
+  function test_SetPermissionlessAction_WhenCalledByOwner(bytes32 _action, bool _set) external {
+    // when called by owner
+    vm.startPrank(_owner);
+
+    (_action == _permissionlessAction)
+      ? assertEq(spaceRegistryProxy.permissionlessActions(_action), true)
+      : assertEq(spaceRegistryProxy.permissionlessActions(_action), false);
+
+    spaceRegistryProxy.setPermissionlessAction(_action, _set);
+
+    // it updates the permissionlessActions mapping
+    assertEq(spaceRegistryProxy.permissionlessActions(_action), _set);
+  }
+
+  function test_SetPermissionlessAction_WhenCalledByNon_owner(bytes32 _action, bool _set) external {
+    // when called by non-owner
+    vm.startPrank(_randomCaller);
+
+    // it reverts with OwnableUnauthorizedAccount
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
+    spaceRegistryProxy.setPermissionlessAction(_action, _set);
   }
 
   function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external view {
