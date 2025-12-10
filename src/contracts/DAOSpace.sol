@@ -3,7 +3,9 @@ pragma solidity 0.8.30;
 
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 
-import {IDAOSpace, ISpace} from 'interfaces/IDAOSpace.sol';
+import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
+import {ISemver} from 'interfaces/ISemver.sol';
+import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -172,6 +174,11 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc IDAOSpace
   function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption) {
     return _proposals[_proposalId].voters[_account];
+  }
+
+  /// @inheritdoc ISemver
+  function version() public pure returns (string memory _version) {
+    _version = '1.0.0';
   }
 
   /**

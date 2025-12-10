@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
-interface IDAOSpace is ISpace {
+interface IDAOSpace is ISpace, ISemver {
   /**
    * @notice Vote options that a voter can choose from
    * @param None Default state, cannot be cast
