@@ -175,8 +175,12 @@ contract UnitDAOSpaceFactory is TestHelper {
     );
 
     DAOSpace.VotingSettings memory _votingSettings;
-    (_votingSettings.slowPathPercentageThreshold, _votingSettings.fastPathFlatThreshold, _votingSettings.duration) =
-      _daoSpaceProxy.votingSettings();
+    (
+      _votingSettings.slowPathPercentageThreshold,
+      _votingSettings.fastPathFlatThreshold,
+      _votingSettings.quorum,
+      _votingSettings.duration
+    ) = _daoSpaceProxy.votingSettings();
 
     // it deploys and initializes DAO space proxy
     assertEq(

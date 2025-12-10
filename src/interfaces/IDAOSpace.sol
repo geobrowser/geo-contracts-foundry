@@ -33,11 +33,13 @@ interface IDAOSpace is ISpace {
    * @notice Voting settings configuration for proposals
    * @param slowPathPercentageThreshold Percentage threshold for slow path (0-10^6, where 10^6 = 100%)
    * @param fastPathFlatThreshold Flat count threshold for fast path (number of yes votes)
+   * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param duration Voting window duration in seconds (slow path)
    */
   struct VotingSettings {
     uint256 slowPathPercentageThreshold;
     uint256 fastPathFlatThreshold;
+    uint256 quorum;
     uint256 duration;
   }
 
@@ -45,12 +47,14 @@ interface IDAOSpace is ISpace {
    * @notice Proposal parameters at creation time
    * @param votingMode Voting mode (Slow or Fast)
    * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates.
+   * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
    * @param lastDate Last voting timestamp (slow path execution requires this)
    */
   struct ProposalParameters {
     VotingMode votingMode;
     uint256 supportThreshold;
+    uint256 quorum;
     uint256 startDate;
     uint256 lastDate;
   }
@@ -214,12 +218,13 @@ interface IDAOSpace is ISpace {
    * @notice Voting settings for proposals
    * @return slowPathPercentageThreshold Percentage threshold for slow path
    * @return fastPathFlatThreshold Flat count threshold for fast path
+   * @return quorum The minimum number of votes (participation) required for a slow path proposal
    * @return duration Voting window duration in seconds
    */
   function votingSettings()
     external
     view
-    returns (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 duration);
+    returns (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration);
 
   /**
    * @notice Maps action selectors to whether they are valid for fast path proposals

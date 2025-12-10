@@ -144,6 +144,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
       if (block.timestamp <= proposal_.parameters.lastDate) return false;
+      // Quorum check
+      if (proposal_.tally.abstain + proposal_.tally.yes + proposal_.tally.no < proposal_.parameters.quorum) {
+        return false;
+      }
       // Threshold percentage calculation
       if ((RATIO_BASE - supportThreshold) * proposal_.tally.yes > supportThreshold * proposal_.tally.no) return true;
     } else {
@@ -185,6 +189,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + votingSettings.duration;
     proposal_.parameters.votingMode = votingMode;
+    proposal_.parameters.quorum = votingSettings.quorum;
     if (votingMode == VotingMode.Slow) {
       // Slow path
       // Only members or editors can create slow path proposals
