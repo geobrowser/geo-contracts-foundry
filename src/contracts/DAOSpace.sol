@@ -59,8 +59,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     address[] calldata _initialMembers
   ) external initializer {
     spaceRegistry = _spaceRegistry;
+    _spaceRegistry.registerSpaceId();
     votingSettings = _votingSettings;
-    spaceRegistry.registerSpaceId();
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);

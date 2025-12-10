@@ -20,7 +20,7 @@ contract UnitVerifierSpace is TestHelper {
   uint256 internal _ownerPrivateKey;
   address internal _randomCaller = makeAddr('_randomCaller');
 
-  address internal _spaceRegistry = makeAddr('_spaceRegistry');
+  ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
   address internal _fromSpace = makeAddr('_fromSpace');
   address internal _toSpace = makeAddr('_toSpace');
 
@@ -62,10 +62,10 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Initialize_WhenOwnerIsNotZeroAddress(
-    address __spaceRegistry,
+    ISpaceRegistry __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
-    _assumeFuzzable(__spaceRegistry);
+    _assumeFuzzable(address(__spaceRegistry));
 
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
@@ -81,7 +81,7 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.owner(), __owner);
 
     // it sets spaceRegistry
-    assertEq(address(verifierSpaceProxy.spaceRegistry()), __spaceRegistry);
+    assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
 
     // it sets validWriters
     assertEq(verifierSpaceProxy.validWriters(__owner), true);
@@ -89,10 +89,10 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
-    address __spaceRegistry,
+    ISpaceRegistry __spaceRegistry,
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
-    _assumeFuzzable(__spaceRegistry);
+    _assumeFuzzable(address(__spaceRegistry));
     _mockRegisterSpaceId(__spaceRegistry);
 
     // when delegate called
@@ -124,7 +124,7 @@ contract UnitVerifierSpace is TestHelper {
     );
   }
 
-  function test_Initialize_WhenCalled(address __spaceRegistry, address __owner) external {
+  function test_Initialize_WhenCalled(ISpaceRegistry __spaceRegistry, address __owner) external {
     // it reverts with InvalidInitialization
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
@@ -185,7 +185,7 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   modifier whenCallerIsSpaceRegistry() {
-    vm.startPrank(_spaceRegistry);
+    vm.startPrank(address(_spaceRegistry));
     _;
   }
 
@@ -242,7 +242,7 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
   }
 
-  function _mockRegisterSpaceId(address __spaceRegistry) internal {
-    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
+    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
   }
 }

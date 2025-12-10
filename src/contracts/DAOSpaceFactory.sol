@@ -6,20 +6,20 @@ import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {BeaconProxy} from '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 
-import {VerifierSpace} from 'contracts/VerifierSpace.sol';
+import {DAOSpace} from 'contracts/DAOSpace.sol';
+import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
 
 /**
- * @title VerifierSpaceFactory
- * @notice Produces beacon-proxy-upgradeable verifier spaces
+ * @title DAOSpaceFactory
+ * @notice Produces beacon-proxy-upgradeable DAO spaces
  */
-contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpaceFactory {
-  /// @inheritdoc IVerifierSpaceFactory
-  address public verifierSpaceBeacon;
+contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactory {
+  /// @inheritdoc IDAOSpaceFactory
+  address public daoSpaceBeacon;
 
-  /// @inheritdoc IVerifierSpaceFactory
+  /// @inheritdoc IDAOSpaceFactory
   ISpaceRegistry public spaceRegistry;
 
   /// @notice Constructor
@@ -27,21 +27,29 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
     _disableInitializers();
   }
 
-  /// @inheritdoc IVerifierSpaceFactory
+  /// @inheritdoc IDAOSpaceFactory
   function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
     __Ownable_init(_owner);
 
-    address verifierSpaceImplementation = address(new VerifierSpace());
-    verifierSpaceBeacon = address(new UpgradeableBeacon(verifierSpaceImplementation, _owner));
+    address daoSpaceImplementation = address(new DAOSpace());
+    daoSpaceBeacon = address(new UpgradeableBeacon(daoSpaceImplementation, _owner));
 
     spaceRegistry = _spaceRegistry;
   }
 
-  /// @inheritdoc IVerifierSpaceFactory
-  function createVerifierSpaceProxy(address _owner) external returns (address _newVerifierSpaceProxy) {
-    _newVerifierSpaceProxy =
-      address(new BeaconProxy(verifierSpaceBeacon, abi.encodeCall(VerifierSpace.initialize, (spaceRegistry, _owner))));
-    emit VerifierSpaceProxyCreated(_newVerifierSpaceProxy);
+  /// @inheritdoc IDAOSpaceFactory
+  function createDAOSpaceProxy(
+    DAOSpace.VotingSettings calldata _votingSettings,
+    address[] calldata _initialEditors,
+    address[] calldata _initialMembers
+  ) external returns (address _newDAOSpaceProxy) {
+    _newDAOSpaceProxy = address(
+      new BeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(DAOSpace.initialize, (spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
+      )
+    );
+    emit DAOSpaceProxyCreated(_newDAOSpaceProxy);
   }
 
   /// @inheritdoc ISemver
