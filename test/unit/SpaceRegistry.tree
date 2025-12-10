@@ -15,12 +15,15 @@ UnitSpaceRegistry::initialize
 
 UnitSpaceRegistry::enter
 ├── when spaces are registered
-│   ├── it emits Action
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
-│       ├── it calls toSpace to fetch _topicOutput
-│       └── it calls toSpace to write
+│       ├── when _action is not permissionless
+│       │   ├── it calls toSpace to fetch _topicOutput
+│       │   ├── it emits Action
+│       │   └── it calls toSpace to write
+│       └── when _action is permissionless
+│           └── it emits Action
 └── when space is not registered
     └── it reverts with SpaceNotRegistered
 
@@ -50,6 +53,12 @@ UnitSpaceRegistry::acceptSpaceMigration
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space
     └── it reverts with InvalidCaller
+
+UnitSpaceRegistry::setPermissionlessAction
+├── when called by owner
+│   └── it updates the permissionlessActions mapping
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
 
 UnitSpaceRegistry::generateSpaceId
 └── when called

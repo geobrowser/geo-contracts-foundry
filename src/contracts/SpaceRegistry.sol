@@ -27,6 +27,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   mapping(address _account => bytes16 _spaceId) public addressToSpaceId;
 
+  /// @inheritdoc ISpaceRegistry
+  mapping(bytes32 _action => bool _isPermissionless) public permissionlessActions;
+
   /// @notice The nonce used to generate a space ID for registration
   uint256 internal _spaceIdNonce;
 
@@ -56,18 +59,23 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // Check that the space IDs exist
     if (fromId == bytes16(0) || toId == bytes16(0)) revert SpaceNotRegistered();
 
-    // Fetch future output variable and update `_topic` for emission if relevant
-    if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic);
-
-    emit Action(fromId, toId, _action, _topic, _data);
-
     // If msg.sender is not the from
-    // Then pass the to, action, topic, data, and signature for verification
+    // Then pass the to, action, topic, data, and signature to the space
     if (msg.sender != _from) ISpace(_from).verify(_to, _action, _topic, _data, _signature);
 
-    // If msg.sender is not the to
-    // Then pass the from, action, topic, and data to the space
-    if (msg.sender != _to) ISpace(_to).write(_from, _action, _topic, _data);
+    // No fetch or write with permissionless actions
+    if (permissionlessActions[_action]) {
+      emit Action(fromId, toId, _action, _topic, _data);
+    } else {
+      // Fetch future output variable and update `_topic` for emission if relevant
+      if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic);
+
+      emit Action(fromId, toId, _action, _topic, _data);
+
+      // If msg.sender is not the to
+      // Then pass the from, action, topic, and data to the space
+      if (msg.sender != _to) ISpace(_to).write(_from, _action, _topic, _data);
+    }
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -109,6 +117,11 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     addressToSpaceId[msg.sender] = _spaceId;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function setPermissionlessAction(bytes32 _action, bool _set) external onlyOwner {
+    permissionlessActions[_action] = _set;
   }
 
   /// @inheritdoc ISpaceRegistry
