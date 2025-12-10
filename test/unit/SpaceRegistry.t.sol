@@ -127,33 +127,6 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  function test_Enter_WhenSpacesAreRegistered(
-    bytes32 _action,
-    bytes32 _topicInput,
-    bytes32 _topicOutput,
-    bytes calldata _data,
-    bytes calldata _signature
-  ) external whenSpacesAreRegistered {
-    vm.startPrank(_randomCaller);
-
-    _mockVerify(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
-    if (_action != _permissionlessAction) {
-      _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
-      _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
-    }
-
-    // it emits Action
-    vm.expectEmit();
-
-    if (_action != _permissionlessAction) {
-      emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
-    } else {
-      emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicInput, _data);
-    }
-
-    spaceRegistryProxy.enter(_fromSpace, _toSpace, _action, _topicInput, _data, _signature);
-  }
-
   function test_Enter_WhenCallerIsNotFromSpace(
     bytes32 _action,
     bytes32 _topic,
@@ -189,6 +162,10 @@ contract UnitSpaceRegistry is TestHelper {
     // it calls toSpace to fetch _topicOutput
     _mockFetch(_toSpace, _action, _topicInput, _topicOutput);
 
+    // it emits Action
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
+
     // it calls toSpace to write
     _mockWrite(_fromSpace, _toSpace, _action, _topicOutput, _data);
 
@@ -200,7 +177,10 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
-    // it does not call toSpace to fetch or write
+    // it emits Action
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _permissionlessAction, _topicInput, _data);
+
     spaceRegistryProxy.enter(_fromSpace, _toSpace, _permissionlessAction, _topicInput, _data, _signature);
   }
 

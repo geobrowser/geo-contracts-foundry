@@ -15,15 +15,15 @@ UnitSpaceRegistry::initialize
 
 UnitSpaceRegistry::enter
 ├── when spaces are registered
-│   ├── it emits Action
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
 │       ├── when _action is not permissionless
 │       │   ├── it calls toSpace to fetch _topicOutput
+│       │   ├── it emits Action
 │       │   └── it calls toSpace to write
 │       └── when _action is permissionless
-│           └── it does not call toSpace to fetch or write
+│           └── it emits Action
 └── when space is not registered
     └── it reverts with SpaceNotRegistered
 
