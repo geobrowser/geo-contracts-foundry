@@ -1,0 +1,191 @@
+UnitDAOSpace::constructor
+└── when called
+    └── it disables initializers
+
+UnitDAOSpace::initializer
+├── when delegate called
+│   ├── it sets the spaceRegistry
+│   ├── it sets the voting settings
+│   ├── it grants the new editor the EDITOR role
+│   ├── it calls enter on the spaceRegistry with the ADD_EDITOR action
+│   ├── it grants the new member the MEMBER role
+│   ├── it calls enter on the spaceRegistry with the ADD_MEMBER action
+│   ├── it grants itself the DAO role
+│   ├── it sets addMember as a valid fast path action
+│   ├── it sets removeMember as a valid fast path action
+│   ├── it calls spaceRegistry to register space ID
+│   └── when delegate called again
+│       └── it reverts with InvalidInitialization
+└── when called
+    └── it reverts with InvalidInitialization
+
+UnitDAOSpace::write
+├── when called by spaceRegistry
+│   ├── when _action equals CREATE_PROPOSAL
+│   │   ├── when the voting mode is slow
+│   │   │   ├── when _fromSpace is not a member or editor
+│   │   │   │   └── it reverts with InvalidFromSpace
+│   │   │   └── when _createProposal params are valid
+│   │   │       ├── it incremments the proposal counter
+│   │   │       ├── it sets the proposal start date to block.timestamp
+│   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │   │       ├── it sets the proposal voting mode
+│   │   │       ├── it sets the proposal support threshold to the slow path percentage threshold
+│   │   │       └── it stores the decoded proposal actions
+│   │   └── when the voting mode is fast
+│   │       ├── when _fromSpace is not an editor
+│   │       │   └── it reverts with InvalidFromSpace
+│   │       ├── when _fromSpace is a flagged editor
+│   │       │   └── it reverts with EditorFlagged
+│   │       ├── when the decoded proposal action is not limited to one call
+│   │       │   └── it reverts with OneActionForFastPath
+│   │       ├── when the function selector of the decoded proposal action is not fast path valid
+│   │       │   └── it reverts with InvalidAction
+│   │       └── when _createProposal params are valid
+│   │           ├── it incremments the proposal counter
+│   │           ├── it sets the proposal start date to block.timestamp
+│   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │           ├── it sets the proposal voting mode
+│   │           ├── it sets the proposal support threshold to the fast path flat threshold
+│   │           └── it stores the decoded proposal actions
+│   ├── when _action equals VOTE
+│   │   ├── when the proposal start date equals zero
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when the block timestamp is greater than the last date 
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when the proposal has been executed
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when the vote option equals none
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when the _fromSpace is not an editor
+│   │   │   └── it reverts with CanNotVote
+│   │   └── when _vote params are valid
+│   │       ├── when the former _fromSpace vote equals yes
+│   │       │   └── it decreases the yes vote tally by one
+│   │       ├── when the former _fromSpace vote equals no
+│   │       │   └── it decreases the no vote tally by one
+│   │       ├── when the former _fromSpace vote equals abstain
+│   │       │   └── it decreases the abstain vote tally by one
+│   │       ├── when the current _fromSpace vote equals yes
+│   │       │   └── it increases the yes vote tally by one
+│   │       ├── when the current _fromSpace vote equals no
+│   │       │   └── it increases the no vote tally by one
+│   │       ├── when the current _fromSpace vote equals abstain
+│   │       │   └── it increases the abstain vote tally by one
+│   │       ├── it stores the current _fromSpace vote
+│   │       └── when the proposal voting mode is using the fast path
+│   │           ├── when the current _fromSpace vote equals no
+│   │           │   ├── it updates the proposal voting mode to the slow path
+│   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
+│   │           │   ├── it updates the proposal start date to block.timestamp
+│   │           │   └── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │           └── when the current _fromSpace vote equals yes
+│   │               └── when the proposal can be executed
+│   │                   └── it loops over the stored proposal actions and performs the external calls
+│   ├── when _action equals EXECUTE_PROPOSAL
+│   │   ├── when the proposal has already been executed
+│   │   │   └── it reverts with CanNotExecute
+│   │   ├── when the proposal start date equals zero
+│   │   │   └── it reverts with CanNotExecute
+│   │   ├── when the support threshold has not been reached
+│   │   │   └── it reverts with CanNotExecute
+│   │   └── when the proposal can be executed
+│   │       ├── it loops over the stored proposal actions and performs the external calls
+│   │       └── when an external call fails
+│   │           └── it reverts with ActionReverted
+│   ├── when _action equals LEAVE
+│   │   ├── when the role specified is MEMBER and the _fromSpace is a member
+│   │   │   ├── it revokes the role of MEMBER from the _fromSpace
+│   │   │   └── it calls enter on the spaceRegistry with the REMOVE_MEMBER action
+│   │   ├── when the role specified is EDITOR and the _fromSpace is an editor
+│   │   │   ├── it revokes the role of EDITOR from the _fromSpace
+│   │   │   ├── it unflags the editor from using the fast path
+│   │   │   └── it calls enter on the spaceRegistry with the REMOVE_EDITOR action
+│   │   └── when the role is not held by the _fromSpace or the role is neither MEMBER nor EDITOR
+│   │       └── it reverts with InvalidFromSpace
+│   ├── when _action equals FLAG_EDITOR
+│   │   ├── when the _fromSpace is not an editor
+│   │   │   └── it reverts with InvalidFromSpace
+│   │   ├── when the to be flagged editor is not an editor
+│   │   │   └── it reverts with NotEditor
+│   │   └── when _leave params are valid
+│   │       └── it flags the editor from using the fast path
+│   └── when _action does not equal any expected constant
+│       └── it reverts with InvalidAction
+└── when called by non-spaceRegistry
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::verify
+└── when called
+    └── it reverts with VerifyDisabled
+
+UnitDAOSpace::addEditor
+├── when called by DAO
+│   ├── when _newEditor is an editor
+│   │   └── it reverts with InvalidAddressForRole
+│   └── when _newEditor is not an editor
+│       ├── it grants _newEditor the EDITOR role
+│       └── it calls enter on the spaceRegistry with the ADD_EDITOR action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::removeEditor
+├── when called by DAO
+│   ├── when _oldEditor is not an editor
+│   │   └── it reverts with InvalidAddressForRole
+│   └── when _oldEditor is an editor
+│       ├── it removes the EDITOR role from _oldEditor
+│       ├── it unflags the editor from using the fast path
+│       └── it calls enter on the spaceRegistry with the REMOVE_EDITOR action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::addMember
+├── when called by DAO
+│   ├── when _newMember is a member
+│   │   └── it reverts with InvalidAddressForRole
+│   └── when _newMember is not a member
+│       ├── it grants _newMember the MEMBER role
+│       └── it calls enter on the spaceRegistry with the ADD_MEMBER action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::removeMember
+├── when called by DAO
+│   ├── when _oldMember is not a member
+│   │   └── it reverts with InvalidAddressForRole
+│   └── when _oldMember is a member
+│       ├── it removes the MEMBER role from _oldMember
+│       └── it calls enter on the spaceRegistry with the REMOVE_MEMBER action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::unflagEditor
+├── when called by DAO
+│   ├── when _unflaggedEditor is not an editor
+│   │   └── it reverts with NotEditor
+│   └── when _unflaggedEditor is an editor
+│       ├── it unflags the editor from using the fast path
+│       └── it calls enter on the spaceRegistry with the UNFLAG_EDITOR action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::fetch
+├── when _action equals CREATE_PROPOSAL
+│   └── it returns bytes32(proposalCounter)
+└── when _action equals anything else
+    └── it returns _topicInput
+
+UnitDAOSpace::isSupportThresholdReached
+├── when the proposal voting mode is using the slow path
+│   ├── when the block timestamp is less than or equal to the proposal last date
+│   │   └── it returns false
+│   ├── when the yes votes are not greater than the percentage support threshold
+│   │   └── it returns false
+│   └── when the yes votes are greater than the percentage support threshold
+│       └── it returns true
+└── when the proposal voting mode is using the fast path
+    ├── when the yes votes are not greater than the flat support threshold
+    │   └── it returns false
+    └── when the yes votes are greater than the flat support threshold
+        └── it returns true
