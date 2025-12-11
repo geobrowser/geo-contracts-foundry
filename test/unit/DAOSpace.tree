@@ -93,7 +93,7 @@ UnitDAOSpace::write
 │   │       ├── it loops over the stored proposal actions and performs the external calls
 │   │       └── when an external call fails
 │   │           └── it reverts with ActionReverted
-│   ├── when _action equals USER_LEFT
+│   ├── when _action equals SPACE_LEFT
 │   │   ├── when the role specified is MEMBER and the _fromSpace is a member
 │   │   │   ├── it revokes the role of MEMBER from the _fromSpace
 │   │   │   └── it calls enter on the spaceRegistry with the MEMBER_REMOVED action
