@@ -52,4 +52,8 @@ contract MockDAOSpace is DAOSpace {
     proposal_.tally.no = _no;
     proposal_.tally.abstain = _abstain;
   }
+
+  function workaround_setVotingSettings(VotingSettings calldata _votingSettings) external {
+    votingSettings = _votingSettings;
+  }
 }
