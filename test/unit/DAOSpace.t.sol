@@ -98,10 +98,7 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Initializer_WhenDelegateCalled(
-    address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings
-  ) external whenDelegateCalled {
+  function test_Initializer_WhenDelegateCalled(address __spaceRegistry) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -133,7 +130,7 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers)
         )
       )
     );
@@ -144,10 +141,10 @@ contract UnitDAOSpace is TestHelper {
     // it sets the voting settings
     (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration) =
       daoSpaceProxy.votingSettings();
-    assertEq(slowPathPercentageThreshold, __votingSettings.slowPathPercentageThreshold);
-    assertEq(fastPathFlatThreshold, __votingSettings.fastPathFlatThreshold);
-    assertEq(quorum, __votingSettings.quorum);
-    assertEq(duration, __votingSettings.duration);
+    assertEq(slowPathPercentageThreshold, _votingSettings.slowPathPercentageThreshold);
+    assertEq(fastPathFlatThreshold, _votingSettings.fastPathFlatThreshold);
+    assertEq(quorum, _votingSettings.quorum);
+    assertEq(duration, _votingSettings.duration);
 
     // it grants the new editor the EDITOR role
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
@@ -165,10 +162,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
   }
 
-  function test_Initializer_WhenDelegateCalledAgain(
-    address __spaceRegistry,
-    IDAOSpace.VotingSettings calldata __votingSettings
-  ) external whenDelegateCalled {
+  function test_Initializer_WhenDelegateCalledAgain(address __spaceRegistry) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -200,7 +194,7 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers)
+          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers)
         )
       )
     );
@@ -209,7 +203,7 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), __votingSettings, _initialEditors, _initialMembers);
+    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers);
   }
 
   function test_Initializer_WhenCalled() external {
@@ -873,6 +867,16 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsLEAVE
   {
+    // Set quorum to 0 so that an editor can be removed
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        quorum: 0,
+        duration: _votingSettings.duration
+      })
+    );
+
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
 
     daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
@@ -1033,6 +1037,9 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_newEditor != _initialEditor);
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditor), false);
 
+    uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
+    assertEq(totalEditorsBefore, 1);
+
     // it calls enter on the spaceRegistry with the ADD_EDITOR action
     _mockEnter(
       _spaceRegistry,
@@ -1042,6 +1049,9 @@ contract UnitDAOSpace is TestHelper {
       bytes32(bytes20(_newEditor))
     );
     daoSpaceProxy.addEditor(_newEditor);
+
+    // it increments totalEditors
+    assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore + 1);
 
     // it grants _newEditor the EDITOR role
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditor), true);
@@ -1066,11 +1076,31 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeEditor(_oldEditor);
   }
 
-  function test_RemoveEditor_When_oldEditorIsAnEditor() external whenCalledByDAO {
+  function test_RemoveEditor_WhenTheVotingSettingsQuorumIsGreaterThanTotalEditorsMinusOne() external whenCalledByDAO {
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.removeEditor(_initialEditor);
+  }
+
+  function test_RemoveEditor_WhenInputParamsAreValid() external whenCalledByDAO {
+    // Set quorum to 0 so that an editor can be removed
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        quorum: 0,
+        duration: _votingSettings.duration
+      })
+    );
+
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
 
+    // Set editor to flagged
     daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
     assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), true);
+
+    uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
+    assertEq(totalEditorsBefore, 1);
 
     // it calls enter on the spaceRegistry with the REMOVE_EDITOR action
     _mockEnter(
@@ -1081,6 +1111,9 @@ contract UnitDAOSpace is TestHelper {
       bytes32(bytes20(_initialEditor))
     );
     daoSpaceProxy.removeEditor(_initialEditor);
+
+    // it decrements totalEditors
+    assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore - 1);
 
     // it unflags the editor from using the fast path
     assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), false);
@@ -1204,6 +1237,75 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
     daoSpaceProxy.unflagEditor(_unflaggedEditor);
+  }
+
+  /// UPDATE VOTING SETTINGS ///
+
+  function test_UpdateVotingSettings_WhenSlowPathPercentageThresholdIsGreaterThanRATIO_BASE(uint256 _slowPathPercentageThreshold)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_slowPathPercentageThreshold > daoSpaceProxy.RATIO_BASE());
+    _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
+  function test_UpdateVotingSettings_WhenQuorumIsGreaterThanTotalEditors(uint256 _quorum) external whenCalledByDAO {
+    vm.assume(_quorum > daoSpaceProxy.totalEditors());
+    _votingSettings.quorum = _quorum;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
+  function test_UpdateVotingSettings_WhenDurationIsLessThanTwoDays(uint256 _duration) external whenCalledByDAO {
+    vm.assume(_duration < 2 days);
+    _votingSettings.duration = _duration;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
+  function test_UpdateVotingSettings_WhenInputParamsAreValid(
+    uint256 _slowPathPercentageThreshold,
+    uint256 _fastPathFlatThreshold,
+    uint256 _quorum,
+    uint256 _duration
+  ) external whenCalledByDAO {
+    _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
+    _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
+    _duration = bound(_duration, 2 days, 200 days);
+    _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
+    _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
+    _votingSettings.quorum = _quorum;
+    _votingSettings.duration = _duration;
+
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+
+    // it updates the voting settings
+    (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration) =
+      daoSpaceProxy.votingSettings();
+    assertEq(slowPathPercentageThreshold, _slowPathPercentageThreshold);
+    assertEq(fastPathFlatThreshold, _fastPathFlatThreshold);
+    assertEq(quorum, _quorum);
+    assertEq(duration, _duration);
+  }
+
+  function test_UpdateVotingSettings_WhenCalledByNon_DAO(
+    address _caller,
+    IDAOSpace.VotingSettings calldata __votingSettings
+  ) external {
+    vm.assume(_caller != address(daoSpaceProxy));
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.updateVotingSettings(__votingSettings);
   }
 
   /// FETCH ///

@@ -10,6 +10,7 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
+import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {MockDAOSpaceFactory} from 'mocks/MockDAOSpaceFactory.sol';
@@ -19,6 +20,8 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
 contract UnitDAOSpaceFactory is TestHelper {
   MockDAOSpaceFactory public daoSpaceFactoryImplementation;
   MockDAOSpaceFactory public daoSpaceFactoryProxy;
+
+  IDAOSpace.VotingSettings internal _votingSettings;
 
   address internal _owner = makeAddr('_owner');
   address internal _randomCaller = makeAddr('_randomCaller');
@@ -33,6 +36,10 @@ contract UnitDAOSpaceFactory is TestHelper {
   function setUp() external {
     _initialEditors[0] = _initialEditor;
     _initialMembers[0] = _initialMember;
+
+    _votingSettings = IDAOSpace.VotingSettings({
+      slowPathPercentageThreshold: 5e5, fastPathFlatThreshold: 1, quorum: 1, duration: 2 days
+    });
 
     // when deployed
     daoSpaceFactoryImplementation = new MockDAOSpaceFactory();
@@ -140,7 +147,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     daoSpaceFactoryImplementation.initialize(__spaceRegistry, __owner);
   }
 
-  function test_CreateDAOSpaceProxy_WhenCalled(DAOSpace.VotingSettings calldata __votingSettings) external {
+  function test_CreateDAOSpaceProxy_WhenCalled() external {
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     DAOSpace _daoSpaceProxy = DAOSpace(vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce));
 
@@ -170,16 +177,16 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     // it returns new DAO space proxy
     assertEq(
-      daoSpaceFactoryProxy.createDAOSpaceProxy(__votingSettings, _initialEditors, _initialMembers),
+      daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialEditors, _initialMembers),
       address(_daoSpaceProxy)
     );
 
-    DAOSpace.VotingSettings memory _votingSettings;
+    DAOSpace.VotingSettings memory votingSettings;
     (
-      _votingSettings.slowPathPercentageThreshold,
-      _votingSettings.fastPathFlatThreshold,
-      _votingSettings.quorum,
-      _votingSettings.duration
+      votingSettings.slowPathPercentageThreshold,
+      votingSettings.fastPathFlatThreshold,
+      votingSettings.quorum,
+      votingSettings.duration
     ) = _daoSpaceProxy.votingSettings();
 
     // it deploys and initializes DAO space proxy
@@ -188,7 +195,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
     assertEq(address(_daoSpaceProxy.spaceRegistry()), address(daoSpaceFactoryProxy.spaceRegistry()));
-    assertEq(abi.encode(_votingSettings), abi.encode(__votingSettings));
+    assertEq(abi.encode(votingSettings), abi.encode(_votingSettings));
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.EDITOR(), _initialEditor), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.MEMBER(), _initialMember), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.DAO(), address(_daoSpaceProxy)), true);

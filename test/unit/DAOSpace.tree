@@ -125,6 +125,7 @@ UnitDAOSpace::addEditor
 │   │   └── it reverts with InvalidAddressForRole
 │   └── when _newEditor is not an editor
 │       ├── it grants _newEditor the EDITOR role
+│       ├── it increments totalEditors
 │       └── it calls enter on the spaceRegistry with the ADD_EDITOR action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
@@ -133,8 +134,11 @@ UnitDAOSpace::removeEditor
 ├── when called by DAO
 │   ├── when _oldEditor is not an editor
 │   │   └── it reverts with InvalidAddressForRole
-│   └── when _oldEditor is an editor
+│   ├── when the voting settings quorum is greater than total editors minus one
+│   │   └── it reverts with InvalidSetting
+│   └── when input params are valid
 │       ├── it removes the EDITOR role from _oldEditor
+│       ├── it decrements totalEditors
 │       ├── it unflags the editor from using the fast path
 │       └── it calls enter on the spaceRegistry with the REMOVE_EDITOR action
 └── when called by non-DAO
@@ -167,6 +171,19 @@ UnitDAOSpace::unflagEditor
 │   └── when _unflaggedEditor is an editor
 │       ├── it unflags the editor from using the fast path
 │       └── it calls enter on the spaceRegistry with the UNFLAG_EDITOR action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::updateVotingSettings
+├── when called by DAO
+│   ├── when slowPathPercentageThreshold is greater than RATIO_BASE
+│   │   └── it reverts with InvalidSetting
+│   ├── when quorum is greater than totalEditors
+│   │   └── it reverts with InvalidSetting
+│   ├── when duration is less than two days
+│   │   └── it reverts with InvalidSetting
+│   └── when input params are valid
+│       └── it updates the voting settings
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 

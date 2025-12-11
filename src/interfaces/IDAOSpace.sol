@@ -126,6 +126,11 @@ interface IDAOSpace is ISpace, ISemver {
   error InvalidAddressForRole();
 
   /**
+   * @notice Thrown when attempting to update the voting settings with invalid parameters
+   */
+  error InvalidSetting();
+
+  /**
    * @notice Thrown when a voter cannot vote on a proposal
    * @dev Voter lacks permission, proposal doesn't exist, voting ended, or not editor at snapshot.
    * Vote replacement allowed.
@@ -204,6 +209,12 @@ interface IDAOSpace is ISpace, ISemver {
   function unflagEditor(address _unflaggedEditor) external;
 
   /**
+   * @notice Updates the voting settings for the DAO
+   * @param _votingSettings The new voting settings
+   */
+  function updateVotingSettings(VotingSettings calldata _votingSettings) external;
+
+  /**
    * @notice Space Registry contract
    * @return The address of the space registry singleton
    */
@@ -214,6 +225,12 @@ interface IDAOSpace is ISpace, ISemver {
    * @return The current proposal counter value
    */
   function proposalCounter() external view returns (uint256);
+
+  /**
+   * @notice Total editors
+   * @return The total number of editors
+   */
+  function totalEditors() external view returns (uint256);
 
   /**
    * @notice Voting settings for proposals

@@ -40,6 +40,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   uint256 public proposalCounter;
 
   /// @inheritdoc IDAOSpace
+  uint256 public totalEditors;
+
+  /// @inheritdoc IDAOSpace
   mapping(bytes4 _selector => bool _isValid) public actionIsFastPathValid;
 
   /// @inheritdoc IDAOSpace
@@ -60,18 +63,24 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
   ) external initializer {
+    // Set Space Registry and register new DAO Space
     spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId();
-    votingSettings = _votingSettings;
+    // Add initial editors
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);
     }
+    // Add initial members
     length = _initialMembers.length;
     for (uint256 j; j < length; j++) {
       _addMember(_initialMembers[j]);
     }
+    // Set voting settings
+    _updateVotingSettings(_votingSettings);
+    // Grant further roles for access control
     _grantRole(DAO, address(this));
+    // Set the initial fast path actions
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
   }
@@ -132,6 +141,12 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     _unflagEditor(_unflaggedEditor);
   }
 
+  /// @inheritdoc IDAOSpace
+  function updateVotingSettings(VotingSettings calldata _votingSettings) public {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    _updateVotingSettings(_votingSettings);
+  }
+
   /// @inheritdoc ISpace
   function fetch(bytes32 _action, bytes32 _topicInput) public view returns (bytes32) {
     if (_action == ActionsConstants.CREATE_PROPOSAL) return bytes32(proposalCounter);
@@ -179,6 +194,19 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc ISemver
   function version() public pure returns (string memory _version) {
     _version = '1.0.0';
+  }
+
+  /**
+   * @notice Sets the voting settings for the DAO
+   * @param _votingSettings The new voting settings
+   * @dev Several checks are performed to ensure the new settings do not prevent future proposals from
+   * being executed.
+   */
+  function _updateVotingSettings(VotingSettings calldata _votingSettings) internal {
+    if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
+    if (_votingSettings.quorum > totalEditors) revert InvalidSetting();
+    if (_votingSettings.duration < 2 days) revert InvalidSetting();
+    votingSettings = _votingSettings;
   }
 
   /**
@@ -348,6 +376,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     if (hasRole(EDITOR, _newEditor)) revert InvalidAddressForRole();
     // Grant the role for access control
     _grantRole(EDITOR, _newEditor);
+    // Update counter
+    totalEditors++;
     // Ping the registry
     spaceRegistry.enter(address(this), address(this), ActionsConstants.ADD_EDITOR, bytes32(bytes20(_newEditor)), '', '');
   }
@@ -358,8 +388,12 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    */
   function _removeEditor(address _oldEditor) internal {
     if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddressForRole();
+    // May not remove editor if doing so would prevent slow path proposals from being executed
+    if (votingSettings.quorum > totalEditors - 1) revert InvalidSetting();
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
+    // Update counter
+    totalEditors--;
     // Reset flagged status
     isEditorFlagged[_oldEditor] = false;
     // Ping the registry
