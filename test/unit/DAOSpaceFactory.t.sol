@@ -165,7 +165,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       _spaceRegistry,
       address(_daoSpaceProxy),
       address(_daoSpaceProxy),
-      ActionsConstants.ADD_EDITOR,
+      ActionsConstants.EDITOR_ADDED,
       bytes32(bytes20(_initialEditor)),
       '',
       ''
@@ -174,7 +174,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       _spaceRegistry,
       address(_daoSpaceProxy),
       address(_daoSpaceProxy),
-      ActionsConstants.ADD_MEMBER,
+      ActionsConstants.MEMBER_ADDED,
       bytes32(bytes20(_initialMember)),
       '',
       ''
