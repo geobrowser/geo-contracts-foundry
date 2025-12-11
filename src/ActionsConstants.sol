@@ -2,37 +2,37 @@
 pragma solidity 0.8.30;
 
 /// @dev The ID of the action to register a space
-bytes32 constant SPACE_ID_REGISTERED = keccak256('SPACE_ID_REGISTERED');
+bytes32 constant SPACE_ID_REGISTERED = keccak256('GOVERNANCE.SPACE_ID_REGISTERED');
 
 /// @dev The ID of the action to migrate a space
-bytes32 constant SPACE_ID_MIGRATED = keccak256('SPACE_ID_MIGRATED');
+bytes32 constant SPACE_ID_MIGRATED = keccak256('GOVERNANCE.SPACE_ID_MIGRATED');
 
 /// @dev The ID of the action to create a proposal
-bytes32 constant CREATE_PROPOSAL = keccak256('CREATE_PROPOSAL');
+bytes32 constant PROPOSAL_CREATED = keccak256('GOVERNANCE.PROPOSAL_CREATED');
 
 /// @dev The ID of the action to vote on a proposal
-bytes32 constant VOTE = keccak256('VOTE');
+bytes32 constant PROPOSAL_VOTED = keccak256('GOVERNANCE.PROPOSAL_VOTED');
 
 /// @dev The ID of the action to execute a proposal
-bytes32 constant EXECUTE_PROPOSAL = keccak256('EXECUTE_PROPOSAL');
+bytes32 constant PROPOSAL_EXECUTED = keccak256('GOVERNANCE.PROPOSAL_EXECUTED');
 
 /// @dev The ID of the action to leave a space as a member or editor
-bytes32 constant LEAVE = keccak256('LEAVE');
+bytes32 constant SPACE_LEFT = keccak256('GOVERNANCE.SPACE_LEFT');
 
 /// @dev The ID of the action to add an editor
-bytes32 constant ADD_EDITOR = keccak256('ADD_EDITOR');
+bytes32 constant EDITOR_ADDED = keccak256('GOVERNANCE.EDITOR_ADDED');
 
 /// @dev The ID of the action to remove an editor
-bytes32 constant REMOVE_EDITOR = keccak256('REMOVE_EDITOR');
+bytes32 constant EDITOR_REMOVED = keccak256('GOVERNANCE.EDITOR_REMOVED');
 
 /// @dev The ID of the action to add a member
-bytes32 constant ADD_MEMBER = keccak256('ADD_MEMBER');
+bytes32 constant MEMBER_ADDED = keccak256('GOVERNANCE.MEMBER_ADDED');
 
 /// @dev The ID of the action to remove a member
-bytes32 constant REMOVE_MEMBER = keccak256('REMOVE_MEMBER');
+bytes32 constant MEMBER_REMOVED = keccak256('GOVERNANCE.MEMBER_REMOVED');
 
 /// @dev The ID of the action to flag an editor (restricts fast path access)
-bytes32 constant FLAG_EDITOR = keccak256('FLAG_EDITOR');
+bytes32 constant EDITOR_FLAGGED = keccak256('GOVERNANCE.EDITOR_FLAGGED');
 
 /// @dev The ID of the action to unflag an editor (restores fast path access)
-bytes32 constant UNFLAG_EDITOR = keccak256('UNFLAG_EDITOR');
+bytes32 constant EDITOR_UNFLAGGED = keccak256('GOVERNANCE.EDITOR_UNFLAGGED');
