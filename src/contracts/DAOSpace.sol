@@ -96,7 +96,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       _vote(_fromSpace, _data);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       _executeProposal(_data);
-    } else if (_action == ActionsConstants.USER_LEFT) {
+    } else if (_action == ActionsConstants.SPACE_LEFT) {
       _leave(_fromSpace, _data);
     } else if (_action == ActionsConstants.EDITOR_FLAGGED) {
       _flagEditor(_fromSpace, _data);

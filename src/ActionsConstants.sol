@@ -17,7 +17,7 @@ bytes32 constant PROPOSAL_VOTED = keccak256('GOVERNANCE.PROPOSAL_VOTED');
 bytes32 constant PROPOSAL_EXECUTED = keccak256('GOVERNANCE.PROPOSAL_EXECUTED');
 
 /// @dev The ID of the action to leave a space as a member or editor
-bytes32 constant USER_LEFT = keccak256('GOVERNANCE.USER_LEFT');
+bytes32 constant SPACE_LEFT = keccak256('GOVERNANCE.SPACE_LEFT');
 
 /// @dev The ID of the action to add an editor
 bytes32 constant EDITOR_ADDED = keccak256('GOVERNANCE.EDITOR_ADDED');

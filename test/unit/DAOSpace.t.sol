@@ -833,16 +833,16 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_EXECUTED, _topic, executeData);
   }
 
-  /// WRITE - USER_LEFT ///
+  /// WRITE - SPACE_LEFT ///
 
-  modifier when_actionEqualsUSER_LEFT() {
+  modifier when_actionEqualsSPACE_LEFT() {
     _;
   }
 
   function test_Write_WhenTheRoleSpecifiedIsMEMBERAndThe_fromSpaceIsAMember(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
-    when_actionEqualsUSER_LEFT
+    when_actionEqualsSPACE_LEFT
   {
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMember), true);
 
@@ -856,7 +856,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.MEMBER());
-    daoSpaceProxy.write(_initialMember, ActionsConstants.USER_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialMember, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // it revokes the role of MEMBER from the _fromSpace
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMember), false);
@@ -865,7 +865,7 @@ contract UnitDAOSpace is TestHelper {
   function test_Write_WhenTheRoleSpecifiedIsEDITORAndThe_fromSpaceIsAnEditor(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
-    when_actionEqualsUSER_LEFT
+    when_actionEqualsSPACE_LEFT
   {
     // Set quorum to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
@@ -892,7 +892,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.EDITOR());
-    daoSpaceProxy.write(_initialEditor, ActionsConstants.USER_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // it revokes the role of EDITOR from the _fromSpace
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), false);
@@ -904,7 +904,7 @@ contract UnitDAOSpace is TestHelper {
   function test_Write_WhenTheRoleIsNotHeldByThe_fromSpaceOrTheRoleIsNeitherMEMBERNorEDITOR(
     bytes32 _topic,
     address _caller
-  ) external whenCalledBySpaceRegistry when_actionEqualsUSER_LEFT {
+  ) external whenCalledBySpaceRegistry when_actionEqualsSPACE_LEFT {
     vm.assume(_caller != _initialEditor);
     vm.assume(_caller != _initialMember);
 
@@ -912,17 +912,17 @@ contract UnitDAOSpace is TestHelper {
     // role is neither MEMBER or EDITOR
     bytes memory leaveData = abi.encode(daoSpaceProxy.DAO());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_caller, ActionsConstants.USER_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_caller, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // _fromSpace doesn't have role
     leaveData = abi.encode(daoSpaceProxy.MEMBER());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialEditor, ActionsConstants.USER_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // _fromSpace doesn't have role
     leaveData = abi.encode(daoSpaceProxy.EDITOR());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialMember, ActionsConstants.USER_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialMember, ActionsConstants.SPACE_LEFT, _topic, leaveData);
   }
 
   /// WRITE - FLAG EDITOR ///
@@ -980,7 +980,7 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_action != ActionsConstants.PROPOSAL_CREATED);
     vm.assume(_action != ActionsConstants.PROPOSAL_VOTED);
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
-    vm.assume(_action != ActionsConstants.USER_LEFT);
+    vm.assume(_action != ActionsConstants.SPACE_LEFT);
     vm.assume(_action != ActionsConstants.EDITOR_FLAGGED);
 
     // it reverts with InvalidAction
