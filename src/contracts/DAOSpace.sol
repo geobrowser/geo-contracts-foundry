@@ -204,6 +204,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    */
   function _updateVotingSettings(VotingSettings calldata _votingSettings) internal {
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
+    if (_votingSettings.fastPathFlatThreshold > totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > totalEditors) revert InvalidSetting();
     if (_votingSettings.duration < 2 days) revert InvalidSetting();
     votingSettings = _votingSettings;
@@ -389,7 +390,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function _removeEditor(address _oldEditor) internal {
     if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddressForRole();
     // May not remove editor if doing so would prevent slow path proposals from being executed
-    if (votingSettings.quorum > totalEditors - 1) revert InvalidSetting();
+    if (votingSettings.quorum == totalEditors) revert InvalidSetting();
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
     // Update counter

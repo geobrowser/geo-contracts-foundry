@@ -1253,6 +1253,18 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
+  function test_UpdateVotingSettings_WhenFastPathFlatThresholdIsGreaterThanTotalEditors(uint256 _fastPathFlatThreshold)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_fastPathFlatThreshold > daoSpaceProxy.totalEditors());
+    _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
   function test_UpdateVotingSettings_WhenQuorumIsGreaterThanTotalEditors(uint256 _quorum) external whenCalledByDAO {
     vm.assume(_quorum > daoSpaceProxy.totalEditors());
     _votingSettings.quorum = _quorum;
@@ -1278,6 +1290,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _duration
   ) external whenCalledByDAO {
     _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
+    _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
     _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
     _duration = bound(_duration, 2 days, 200 days);
     _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;

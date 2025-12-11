@@ -147,7 +147,12 @@ contract UnitDAOSpaceFactory is TestHelper {
     daoSpaceFactoryImplementation.initialize(__spaceRegistry, __owner);
   }
 
-  function test_CreateDAOSpaceProxy_WhenCalled() external {
+  function test_CreateDAOSpaceProxy_WhenCalled(IDAOSpace.VotingSettings memory __votingSettings) external {
+    __votingSettings.slowPathPercentageThreshold = bound(__votingSettings.slowPathPercentageThreshold, 0, 1e6);
+    __votingSettings.fastPathFlatThreshold = bound(__votingSettings.fastPathFlatThreshold, 0, 1);
+    __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
+    __votingSettings.duration = bound(__votingSettings.duration, 2 days, 200 days);
+
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     DAOSpace _daoSpaceProxy = DAOSpace(vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce));
 
@@ -177,16 +182,15 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     // it returns new DAO space proxy
     assertEq(
-      daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialEditors, _initialMembers),
+      daoSpaceFactoryProxy.createDAOSpaceProxy(__votingSettings, _initialEditors, _initialMembers),
       address(_daoSpaceProxy)
     );
 
-    DAOSpace.VotingSettings memory votingSettings;
     (
-      votingSettings.slowPathPercentageThreshold,
-      votingSettings.fastPathFlatThreshold,
-      votingSettings.quorum,
-      votingSettings.duration
+      _votingSettings.slowPathPercentageThreshold,
+      _votingSettings.fastPathFlatThreshold,
+      _votingSettings.quorum,
+      _votingSettings.duration
     ) = _daoSpaceProxy.votingSettings();
 
     // it deploys and initializes DAO space proxy
@@ -195,7 +199,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
     assertEq(address(_daoSpaceProxy.spaceRegistry()), address(daoSpaceFactoryProxy.spaceRegistry()));
-    assertEq(abi.encode(votingSettings), abi.encode(_votingSettings));
+    assertEq(abi.encode(_votingSettings), abi.encode(__votingSettings));
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.EDITOR(), _initialEditor), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.MEMBER(), _initialMember), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.DAO(), address(_daoSpaceProxy)), true);
