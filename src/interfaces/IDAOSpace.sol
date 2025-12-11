@@ -293,6 +293,12 @@ interface IDAOSpace is ISpace, ISemver {
   function RATIO_BASE() external view returns (uint256);
 
   /**
+   * @notice Returns the SPACE_REGISTRY role identifier
+   * @return The SPACE_REGISTRY role identifier
+   */
+  function SPACE_REGISTRY() external view returns (bytes32);
+
+  /**
    * @notice Returns the editor role identifier
    * @return The editor role identifier
    */

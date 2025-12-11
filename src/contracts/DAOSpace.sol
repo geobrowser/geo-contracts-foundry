@@ -22,6 +22,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   uint256 public constant RATIO_BASE = 10e6;
 
   /// @inheritdoc IDAOSpace
+  bytes32 public constant SPACE_REGISTRY = keccak256('SPACE_REGISTRY');
+
+  /// @inheritdoc IDAOSpace
   bytes32 public constant EDITOR = keccak256('EDITOR');
 
   /// @inheritdoc IDAOSpace
@@ -79,6 +82,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Set voting settings
     _updateVotingSettings(_votingSettings);
     // Grant further roles for access control
+    _grantRole(SPACE_REGISTRY, address(spaceRegistry));
     _grantRole(DAO, address(this));
     // Set the initial fast path actions
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
@@ -88,7 +92,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc ISpace
   function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external {
     // Only Space Registry can call
-    if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
+    if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
     // Governance Actions
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
       _createProposal(_fromSpace, _data);
