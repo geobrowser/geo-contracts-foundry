@@ -1,3 +1,12 @@
+UnitDAOSpace::constants
+└── when deployed
+    ├── it sets MINIMUM_VOTING_DURATION to 2 days
+    ├── it sets RATIO_BASE to 10e6
+    ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
+    ├── it sets EDITOR to keccak256('EDITOR')
+    ├── it sets MEMBER to keccak256('MEMBER')
+    └── it sets DAO to keccak256('DAO')
+
 UnitDAOSpace::constructor
 └── when called
     └── it disables initializers
@@ -182,7 +191,7 @@ UnitDAOSpace::updateVotingSettings
 │   │   └── it reverts with InvalidSetting
 │   ├── when quorum is greater than totalEditors
 │   │   └── it reverts with InvalidSetting
-│   ├── when duration is less than two days
+│   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       └── it updates the voting settings

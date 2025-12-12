@@ -19,6 +19,9 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  */
 contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc IDAOSpace
+  uint256 public constant MINIMUM_VOTING_DURATION = 2 days;
+
+  /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
 
   /// @inheritdoc IDAOSpace
@@ -210,7 +213,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
     if (_votingSettings.fastPathFlatThreshold > totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > totalEditors) revert InvalidSetting();
-    if (_votingSettings.duration < 2 days) revert InvalidSetting();
+    if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
     votingSettings = _votingSettings;
   }
 

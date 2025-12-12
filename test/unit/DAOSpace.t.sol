@@ -80,6 +80,28 @@ contract UnitDAOSpace is TestHelper {
     );
   }
 
+  /// CONSTANTS ///
+
+  function test_Constants_WhenDeployed() external {
+    // it sets MINIMUM_VOTING_DURATION to 2 days
+    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
+
+    // it sets RATIO_BASE to 10e6
+    assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
+
+    // it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
+    assertEq(daoSpaceProxy.SPACE_REGISTRY(), keccak256('SPACE_REGISTRY'));
+
+    // it sets EDITOR to keccak256('EDITOR')
+    assertEq(daoSpaceProxy.EDITOR(), keccak256('EDITOR'));
+
+    // it sets MEMBER to keccak256('MEMBER')
+    assertEq(daoSpaceProxy.MEMBER(), keccak256('MEMBER'));
+
+    // it sets DAO to keccak256('DAO')
+    assertEq(daoSpaceProxy.DAO(), keccak256('DAO'));
+  }
+
   /// CONSTRUCTOR ///
 
   function test_Constructor_WhenCalled() external {
@@ -1274,8 +1296,11 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
-  function test_UpdateVotingSettings_WhenDurationIsLessThanTwoDays(uint256 _duration) external whenCalledByDAO {
-    vm.assume(_duration < 2 days);
+  function test_UpdateVotingSettings_WhenDurationIsLessThanMINIMUM_VOTING_DURATION(uint256 _duration)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_duration < daoSpaceProxy.MINIMUM_VOTING_DURATION());
     _votingSettings.duration = _duration;
 
     // it reverts with InvalidSetting
@@ -1292,7 +1317,7 @@ contract UnitDAOSpace is TestHelper {
     _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
     _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
     _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
-    _duration = bound(_duration, 2 days, 200 days);
+    _duration = bound(_duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100);
     _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
     _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
     _votingSettings.quorum = _quorum;
