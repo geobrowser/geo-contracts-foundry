@@ -209,7 +209,7 @@ interface IDAOSpace is ISpace, ISemver {
   function unflagEditor(address _unflaggedEditor) external;
 
   /**
-   * @notice Internal function to re-enter the Space Registry and emit another Action event
+   * @notice Re-enters the Space Registry to emit an Action event
    * @param _action An action identifier
    * @param _topic A topic identifier
    * @param _data Some extra arbitrary data that may hold additional information
