@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
+import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {DeployGEOBrowser} from 'script/DeployGEOBrowser.s.sol';
 
 abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
@@ -11,6 +12,11 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
 
   uint256 internal _arbitrumOneForkId;
   uint256 internal _geoGenesisForkId;
+
+  IDAOSpace.VotingSettings internal _votingSettings;
+  address[] internal _initialSpaceEditors;
+  address[] internal _initialSpaceMembers;
+  address internal _initialSpaceOwner;
 
   function setUp() public virtual override {
     _arbitrumOneForkId = vm.createFork(vm.rpcUrl('arbitrum_one'), _ARBITRUM_ONE_FORK_BLOCK);

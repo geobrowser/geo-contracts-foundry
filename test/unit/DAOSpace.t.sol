@@ -8,7 +8,7 @@ import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {MockDAOSpace} from 'mocks/MockDAOSpace.sol';
+import {MockDAOSpace} from 'test/unit/mocks/MockDAOSpace.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 

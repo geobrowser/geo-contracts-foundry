@@ -12,7 +12,7 @@ import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
-import {MockVerifierSpaceFactory} from 'mocks/MockVerifierSpaceFactory.sol';
+import {MockVerifierSpaceFactory} from 'test/unit/mocks/MockVerifierSpaceFactory.sol';
 
 contract UnitVerifierSpaceFactory is TestHelper {
   MockVerifierSpaceFactory public verifierSpaceFactoryImplementation;
