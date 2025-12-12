@@ -209,6 +209,15 @@ interface IDAOSpace is ISpace, ISemver {
   function unflagEditor(address _unflaggedEditor) external;
 
   /**
+   * @notice Re-enters the Space Registry to emit an Action event
+   * @param _action An action identifier
+   * @param _topic A topic identifier
+   * @param _data Some extra arbitrary data that may hold additional information
+   * @dev _from and _to are always the DAO's address
+   */
+  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
+
+  /**
    * @notice Updates the voting settings for the DAO
    * @param _votingSettings The new voting settings
    */
@@ -285,6 +294,12 @@ interface IDAOSpace is ISpace, ISemver {
    * @return _voteOption The vote option cast by the account (None if not voted)
    */
   function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption);
+
+  /**
+   * @notice Returns the minimum voting duration for a slow path proposal
+   * @return The minimum voting duration in seconds
+   */
+  function MINIMUM_VOTING_DURATION() external view returns (uint256);
 
   /**
    * @notice Returns the ratio base used for percentage calculations

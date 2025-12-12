@@ -28,22 +28,24 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     IntegrationBase.setUp();
     vm.selectFork(_geoTestnetForkId);
 
-    _votingSettings.duration = 2 days;
+    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
+    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
+
+    daoSpaceImplementationA = DAOSpace(daoSpaceBeacon.implementation());
+    verifierSpaceImplementationA = VerifierSpace(verifierSpaceBeacon.implementation());
+
+    _votingSettings.duration = daoSpaceImplementationA.MINIMUM_VOTING_DURATION();
     _initialSpaceOwner = address(this);
 
-    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
-    daoSpaceImplementationA = DAOSpace(daoSpaceBeacon.implementation());
-    daoSpaceImplementationB = DAOSpace(address(new MockNewImplementation()));
     daoSpaceProxyA =
       DAOSpace(daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers));
     daoSpaceProxyB =
       DAOSpace(daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers));
-
-    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
-    verifierSpaceImplementationA = VerifierSpace(verifierSpaceBeacon.implementation());
-    verifierSpaceImplementationB = VerifierSpace(address(new MockNewImplementation()));
     verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
     verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
+
+    daoSpaceImplementationB = DAOSpace(address(new MockNewImplementation()));
+    verifierSpaceImplementationB = VerifierSpace(address(new MockNewImplementation()));
   }
 
   function test_UpgradeBeaconImplementation_DAOSpace() external {
