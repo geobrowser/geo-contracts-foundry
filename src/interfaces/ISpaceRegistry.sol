@@ -14,7 +14,7 @@ interface ISpaceRegistry is ISemver {
    * @param toId The to space ID involved
    * @param action An action, which is passed to the space contract
    * @param topic A topic, which is passed to the space contract
-   * @param data Some arbitrary data for space contract execution
+   * @param data Some extra arbitrary data that may be used for space contract execution
    */
   event Action(
     bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data

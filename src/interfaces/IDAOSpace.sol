@@ -209,6 +209,15 @@ interface IDAOSpace is ISpace, ISemver {
   function unflagEditor(address _unflaggedEditor) external;
 
   /**
+   * @notice Internal function to re-enter the Space Registry and emit another Action event
+   * @param _action An action identifier
+   * @param _topic A topic identifier
+   * @param _data Some extra arbitrary data that may hold additional information
+   * @dev _from and _to are always the DAO's address
+   */
+  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
+
+  /**
    * @notice Updates the voting settings for the DAO
    * @param _votingSettings The new voting settings
    */

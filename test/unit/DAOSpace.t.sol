@@ -57,7 +57,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
@@ -66,7 +67,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember))
+      bytes32(bytes20(_initialMember)),
+      ''
     );
 
     // when deployed
@@ -113,7 +115,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
@@ -122,7 +125,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember))
+      bytes32(bytes20(_initialMember)),
+      ''
     );
 
     // when delegate called
@@ -177,7 +181,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
@@ -186,7 +191,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember))
+      bytes32(bytes20(_initialMember)),
+      ''
     );
 
     // when delegate called
@@ -697,7 +703,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_randomCaller))
+      bytes32(bytes20(_randomCaller)),
+      ''
     );
 
     // vote yes
@@ -795,7 +802,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_randomCaller))
+      bytes32(bytes20(_randomCaller)),
+      ''
     );
 
     bytes memory executeData = abi.encode(0);
@@ -852,7 +860,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_REMOVED,
-      bytes32(bytes20(_initialMember))
+      bytes32(bytes20(_initialMember)),
+      ''
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.MEMBER());
@@ -888,7 +897,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_REMOVED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.EDITOR());
@@ -1046,7 +1056,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_newEditor))
+      bytes32(bytes20(_newEditor)),
+      ''
     );
     daoSpaceProxy.addEditor(_newEditor);
 
@@ -1108,7 +1119,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_REMOVED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
     daoSpaceProxy.removeEditor(_initialEditor);
 
@@ -1149,7 +1161,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_newMember))
+      bytes32(bytes20(_newMember)),
+      ''
     );
     daoSpaceProxy.addMember(_newMember);
 
@@ -1185,7 +1198,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_REMOVED,
-      bytes32(bytes20(_initialMember))
+      bytes32(bytes20(_initialMember)),
+      ''
     );
     daoSpaceProxy.removeMember(_initialMember);
 
@@ -1222,7 +1236,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_UNFLAGGED,
-      bytes32(bytes20(_initialEditor))
+      bytes32(bytes20(_initialEditor)),
+      ''
     );
     daoSpaceProxy.unflagEditor(_initialEditor);
 
@@ -1237,6 +1252,28 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
     daoSpaceProxy.unflagEditor(_unflaggedEditor);
+  }
+
+  /// PING ///
+
+  function test_Ping_WhenCalledByDAO(bytes32 _action, bytes32 _topic, bytes calldata _data) external whenCalledByDAO {
+    // it calls enter on the spaceRegistry with the input variables passed
+    _mockEnter(_spaceRegistry, address(daoSpaceProxy), address(daoSpaceProxy), _action, _topic, _data);
+    daoSpaceProxy.ping(_action, _topic, _data);
+  }
+
+  function test_Ping_WhenCalledByNon_DAO(
+    address _caller,
+    bytes32 _action,
+    bytes32 _topic,
+    bytes calldata _data
+  ) external {
+    vm.assume(_caller != address(daoSpaceProxy));
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.ping(_action, _topic, _data);
   }
 
   /// UPDATE VOTING SETTINGS ///
@@ -1524,9 +1561,16 @@ contract UnitDAOSpace is TestHelper {
     _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
   }
 
-  function _mockEnter(address __spaceRegistry, address _from, address _to, bytes32 _action, bytes32 _topic) internal {
+  function _mockEnter(
+    address __spaceRegistry,
+    address _from,
+    address _to,
+    bytes32 _action,
+    bytes32 _topic,
+    bytes memory _data
+  ) internal {
     _mockAndExpect(
-      __spaceRegistry, abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, '', '')), abi.encode()
+      __spaceRegistry, abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, _data, '')), abi.encode()
     );
   }
 
