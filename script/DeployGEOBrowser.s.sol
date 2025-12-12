@@ -35,20 +35,20 @@ contract DeployGEOBrowser is Script {
     spaceRegistryProxy = SpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
         address(spaceRegistryImplementation),
-        abi.encodeCall(SpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
+        abi.encodeCall(SpaceRegistry.initialize, (Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))
       )
     );
     daoSpaceFactoryProxy = DAOSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(daoSpaceFactoryImplementation),
-        abi.encodeCall(DAOSpaceFactory.initialize, (spaceRegistryProxy, Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
+        abi.encodeCall(DAOSpaceFactory.initialize, (spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))
       )
     );
     verifierSpaceFactoryProxy = VerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
         abi.encodeCall(
-          VerifierSpaceFactory.initialize, (spaceRegistryProxy, Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL)
+          VerifierSpaceFactory.initialize, (spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL)
         )
       )
     );

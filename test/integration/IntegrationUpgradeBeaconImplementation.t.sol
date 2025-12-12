@@ -26,7 +26,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
 
   function setUp() public override {
     IntegrationBase.setUp();
-    vm.selectFork(_geoGenesisForkId);
+    vm.selectFork(_geoTestnetForkId);
 
     _votingSettings.duration = 2 days;
     _initialSpaceOwner = address(this);
@@ -52,7 +52,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
     daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationB));
 
     assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationB));
@@ -67,7 +67,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(verifierSpaceProxyA.version(), '1.0.0');
     assertEq(verifierSpaceProxyB.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
     verifierSpaceBeacon.upgradeTo(address(verifierSpaceImplementationB));
 
     assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementationB));

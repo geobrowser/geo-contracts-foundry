@@ -7,11 +7,11 @@ import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {DeployGEOBrowser} from 'script/DeployGEOBrowser.s.sol';
 
 abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
-  uint256 internal constant _ARBITRUM_ONE_FORK_BLOCK = 350_000_000;
-  uint256 internal constant _GEO_GENESIS_FORK_BLOCK = 500;
+  uint256 internal constant _ARBITRUM_TESTNET_FORK_BLOCK = 200_000_000;
+  uint256 internal constant _GEO_TESTNET_FORK_BLOCK = 500;
 
-  uint256 internal _arbitrumOneForkId;
-  uint256 internal _geoGenesisForkId;
+  uint256 internal _arbitrumTestnetForkId;
+  uint256 internal _geoTestnetForkId;
 
   IDAOSpace.VotingSettings internal _votingSettings;
   address[] internal _initialSpaceEditors;
@@ -19,15 +19,15 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   address internal _initialSpaceOwner;
 
   function setUp() public virtual override {
-    _arbitrumOneForkId = vm.createFork(vm.rpcUrl('arbitrum_one'), _ARBITRUM_ONE_FORK_BLOCK);
-    _geoGenesisForkId = vm.createFork(vm.rpcUrl('geo_genesis'), _GEO_GENESIS_FORK_BLOCK);
+    _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);
+    _geoTestnetForkId = vm.createFork(vm.rpcUrl('geo_testnet'), _GEO_TESTNET_FORK_BLOCK);
 
-    // Deploy GEO incentives contracts on Arbitrum One
-    vm.selectFork(_arbitrumOneForkId);
+    // Deploy GEO incentives contracts on Arbitrum Testnet
+    vm.selectFork(_arbitrumTestnetForkId);
     _deployGEOIncentives();
 
-    // Deploy GEO browser contracts on Geo Genesis
-    vm.selectFork(_geoGenesisForkId);
+    // Deploy GEO browser contracts on Geo Testnet
+    vm.selectFork(_geoTestnetForkId);
     _deployGEOBrowser();
   }
 

@@ -30,7 +30,9 @@ runs = 1000
 
 [rpc_endpoints]
 arbitrum_one = "${ARBITRUM_ONE_RPC}"
+arbitrum_testnet = "${ARBITRUM_TESTNET_RPC}"
 geo_genesis = "${GEO_GENESIS_RPC}"
+geo_testnet = "${GEO_TESTNET_RPC}"
 
 [etherscan]
-arbitrum_one = { key = "${ARBISCAN_API_KEY}" }
+arbitrum = { key = "${ARBISCAN_API_KEY}" }
