@@ -7,9 +7,9 @@ UnitDAOSpace::initializer
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings
 │   ├── it grants the new editor the EDITOR role
-│   ├── it calls enter on the spaceRegistry with the ADD_EDITOR action
+│   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 │   ├── it grants the new member the MEMBER role
-│   ├── it calls enter on the spaceRegistry with the ADD_MEMBER action
+│   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
@@ -21,7 +21,7 @@ UnitDAOSpace::initializer
 
 UnitDAOSpace::write
 ├── when called by spaceRegistry
-│   ├── when _action equals CREATE_PROPOSAL
+│   ├── when _action equals PROPOSAL_CREATED
 │   │   ├── when the voting mode is slow
 │   │   │   ├── when _fromSpace is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
@@ -48,7 +48,7 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal voting mode
 │   │           ├── it sets the proposal support threshold to the fast path flat threshold
 │   │           └── it stores the decoded proposal actions
-│   ├── when _action equals VOTE
+│   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the block timestamp is greater than the last date 
@@ -82,7 +82,7 @@ UnitDAOSpace::write
 │   │           └── when the current _fromSpace vote equals yes
 │   │               └── when the proposal can be executed
 │   │                   └── it loops over the stored proposal actions and performs the external calls
-│   ├── when _action equals EXECUTE_PROPOSAL
+│   ├── when _action equals PROPOSAL_EXECUTED
 │   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute
 │   │   ├── when the proposal start date equals zero
@@ -93,17 +93,17 @@ UnitDAOSpace::write
 │   │       ├── it loops over the stored proposal actions and performs the external calls
 │   │       └── when an external call fails
 │   │           └── it reverts with ActionReverted
-│   ├── when _action equals LEAVE
+│   ├── when _action equals SPACE_LEFT
 │   │   ├── when the role specified is MEMBER and the _fromSpace is a member
 │   │   │   ├── it revokes the role of MEMBER from the _fromSpace
-│   │   │   └── it calls enter on the spaceRegistry with the REMOVE_MEMBER action
+│   │   │   └── it calls enter on the spaceRegistry with the MEMBER_REMOVED action
 │   │   ├── when the role specified is EDITOR and the _fromSpace is an editor
 │   │   │   ├── it revokes the role of EDITOR from the _fromSpace
 │   │   │   ├── it unflags the editor from using the fast path
-│   │   │   └── it calls enter on the spaceRegistry with the REMOVE_EDITOR action
+│   │   │   └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
 │   │   └── when the role is not held by the _fromSpace or the role is neither MEMBER nor EDITOR
 │   │       └── it reverts with InvalidFromSpace
-│   ├── when _action equals FLAG_EDITOR
+│   ├── when _action equals EDITOR_FLAGGED
 │   │   ├── when the _fromSpace is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
 │   │   ├── when the to be flagged editor is not an editor
@@ -125,7 +125,8 @@ UnitDAOSpace::addEditor
 │   │   └── it reverts with InvalidAddressForRole
 │   └── when _newEditor is not an editor
 │       ├── it grants _newEditor the EDITOR role
-│       └── it calls enter on the spaceRegistry with the ADD_EDITOR action
+│       ├── it increments totalEditors
+│       └── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -133,10 +134,13 @@ UnitDAOSpace::removeEditor
 ├── when called by DAO
 │   ├── when _oldEditor is not an editor
 │   │   └── it reverts with InvalidAddressForRole
-│   └── when _oldEditor is an editor
+│   ├── when the voting settings quorum is greater than total editors minus one
+│   │   └── it reverts with InvalidSetting
+│   └── when input params are valid
 │       ├── it removes the EDITOR role from _oldEditor
+│       ├── it decrements totalEditors
 │       ├── it unflags the editor from using the fast path
-│       └── it calls enter on the spaceRegistry with the REMOVE_EDITOR action
+│       └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -146,7 +150,7 @@ UnitDAOSpace::addMember
 │   │   └── it reverts with InvalidAddressForRole
 │   └── when _newMember is not a member
 │       ├── it grants _newMember the MEMBER role
-│       └── it calls enter on the spaceRegistry with the ADD_MEMBER action
+│       └── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -156,7 +160,7 @@ UnitDAOSpace::removeMember
 │   │   └── it reverts with InvalidAddressForRole
 │   └── when _oldMember is a member
 │       ├── it removes the MEMBER role from _oldMember
-│       └── it calls enter on the spaceRegistry with the REMOVE_MEMBER action
+│       └── it calls enter on the spaceRegistry with the MEMBER_REMOVED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -166,12 +170,27 @@ UnitDAOSpace::unflagEditor
 │   │   └── it reverts with NotEditor
 │   └── when _unflaggedEditor is an editor
 │       ├── it unflags the editor from using the fast path
-│       └── it calls enter on the spaceRegistry with the UNFLAG_EDITOR action
+│       └── it calls enter on the spaceRegistry with the EDITOR_UNFLAGGED action
+└── when called by non-DAO
+    └── it reverts with InvalidCaller
+
+UnitDAOSpace::updateVotingSettings
+├── when called by DAO
+│   ├── when slowPathPercentageThreshold is greater than RATIO_BASE
+│   │   └── it reverts with InvalidSetting
+│   ├── when fastPathFlatThreshold is greater than totalEditors
+│   │   └── it reverts with InvalidSetting
+│   ├── when quorum is greater than totalEditors
+│   │   └── it reverts with InvalidSetting
+│   ├── when duration is less than two days
+│   │   └── it reverts with InvalidSetting
+│   └── when input params are valid
+│       └── it updates the voting settings
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
 UnitDAOSpace::fetch
-├── when _action equals CREATE_PROPOSAL
+├── when _action equals PROPOSAL_CREATED
 │   └── it returns bytes32(proposalCounter)
 └── when _action equals anything else
     └── it returns _topicInput

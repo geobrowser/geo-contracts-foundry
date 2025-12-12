@@ -28,6 +28,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     IntegrationBase.setUp();
     vm.selectFork(_geoGenesisForkId);
 
+    _votingSettings.duration = 2 days;
     _initialSpaceOwner = address(this);
 
     daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
