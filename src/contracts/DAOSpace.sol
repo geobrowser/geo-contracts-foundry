@@ -149,6 +149,12 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
+  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    _ping(_action, _topic, _data);
+  }
+
+  /// @inheritdoc IDAOSpace
   function updateVotingSettings(VotingSettings calldata _votingSettings) public {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _updateVotingSettings(_votingSettings);
@@ -371,9 +377,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function _unflagEditor(address _unflaggedEditor) internal {
     if (!hasRole(EDITOR, _unflaggedEditor)) revert NotEditor();
     isEditorFlagged[_unflaggedEditor] = false;
-    spaceRegistry.enter(
-      address(this), address(this), ActionsConstants.EDITOR_UNFLAGGED, bytes32(bytes20(_unflaggedEditor)), '', ''
-    );
+    _ping(ActionsConstants.EDITOR_UNFLAGGED, bytes32(bytes20(_unflaggedEditor)), '');
   }
 
   /**
@@ -387,9 +391,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Update counter
     totalEditors++;
     // Ping the registry
-    spaceRegistry.enter(
-      address(this), address(this), ActionsConstants.EDITOR_ADDED, bytes32(bytes20(_newEditor)), '', ''
-    );
+    _ping(ActionsConstants.EDITOR_ADDED, bytes32(bytes20(_newEditor)), '');
   }
 
   /**
@@ -407,9 +409,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Reset flagged status
     isEditorFlagged[_oldEditor] = false;
     // Ping the registry
-    spaceRegistry.enter(
-      address(this), address(this), ActionsConstants.EDITOR_REMOVED, bytes32(bytes20(_oldEditor)), '', ''
-    );
+    _ping(ActionsConstants.EDITOR_REMOVED, bytes32(bytes20(_oldEditor)), '');
   }
 
   /**
@@ -419,9 +419,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function _addMember(address _newMember) internal {
     if (hasRole(MEMBER, _newMember)) revert InvalidAddressForRole();
     _grantRole(MEMBER, _newMember);
-    spaceRegistry.enter(
-      address(this), address(this), ActionsConstants.MEMBER_ADDED, bytes32(bytes20(_newMember)), '', ''
-    );
+    _ping(ActionsConstants.MEMBER_ADDED, bytes32(bytes20(_newMember)), '');
   }
 
   /**
@@ -431,9 +429,18 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function _removeMember(address _oldMember) internal {
     if (!hasRole(MEMBER, _oldMember)) revert InvalidAddressForRole();
     _revokeRole(MEMBER, _oldMember);
-    spaceRegistry.enter(
-      address(this), address(this), ActionsConstants.MEMBER_REMOVED, bytes32(bytes20(_oldMember)), '', ''
-    );
+    _ping(ActionsConstants.MEMBER_REMOVED, bytes32(bytes20(_oldMember)), '');
+  }
+
+  /**
+   * @notice Internal function to re-enter the Space Registry and emit another Action event
+   * @param _action An action identifier
+   * @param _topic A topic identifier
+   * @param _data Some extra arbitrary data that may hold additional information
+   * @dev _from and _to are always the DAO's address
+   */
+  function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal {
+    spaceRegistry.enter(address(this), address(this), _action, _topic, _data, '');
   }
 
   /**
