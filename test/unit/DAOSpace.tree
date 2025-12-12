@@ -182,7 +182,7 @@ UnitDAOSpace::updateVotingSettings
 │   │   └── it reverts with InvalidSetting
 │   ├── when quorum is greater than totalEditors
 │   │   └── it reverts with InvalidSetting
-│   ├── when duration is less than two days
+│   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       └── it updates the voting settings

@@ -1274,8 +1274,11 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
-  function test_UpdateVotingSettings_WhenDurationIsLessThanTwoDays(uint256 _duration) external whenCalledByDAO {
-    vm.assume(_duration < 2 days);
+  function test_UpdateVotingSettings_WhenDurationIsLessThanMINIMUM_VOTING_DURATION(uint256 _duration)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_duration < daoSpaceProxy.MINIMUM_VOTING_DURATION());
     _votingSettings.duration = _duration;
 
     // it reverts with InvalidSetting
@@ -1292,7 +1295,7 @@ contract UnitDAOSpace is TestHelper {
     _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
     _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
     _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
-    _duration = bound(_duration, 2 days, 200 days);
+    _duration = bound(_duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100);
     _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
     _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
     _votingSettings.quorum = _quorum;
