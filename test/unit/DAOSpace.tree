@@ -1,3 +1,12 @@
+UnitDAOSpace::constants
+└── when deployed
+    ├── it sets MINIMUM_VOTING_DURATION to 2 days
+    ├── it sets RATIO_BASE to 10e6
+    ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
+    ├── it sets EDITOR to keccak256('EDITOR')
+    ├── it sets MEMBER to keccak256('MEMBER')
+    └── it sets DAO to keccak256('DAO')
+
 UnitDAOSpace::constructor
 └── when called
     └── it disables initializers

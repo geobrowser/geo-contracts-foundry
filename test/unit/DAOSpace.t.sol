@@ -80,6 +80,28 @@ contract UnitDAOSpace is TestHelper {
     );
   }
 
+  /// CONSTANTS ///
+
+  function test_Constants_WhenDeployed() external {
+    // it sets MINIMUM_VOTING_DURATION to 2 days
+    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
+
+    // it sets RATIO_BASE to 10e6
+    assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
+
+    // it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
+    assertEq(daoSpaceProxy.SPACE_REGISTRY(), keccak256('SPACE_REGISTRY'));
+
+    // it sets EDITOR to keccak256('EDITOR')
+    assertEq(daoSpaceProxy.EDITOR(), keccak256('EDITOR'));
+
+    // it sets MEMBER to keccak256('MEMBER')
+    assertEq(daoSpaceProxy.MEMBER(), keccak256('MEMBER'));
+
+    // it sets DAO to keccak256('DAO')
+    assertEq(daoSpaceProxy.DAO(), keccak256('DAO'));
+  }
+
   /// CONSTRUCTOR ///
 
   function test_Constructor_WhenCalled() external {
