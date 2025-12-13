@@ -218,6 +218,31 @@ interface IDAOSpace is ISpace, ISemver {
   function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
 
   /**
+   * @notice Publishes content edits via an Action event emission
+   * @param _topic An optional topic identifier
+   * @param _editsContentUri The uri for the content
+   * @param _editsMetadata The uri for the metadata
+   * @dev _from and _to are always the DAO's address
+   */
+  function publish(bytes32 _topic, bytes memory _editsContentUri, bytes memory _editsMetadata) external;
+
+  /**
+   * @notice Flags something for additional consideration via an Action event emission
+   * @param _topic An optional topic identifier
+   * @param _flaggedId The id or uri of the thing being flagged (e.g. content, topic, proposal)
+   * @dev _from and _to are always the DAO's address
+   */
+  function flag(bytes32 _topic, bytes calldata _flaggedId) external;
+
+  /**
+   * @notice Unflags something via an Action event emission
+   * @param _topic An optional topic identifier
+   * @param _unflaggedId The id or uri of the thing being unflagged (e.g. content, topic, proposal)
+   * @dev _from and _to are always the DAO's address
+   */
+  function unflag(bytes32 _topic, bytes calldata _unflaggedId) external;
+
+  /**
    * @notice Updates the voting settings for the DAO
    * @param _votingSettings The new voting settings
    */
