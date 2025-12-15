@@ -28,7 +28,7 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   }
 
   /// @inheritdoc IDAOSpaceFactory
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external virtual initializer {
     __Ownable_init(_owner);
 
     address daoSpaceImplementation = address(new DAOSpace());
@@ -42,7 +42,7 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     DAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
-  ) external returns (address _newDAOSpaceProxy) {
+  ) external virtual returns (address _newDAOSpaceProxy) {
     _newDAOSpaceProxy = address(
       new BeaconProxy(
         daoSpaceBeacon,
@@ -53,10 +53,10 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   }
 
   /// @inheritdoc ISemver
-  function version() public pure returns (string memory _version) {
+  function version() public pure virtual returns (string memory _version) {
     _version = '1.0.0';
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+  function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 }

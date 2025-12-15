@@ -31,7 +31,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc IVerifierSpace
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external initializer {
+  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external virtual initializer {
     __Ownable_init(_owner);
 
     spaceRegistry = _spaceRegistry;
@@ -43,7 +43,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc IVerifierSpace
-  function setValidWriters(address _account, bool _valid) external onlyOwner {
+  function setValidWriters(address _account, bool _valid) external virtual onlyOwner {
     _setValidWriters(_account, _valid);
   }
 
@@ -54,7 +54,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
     bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
-  ) external {
+  ) external virtual {
     // Construct the message hash and increment nonce to prevent replay
     bytes32 messageHash = keccak256(abi.encodePacked(_toSpace, _action, _topic, _data, replayNonce++, address(this)));
 
@@ -63,7 +63,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc ISpace
-  function write(address _fromSpace, bytes32, bytes32, bytes calldata) external view {
+  function write(address _fromSpace, bytes32, bytes32, bytes calldata) external view virtual {
     // Only space registry can call
     if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
     // From space must be valid writer
@@ -71,12 +71,12 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32, bytes32 _topicInput) public pure returns (bytes32 _topicOutput) {
+  function fetch(bytes32, bytes32 _topicInput) public pure virtual returns (bytes32 _topicOutput) {
     _topicOutput = _topicInput;
   }
 
   /// @inheritdoc ISemver
-  function version() public pure returns (string memory _version) {
+  function version() public pure virtual returns (string memory _version) {
     _version = '1.0.0';
   }
 
@@ -85,7 +85,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
    * @param _account The address of the writer
    * @param _valid Whether the writer will be valid
    */
-  function _setValidWriters(address _account, bool _valid) internal {
+  function _setValidWriters(address _account, bool _valid) internal virtual {
     validWriters[_account] = _valid;
     emit ValidWriterSet(_account, _valid);
   }
