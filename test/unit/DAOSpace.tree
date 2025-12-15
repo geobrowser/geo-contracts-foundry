@@ -11,7 +11,7 @@ UnitDAOSpace::constructor
 └── when called
     └── it disables initializers
 
-UnitDAOSpace::initializer
+UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings

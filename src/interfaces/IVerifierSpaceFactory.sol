@@ -29,10 +29,11 @@ interface IVerifierSpaceFactory is ISemver {
 
   /**
    * @notice Initializes the contract
-   * @param _spaceRegistry The address of the space registry contract
-   * @param _owner The address of the owner
+   * @param _initializerData The encoded initializer data:
+   *        _spaceRegistry The address of the space registry contract
+   *        _owner The address of the owner
    */
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external;
+  function initialize(bytes calldata _initializerData) external;
 
   /**
    * @notice Creates a verifier space proxy contract

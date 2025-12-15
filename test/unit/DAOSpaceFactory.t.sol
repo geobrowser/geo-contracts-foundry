@@ -46,7 +46,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // when delegate called
     daoSpaceFactoryProxy = MockDAOSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation), abi.encodeCall(IDAOSpaceFactory.initialize, (_spaceRegistry, _owner))
+        address(daoSpaceFactoryImplementation),
+        abi.encodeCall(IDAOSpaceFactory.initialize, (abi.encode(_spaceRegistry, _owner)))
       )
     );
   }
@@ -78,7 +79,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // when delegate called
     daoSpaceFactoryProxy = MockDAOSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation), abi.encodeCall(IDAOSpaceFactory.initialize, (__spaceRegistry, __owner))
+        address(daoSpaceFactoryImplementation),
+        abi.encodeCall(IDAOSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner)))
       )
     );
 
@@ -113,7 +115,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // when delegate called
     daoSpaceFactoryProxy = MockDAOSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation), abi.encodeCall(IDAOSpaceFactory.initialize, (__spaceRegistry, __owner))
+        address(daoSpaceFactoryImplementation),
+        abi.encodeCall(IDAOSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner)))
       )
     );
 
@@ -121,7 +124,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    daoSpaceFactoryProxy.initialize(__spaceRegistry, __owner);
+    daoSpaceFactoryProxy.initialize(abi.encode(__spaceRegistry, __owner));
   }
 
   function test_Initialize_WhenOwnerIsZeroAddress() external whenDelegateCalled {
@@ -134,7 +137,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // when delegate called
     daoSpaceFactoryProxy = MockDAOSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation), abi.encodeCall(IDAOSpaceFactory.initialize, (_spaceRegistry, __owner))
+        address(daoSpaceFactoryImplementation),
+        abi.encodeCall(IDAOSpaceFactory.initialize, (abi.encode(_spaceRegistry, __owner)))
       )
     );
   }
@@ -144,7 +148,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    daoSpaceFactoryImplementation.initialize(__spaceRegistry, __owner);
+    daoSpaceFactoryImplementation.initialize(abi.encode(__spaceRegistry, __owner));
   }
 
   function test_CreateDAOSpaceProxy_WhenCalled(IDAOSpace.VotingSettings memory __votingSettings) external {

@@ -7,8 +7,8 @@ UnitVerifierSpace::initialize
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
 │   │   ├── it sets spaceRegistry
-│   │   ├── it sets validWriters
 │   │   ├── it calls spaceRegistry to register space ID
+│   │   ├── it sets validWriters
 │   │   └── when delegate called again
 │   │       └── it reverts with InvalidInitialization
 │   └── when owner is zero address
