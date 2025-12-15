@@ -26,7 +26,7 @@ contract DeployGEOBrowser is Script {
     spaceRegistryProxy = SpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
         address(spaceRegistryImplementation),
-        abi.encodeCall(ISpaceRegistry.initialize, (Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL))
+        abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(Constants.GEO_GENESIS_GEO_MULTISIG_COUNCIL)))
       )
     );
 

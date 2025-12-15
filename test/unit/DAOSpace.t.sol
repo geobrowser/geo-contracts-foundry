@@ -76,7 +76,7 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(_spaceRegistry), _votingSettings, _initialEditors, _initialMembers)
+          IDAOSpace.initialize, (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
         )
       )
     );
@@ -122,7 +122,7 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Initializer_WhenDelegateCalled(address __spaceRegistry) external whenDelegateCalled {
+  function test_Initialize_WhenDelegateCalled(address __spaceRegistry) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -156,7 +156,7 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers)
+          IDAOSpace.initialize, (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
         )
       )
     );
@@ -188,7 +188,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
   }
 
-  function test_Initializer_WhenDelegateCalledAgain(address __spaceRegistry) external whenDelegateCalled {
+  function test_Initialize_WhenDelegateCalledAgain(address __spaceRegistry) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -222,7 +222,7 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers)
+          IDAOSpace.initialize, (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
         )
       )
     );
@@ -231,15 +231,15 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    daoSpaceProxy.initialize(ISpaceRegistry(__spaceRegistry), _votingSettings, _initialEditors, _initialMembers);
+    daoSpaceProxy.initialize(abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers));
   }
 
-  function test_Initializer_WhenCalled() external {
+  function test_Initialize_WhenCalled() external {
     // it reverts with InvalidInitialization
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called again
-    daoSpaceProxy.initialize(ISpaceRegistry(_spaceRegistry), _votingSettings, _initialEditors, _initialMembers);
+    daoSpaceProxy.initialize(abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers));
   }
 
   /// WRITE - PROPOSAL CREATED ///

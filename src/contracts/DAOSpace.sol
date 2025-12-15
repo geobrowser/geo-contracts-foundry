@@ -63,37 +63,45 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function initialize(
-    ISpaceRegistry _spaceRegistry,
-    VotingSettings calldata _votingSettings,
-    address[] calldata _initialEditors,
-    address[] calldata _initialMembers
-  ) external initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    // Decode initializer data
+    (
+      ISpaceRegistry _spaceRegistry,
+      VotingSettings memory _votingSettings,
+      address[] memory _initialEditors,
+      address[] memory _initialMembers
+    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[]));
+
     // Set Space Registry and register new DAO Space
     spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId();
+
     // Add initial editors
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);
     }
+
     // Add initial members
     length = _initialMembers.length;
     for (uint256 j; j < length; j++) {
       _addMember(_initialMembers[j]);
     }
+
     // Set voting settings
     _updateVotingSettings(_votingSettings);
+
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, address(spaceRegistry));
     _grantRole(DAO, address(this));
+
     // Set the initial fast path actions
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
   }
 
   /// @inheritdoc ISpace
-  function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external {
+  function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external virtual {
     // Only Space Registry can call
     if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
     // Governance Actions
@@ -114,60 +122,60 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function verify(address, bytes32, bytes32, bytes calldata, bytes calldata) external pure {
+  function verify(address, bytes32, bytes32, bytes calldata, bytes calldata) external pure virtual {
     revert VerifyDisabled();
   }
 
   /// @inheritdoc IDAOSpace
-  function addEditor(address _newEditor) public {
+  function addEditor(address _newEditor) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _addEditor(_newEditor);
   }
 
   /// @inheritdoc IDAOSpace
-  function removeEditor(address _oldEditor) public {
+  function removeEditor(address _oldEditor) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _removeEditor(_oldEditor);
   }
 
   /// @inheritdoc IDAOSpace
-  function addMember(address _newMember) public {
+  function addMember(address _newMember) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _addMember(_newMember);
   }
 
   /// @inheritdoc IDAOSpace
-  function removeMember(address _oldMember) public {
+  function removeMember(address _oldMember) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _removeMember(_oldMember);
   }
 
   /// @inheritdoc IDAOSpace
-  function unflagEditor(address _unflaggedEditor) public {
+  function unflagEditor(address _unflaggedEditor) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _unflagEditor(_unflaggedEditor);
   }
 
   /// @inheritdoc IDAOSpace
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public {
+  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _ping(_action, _topic, _data);
   }
 
   /// @inheritdoc IDAOSpace
-  function updateVotingSettings(VotingSettings calldata _votingSettings) public {
+  function updateVotingSettings(VotingSettings calldata _votingSettings) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _updateVotingSettings(_votingSettings);
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32 _action, bytes32 _topicInput) public view returns (bytes32) {
+  function fetch(bytes32 _action, bytes32 _topicInput) public view virtual returns (bytes32) {
     if (_action == ActionsConstants.PROPOSAL_CREATED) return bytes32(proposalCounter);
     else return _topicInput;
   }
 
   /// @inheritdoc IDAOSpace
-  function isSupportThresholdReached(uint256 _proposalId) public view returns (bool _isSupportReached) {
+  function isSupportThresholdReached(uint256 _proposalId) public view virtual returns (bool _isSupportReached) {
     Proposal storage proposal_ = _proposals[_proposalId];
     uint256 supportThreshold =
       (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
@@ -191,6 +199,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function getProposalInformation(uint256 _proposalId)
     external
     view
+    virtual
     returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions)
   {
     _executed = _proposals[_proposalId].executed;
@@ -200,12 +209,15 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption) {
+  function getProposalVote(
+    uint256 _proposalId,
+    address _account
+  ) external view virtual returns (VoteOption _voteOption) {
     return _proposals[_proposalId].voters[_account];
   }
 
   /// @inheritdoc ISemver
-  function version() public pure returns (string memory _version) {
+  function version() public pure virtual returns (string memory _version) {
     _version = '1.0.0';
   }
 
@@ -215,7 +227,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Several checks are performed to ensure the new settings do not prevent future proposals from
    * being executed.
    */
-  function _updateVotingSettings(VotingSettings calldata _votingSettings) internal {
+  function _updateVotingSettings(VotingSettings memory _votingSettings) internal virtual {
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
     if (_votingSettings.fastPathFlatThreshold > totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > totalEditors) revert InvalidSetting();
@@ -230,7 +242,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Fast path: only editors can create, creator must not be flagged, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
-  function _createProposal(address _fromSpace, bytes calldata _data) internal {
+  function _createProposal(address _fromSpace, bytes calldata _data) internal virtual {
     // Decode data to construct proposal
     (VotingMode votingMode, Action[] memory actions) = abi.decode(_data, (VotingMode, Action[]));
     // Update proposal storage
@@ -268,7 +280,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
    * Fast path can execute immediately if threshold met; slow path requires voting period to end.
    */
-  function _vote(address _fromSpace, bytes calldata _data) internal {
+  function _vote(address _fromSpace, bytes calldata _data) internal virtual {
     // Decode data to construct vote
     (uint256 _proposalId, VoteOption _voteOption) = abi.decode(_data, (uint256, VoteOption));
     // Ensure _fromSpace can vote
@@ -314,7 +326,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Decodes input data and then executes a proposal after it has passed
    * @param _data The encoded execution data containing the proposal ID
    */
-  function _executeProposal(bytes calldata _data) internal {
+  function _executeProposal(bytes calldata _data) internal virtual {
     // Anyone can call
     // Check if proposal can be settled
     uint256 _proposalId = abi.decode(_data, (uint256));
@@ -327,7 +339,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _proposalId The proposal ID of the proposal to be executed
    * @dev Anyone can call once execution criteria met. Actions executed sequentially. Reverts if any action fails.
    */
-  function _executeProposal(uint256 _proposalId) internal {
+  function _executeProposal(uint256 _proposalId) internal virtual {
     // Set proposal as executed
     _proposals[_proposalId].executed = true;
     /// loop over actions
@@ -346,7 +358,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _fromSpace The address of the space leaving
    * @param _data The encoded role data used to determine which role a user wants to leave
    */
-  function _leave(address _fromSpace, bytes calldata _data) internal {
+  function _leave(address _fromSpace, bytes calldata _data) internal virtual {
     bytes32 role = abi.decode(_data, (bytes32));
     if (role == MEMBER && hasRole(MEMBER, _fromSpace)) {
       _removeMember(_fromSpace);
@@ -363,7 +375,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _data The encoded data containing the address of the editor to flag
    * @dev Only editors can flag other editors.
    */
-  function _flagEditor(address _fromSpace, bytes calldata _data) internal {
+  function _flagEditor(address _fromSpace, bytes calldata _data) internal virtual {
     if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
     address _flaggedEditor = abi.decode(_data, (address));
     if (!hasRole(EDITOR, _flaggedEditor)) revert NotEditor();
@@ -374,7 +386,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Unflags an editor, allowing them to create fast path proposals
    * @param _unflaggedEditor The address of the editor to be unflaged
    */
-  function _unflagEditor(address _unflaggedEditor) internal {
+  function _unflagEditor(address _unflaggedEditor) internal virtual {
     if (!hasRole(EDITOR, _unflaggedEditor)) revert NotEditor();
     isEditorFlagged[_unflaggedEditor] = false;
     _ping(ActionsConstants.EDITOR_UNFLAGGED, bytes32(bytes20(_unflaggedEditor)), '');
@@ -384,7 +396,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Internal function to add an editor
    * @param _newEditor The address of the new editor
    */
-  function _addEditor(address _newEditor) internal {
+  function _addEditor(address _newEditor) internal virtual {
     if (hasRole(EDITOR, _newEditor)) revert InvalidAddressForRole();
     // Grant the role for access control
     _grantRole(EDITOR, _newEditor);
@@ -398,7 +410,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Internal function to remove an editor
    * @param _oldEditor The address of the editor to remove
    */
-  function _removeEditor(address _oldEditor) internal {
+  function _removeEditor(address _oldEditor) internal virtual {
     if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddressForRole();
     // May not remove editor if doing so would prevent slow path proposals from being executed
     if (votingSettings.quorum == totalEditors) revert InvalidSetting();
@@ -416,7 +428,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Internal function to add a member
    * @param _newMember The address of the new member
    */
-  function _addMember(address _newMember) internal {
+  function _addMember(address _newMember) internal virtual {
     if (hasRole(MEMBER, _newMember)) revert InvalidAddressForRole();
     _grantRole(MEMBER, _newMember);
     _ping(ActionsConstants.MEMBER_ADDED, bytes32(bytes20(_newMember)), '');
@@ -426,7 +438,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @notice Internal function to remove a member
    * @param _oldMember The address of the member to remove
    */
-  function _removeMember(address _oldMember) internal {
+  function _removeMember(address _oldMember) internal virtual {
     if (!hasRole(MEMBER, _oldMember)) revert InvalidAddressForRole();
     _revokeRole(MEMBER, _oldMember);
     _ping(ActionsConstants.MEMBER_REMOVED, bytes32(bytes20(_oldMember)), '');
@@ -439,7 +451,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _data Some extra arbitrary data that may hold additional information
    * @dev _from and _to are always the DAO's address
    */
-  function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal {
+  function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal virtual {
     spaceRegistry.enter(address(this), address(this), _action, _topic, _data, '');
   }
 
@@ -452,7 +464,11 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Returns false if proposal doesn't exist, voting ended, vote option is None, or account
    * wasn't an editor at snapshot block. Vote replacement allowed.
    */
-  function _canVote(address _account, uint256 _proposalId, VoteOption _voteOption) internal view returns (bool) {
+  function _canVote(
+    address _account,
+    uint256 _proposalId,
+    VoteOption _voteOption
+  ) internal view virtual returns (bool) {
     Proposal storage proposal_ = _proposals[_proposalId];
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
@@ -474,7 +490,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
    * Slow path requires voting period to end; fast path can execute immediately.
    */
-  function _canExecuteProposal(uint256 _proposalId) internal view returns (bool) {
+  function _canExecuteProposal(uint256 _proposalId) internal view virtual returns (bool) {
     Proposal storage proposal_ = _proposals[_proposalId];
     // Verify that the proposal has not been executed already.
     if (proposal_.executed) return false;

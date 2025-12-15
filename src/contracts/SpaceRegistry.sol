@@ -39,7 +39,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function initialize(address _owner) external initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    address _owner = abi.decode(_initializerData, (address));
+
     __Ownable_init(_owner);
   }
 
@@ -51,7 +53,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
-  ) external {
+  ) external virtual {
     // Translate addresses into space IDs
     bytes16 fromId = addressToSpaceId[_from];
     bytes16 toId = addressToSpaceId[_to];
@@ -79,7 +81,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function registerSpaceId() external {
+  function registerSpaceId() external virtual {
     // Account must not be registered
     if (addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
 
@@ -92,7 +94,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function proposeSpaceMigration(address _newAccount) external {
+  function proposeSpaceMigration(address _newAccount) external virtual {
     // Must be called by the space itself
     bytes16 spaceId = addressToSpaceId[msg.sender];
     if (spaceId == bytes16(0)) revert InvalidCaller();
@@ -101,7 +103,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function acceptSpaceMigration(bytes16 _spaceId) external {
+  function acceptSpaceMigration(bytes16 _spaceId) external virtual {
     // Must be called by the proposed space itself
     if (spaceIdToProposedAddress[_spaceId] != msg.sender) revert InvalidCaller();
 
@@ -120,20 +122,20 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function setPermissionlessAction(bytes32 _action, bool _set) external onlyOwner {
+  function setPermissionlessAction(bytes32 _action, bool _set) external virtual onlyOwner {
     permissionlessActions[_action] = _set;
   }
 
   /// @inheritdoc ISpaceRegistry
-  function generateSpaceId(address _account, uint256 _nonce) public view returns (bytes16 _spaceId) {
+  function generateSpaceId(address _account, uint256 _nonce) public view virtual returns (bytes16 _spaceId) {
     _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
   }
 
   /// @inheritdoc ISemver
-  function version() public pure returns (string memory _version) {
+  function version() public pure virtual returns (string memory _version) {
     _version = '1.0.0';
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+  function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 }
