@@ -7,6 +7,7 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
+import {MockDAOSpaceV2} from 'test/integration/mocks/MockDAOSpaceV2.sol';
 import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementation.sol';
 
 import 'script/Constants.s.sol' as Constants;
@@ -14,7 +15,7 @@ import 'script/Constants.s.sol' as Constants;
 contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   UpgradeableBeacon public daoSpaceBeacon;
   DAOSpace public daoSpaceImplementationA;
-  DAOSpace public daoSpaceImplementationB;
+  MockDAOSpaceV2 public daoSpaceImplementationB;
   DAOSpace public daoSpaceProxyA;
   DAOSpace public daoSpaceProxyB;
 
@@ -44,7 +45,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
     verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
 
-    daoSpaceImplementationB = DAOSpace(address(new MockNewImplementation()));
+    daoSpaceImplementationB = new MockDAOSpaceV2();
     verifierSpaceImplementationB = VerifierSpace(address(new MockNewImplementation()));
   }
 
@@ -53,14 +54,35 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceImplementationA.version(), '1.0.0');
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
+    // actionIsFastPathValid
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector), true);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector), true);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector), false);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector), false);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector), false);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector), false);
 
     vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
     daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationB));
+
+    daoSpaceProxyA.initialize('');
+    daoSpaceProxyB.initialize('');
 
     assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationB));
     assertEq(daoSpaceImplementationB.version(), '2.0.0');
     assertEq(daoSpaceProxyA.version(), '2.0.0');
     assertEq(daoSpaceProxyB.version(), '2.0.0');
+    // actionIsFastPathValid
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), false);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), false);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector), false);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector), false);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector), true);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector), true);
+    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector), true);
+    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector), true);
   }
 
   function test_UpgradeBeaconImplementation_VerifierSpace() external {
