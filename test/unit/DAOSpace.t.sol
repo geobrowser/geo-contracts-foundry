@@ -84,7 +84,7 @@ contract UnitDAOSpace is TestHelper {
 
   /// CONSTANTS ///
 
-  function test_Constants_WhenDeployed() external {
+  function test_Constants_WhenDeployed() external view {
     // it sets MINIMUM_VOTING_DURATION to 2 days
     assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
 
@@ -186,6 +186,15 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets removeMember as a valid fast path action
     assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
+
+    // it sets publish as a valid fast path action
+    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.publish.selector), true);
+
+    // it sets flag as a valid fast path action
+    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.flag.selector), true);
+
+    // it sets unflag as a valid fast path action
+    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.unflag.selector), true);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __spaceRegistry) external whenDelegateCalled {
@@ -1296,6 +1305,77 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
     daoSpaceProxy.ping(_action, _topic, _data);
+  }
+
+  /// PUBLISH ///
+
+  function test_Publish_WhenCalledByDAO(
+    bytes32 _topic,
+    bytes memory _editsContentUri,
+    bytes memory _editsMetadata
+  ) external whenCalledByDAO {
+    // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
+    _mockEnter(
+      _spaceRegistry,
+      address(daoSpaceProxy),
+      address(daoSpaceProxy),
+      ActionsConstants.EDITS_PUBLISHED,
+      _topic,
+      abi.encode(_editsContentUri, _editsMetadata)
+    );
+    daoSpaceProxy.publish(_topic, _editsContentUri, _editsMetadata);
+  }
+
+  function test_Publish_WhenCalledByNon_DAO(
+    address _caller,
+    bytes32 _topic,
+    bytes memory _editsContentUri,
+    bytes memory _editsMetadata
+  ) external {
+    vm.assume(_caller != address(daoSpaceProxy));
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.publish(_topic, _editsContentUri, _editsMetadata);
+  }
+
+  /// FLAG ///
+
+  function test_Flag_WhenCalledByDAO(bytes32 _topic, bytes calldata _flaggedId) external whenCalledByDAO {
+    // it calls enter on the spaceRegistry with the FLAGGED action
+    _mockEnter(
+      _spaceRegistry, address(daoSpaceProxy), address(daoSpaceProxy), ActionsConstants.FLAGGED, _topic, _flaggedId
+    );
+    daoSpaceProxy.flag(_topic, _flaggedId);
+  }
+
+  function test_Flag_WhenCalledByNon_DAO(address _caller, bytes32 _topic, bytes calldata _flaggedId) external {
+    vm.assume(_caller != address(daoSpaceProxy));
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.flag(_topic, _flaggedId);
+  }
+
+  /// UNFLAG ///
+
+  function test_Unflag_WhenCalledByDAO(bytes32 _topic, bytes calldata _unflaggedId) external whenCalledByDAO {
+    // it calls enter on the spaceRegistry with the UNFLAGGED action
+    _mockEnter(
+      _spaceRegistry, address(daoSpaceProxy), address(daoSpaceProxy), ActionsConstants.UNFLAGGED, _topic, _unflaggedId
+    );
+    daoSpaceProxy.unflag(_topic, _unflaggedId);
+  }
+
+  function test_Unflag_WhenCalledByNon_DAO(address _caller, bytes32 _topic, bytes calldata _unflaggedId) external {
+    vm.assume(_caller != address(daoSpaceProxy));
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.unflag(_topic, _unflaggedId);
   }
 
   /// UPDATE VOTING SETTINGS ///
