@@ -98,6 +98,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Set the initial fast path actions
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
+    actionIsFastPathValid[IDAOSpace.publish.selector] = true;
+    actionIsFastPathValid[IDAOSpace.flag.selector] = true;
+    actionIsFastPathValid[IDAOSpace.unflag.selector] = true;
   }
 
   /// @inheritdoc ISpace
@@ -160,6 +163,24 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _ping(_action, _topic, _data);
+  }
+
+  /// @inheritdoc IDAOSpace
+  function publish(bytes32 _topic, bytes memory _editsContentUri, bytes memory _editsMetadata) public virtual {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    _ping(ActionsConstants.EDITS_PUBLISHED, _topic, abi.encode(_editsContentUri, _editsMetadata));
+  }
+
+  /// @inheritdoc IDAOSpace
+  function flag(bytes32 _topic, bytes calldata _flaggedId) public virtual {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    _ping(ActionsConstants.FLAGGED, _topic, _flaggedId);
+  }
+
+  /// @inheritdoc IDAOSpace
+  function unflag(bytes32 _topic, bytes calldata _unflaggedId) public virtual {
+    if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
+    _ping(ActionsConstants.UNFLAGGED, _topic, _unflaggedId);
   }
 
   /// @inheritdoc IDAOSpace

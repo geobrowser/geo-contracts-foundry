@@ -36,3 +36,12 @@ bytes32 constant EDITOR_FLAGGED = keccak256('GOVERNANCE.EDITOR_FLAGGED');
 
 /// @dev The ID of the action to unflag an editor (restores fast path access)
 bytes32 constant EDITOR_UNFLAGGED = keccak256('GOVERNANCE.EDITOR_UNFLAGGED');
+
+/// @dev The ID of the action to publish content edits
+bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
+
+/// @dev The ID of the action to flag something (e.g. content, topic, proposal)
+bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');
+
+/// @dev The ID of the action to unflag something (e.g. content, topic, proposal)
+bytes32 constant UNFLAGGED = keccak256('GOVERNANCE.FLAGGED');
