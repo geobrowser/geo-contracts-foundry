@@ -28,7 +28,9 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   }
 
   /// @inheritdoc IDAOSpaceFactory
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external virtual initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    (ISpaceRegistry _spaceRegistry, address _owner) = abi.decode(_initializerData, (ISpaceRegistry, address));
+
     __Ownable_init(_owner);
 
     address daoSpaceImplementation = address(new DAOSpace());
@@ -43,12 +45,11 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
   ) external virtual returns (address _newDAOSpaceProxy) {
-    _newDAOSpaceProxy = address(
-      new BeaconProxy(
-        daoSpaceBeacon,
-        abi.encodeCall(DAOSpace.initialize, (spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
-      )
-    );
+    bytes memory _initializerData = abi.encode(spaceRegistry, _votingSettings, _initialEditors, _initialMembers);
+
+    _newDAOSpaceProxy =
+      address(new BeaconProxy(daoSpaceBeacon, abi.encodeCall(DAOSpace.initialize, (_initializerData))));
+
     emit DAOSpaceProxyCreated(_newDAOSpaceProxy);
   }
 

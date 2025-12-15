@@ -59,9 +59,10 @@ interface ISpaceRegistry is ISemver {
 
   /**
    * @notice Initializes the contract
-   * @param _owner The address of the owner
+   * @param _initializerData The encoded initializer data:
+   *        _owner The address of the owner
    */
-  function initialize(address _owner) external;
+  function initialize(bytes calldata _initializerData) external;
 
   /**
    * @notice Generalized entry point for all users across all spaces

@@ -39,7 +39,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function initialize(address _owner) external virtual initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    address _owner = abi.decode(_initializerData, (address));
+
     __Ownable_init(_owner);
   }
 

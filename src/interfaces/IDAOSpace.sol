@@ -5,6 +5,10 @@ import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 
+/**
+ * @title IDAOSpace
+ * @notice Manages governance proposals and voting for a DAO Space
+ */
 interface IDAOSpace is ISpace, ISemver {
   /**
    * @notice Vote options that a voter can choose from
@@ -166,17 +170,13 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice Initializes the contract
-   * @param _spaceRegistry The address of the space registry contract
-   * @param _votingSettings The voting settings to use for proposals
-   * @param _initialEditors The initial list of editor addresses
-   * @param _initialMembers The initial list of member addresses
+   * @param _initializerData The encoded initializer data:
+   *        _spaceRegistry The address of the space registry contract
+   *        _votingSettings The voting settings to use for proposals
+   *        _initialEditors The initial list of editor addresses
+   *        _initialMembers The initial list of member addresses
    */
-  function initialize(
-    ISpaceRegistry _spaceRegistry,
-    VotingSettings calldata _votingSettings,
-    address[] calldata _initialEditors,
-    address[] calldata _initialMembers
-  ) external;
+  function initialize(bytes calldata _initializerData) external;
 
   /**
    * @notice Adds a new editor to the space

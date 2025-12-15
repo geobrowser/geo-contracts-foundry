@@ -34,7 +34,7 @@ contract UnitSpaceRegistry is TestHelper {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (_owner))
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(_owner)))
       )
     );
     // set one permissionless action
@@ -70,7 +70,7 @@ contract UnitSpaceRegistry is TestHelper {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(__owner)))
       )
     );
 
@@ -86,7 +86,7 @@ contract UnitSpaceRegistry is TestHelper {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(__owner)))
       )
     );
 
@@ -94,7 +94,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    spaceRegistryProxy.initialize(__owner);
+    spaceRegistryProxy.initialize(abi.encode(__owner));
   }
 
   function test_Initialize_WhenOwnerIsZeroAddress() external whenDelegateCalled {
@@ -107,7 +107,7 @@ contract UnitSpaceRegistry is TestHelper {
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (__owner))
+        address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(__owner)))
       )
     );
   }
@@ -117,7 +117,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    spaceRegistryImplementation.initialize(__owner);
+    spaceRegistryImplementation.initialize(abi.encode(__owner));
   }
 
   modifier whenSpacesAreRegistered() {

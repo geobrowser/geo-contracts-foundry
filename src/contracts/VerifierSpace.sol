@@ -31,15 +31,16 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc IVerifierSpace
-  function initialize(ISpaceRegistry _spaceRegistry, address _owner) external virtual initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    (ISpaceRegistry _spaceRegistry, address _owner) = abi.decode(_initializerData, (ISpaceRegistry, address));
+
     __Ownable_init(_owner);
 
     spaceRegistry = _spaceRegistry;
+    _spaceRegistry.registerSpaceId();
 
     _setValidWriters(_owner, true);
     _setValidWriters(address(this), true);
-
-    _spaceRegistry.registerSpaceId();
   }
 
   /// @inheritdoc IVerifierSpace

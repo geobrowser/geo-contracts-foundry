@@ -63,30 +63,38 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function initialize(
-    ISpaceRegistry _spaceRegistry,
-    VotingSettings calldata _votingSettings,
-    address[] calldata _initialEditors,
-    address[] calldata _initialMembers
-  ) external virtual initializer {
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    // Decode initializer data
+    (
+      ISpaceRegistry _spaceRegistry,
+      VotingSettings memory _votingSettings,
+      address[] memory _initialEditors,
+      address[] memory _initialMembers
+    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[]));
+
     // Set Space Registry and register new DAO Space
     spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId();
+
     // Add initial editors
     uint256 length = _initialEditors.length;
     for (uint256 i; i < length; i++) {
       _addEditor(_initialEditors[i]);
     }
+
     // Add initial members
     length = _initialMembers.length;
     for (uint256 j; j < length; j++) {
       _addMember(_initialMembers[j]);
     }
+
     // Set voting settings
     _updateVotingSettings(_votingSettings);
+
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, address(spaceRegistry));
     _grantRole(DAO, address(this));
+
     // Set the initial fast path actions
     actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
@@ -219,7 +227,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Several checks are performed to ensure the new settings do not prevent future proposals from
    * being executed.
    */
-  function _updateVotingSettings(VotingSettings calldata _votingSettings) internal virtual {
+  function _updateVotingSettings(VotingSettings memory _votingSettings) internal virtual {
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
     if (_votingSettings.fastPathFlatThreshold > totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > totalEditors) revert InvalidSetting();
