@@ -85,9 +85,6 @@ contract UnitDAOSpace is TestHelper {
   /// CONSTANTS ///
 
   function test_Constants_WhenDeployed() external view {
-    // it sets MINIMUM_VOTING_DURATION to 2 days
-    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
-
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
 
@@ -1437,18 +1434,6 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
-  function test_UpdateVotingSettings_WhenDurationIsLessThanMINIMUM_VOTING_DURATION(uint256 _duration)
-    external
-    whenCalledByDAO
-  {
-    vm.assume(_duration < daoSpaceProxy.MINIMUM_VOTING_DURATION());
-    _votingSettings.duration = _duration;
-
-    // it reverts with InvalidSetting
-    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
-    daoSpaceProxy.updateVotingSettings(_votingSettings);
-  }
-
   function test_UpdateVotingSettings_WhenInputParamsAreValid(
     uint256 _slowPathPercentageThreshold,
     uint256 _fastPathFlatThreshold,
@@ -1458,7 +1443,7 @@ contract UnitDAOSpace is TestHelper {
     _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
     _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
     _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
-    _duration = bound(_duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100);
+    _duration = bound(_duration, 0, 100 days);
     _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
     _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
     _votingSettings.quorum = _quorum;

@@ -321,12 +321,6 @@ interface IDAOSpace is ISpace, ISemver {
   function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption);
 
   /**
-   * @notice Returns the minimum voting duration for a slow path proposal
-   * @return The minimum voting duration in seconds
-   */
-  function MINIMUM_VOTING_DURATION() external view returns (uint256);
-
-  /**
    * @notice Returns the ratio base used for percentage calculations
    * @return The ratio base (10^6)
    */
