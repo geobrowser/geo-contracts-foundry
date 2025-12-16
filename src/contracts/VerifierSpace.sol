@@ -2,6 +2,7 @@
 pragma solidity 0.8.30;
 
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {EIP712Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
 import {SignatureChecker} from '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
 
 import {ISemver} from 'interfaces/ISemver.sol';
@@ -15,7 +16,11 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
  * @dev This contract validates off-chain messages passed to the SpaceRegistry when from ≠ msg.sender
  *      An arbitrary number of these contracts allows for an EOA (or a DAO) to control multiple spaces simultaneously
  */
-contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
+contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace {
+  /// @inheritdoc IVerifierSpace
+  bytes32 public constant MESSAGE_TYPEHASH =
+    keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
+
   /// @inheritdoc IVerifierSpace
   ISpaceRegistry public spaceRegistry;
 
@@ -32,13 +37,15 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
 
   /// @inheritdoc IVerifierSpace
   function initialize(bytes calldata _initializerData) external virtual initializer {
+    // Decode initializer data
     (ISpaceRegistry _spaceRegistry, address _owner) = abi.decode(_initializerData, (ISpaceRegistry, address));
-
+    // Initialise
     __Ownable_init(_owner);
-
+    __EIP712_init('VERIFIER_SPACE', version());
+    // Set Space Registry and register new DAO Space
     spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId();
-
+    // Set valid writers
     _setValidWriters(_owner, true);
     _setValidWriters(address(this), true);
   }
@@ -56,11 +63,14 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
+    // Only space registry can call
+    if (msg.sender != address(spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
-    bytes32 messageHash = keccak256(abi.encodePacked(_toSpace, _action, _topic, _data, replayNonce++, address(this)));
-
+    bytes32 digest = _hashTypedDataV4(
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpace, _action, _topic, replayNonce++, keccak256(_data)))
+    );
     // Validate that owner is the signer of the message hash, revert if not
-    if (!SignatureChecker.isValidSignatureNow(owner(), messageHash, _signature)) revert InvalidSignature();
+    if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
   }
 
   /// @inheritdoc ISpace
