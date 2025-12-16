@@ -44,4 +44,31 @@ bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
 bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');
 
 /// @dev The ID of the action to unflag something (e.g. content, topic, proposal)
-bytes32 constant UNFLAGGED = keccak256('GOVERNANCE.FLAGGED');
+bytes32 constant UNFLAGGED = keccak256('GOVERNANCE.UNFLAGGED');
+
+/// @dev The ID of the action to declare a new topic identifier
+bytes32 constant TOPIC_DECLARED = keccak256('GOVERNANCE.TOPIC_DECLARED');
+
+/// @dev The ID of the action to add a subspace
+bytes32 constant SUBSPACE_ADDED = keccak256('GOVERNANCE.SUBSPACE_ADDED');
+
+/// @dev The ID of the action to remove a subspace
+bytes32 constant SUBSPACE_REMOVED = keccak256('GOVERNANCE.SUBSPACE_REMOVED');
+
+/// @dev The ID of the action to verify a subspace
+bytes32 constant SUBSPACE_VERIFIED = keccak256('GOVERNANCE.SUBSPACE_VERIFIED');
+
+/// @dev The ID of the action to relate a subspace (e.g. link subspaces)
+bytes32 constant SUBSPACE_RELATED = keccak256('GOVERNANCE.SUBSPACE_RELATED');
+
+/// @dev The ID of the action to declare a new topic identifier in a subspace
+bytes32 constant SUBSPACE_TOPIC_DECLARED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_DECLARED');
+
+/// @dev The ID of the action to upvote something (e.g. content, topic, proposal)
+bytes32 constant UPVOTED = keccak256('PERMISSIONLESS.UPVOTED');
+
+/// @dev The ID of the action to downvote something (e.g. content, topic, proposal)
+bytes32 constant DOWNVOTED = keccak256('PERMISSIONLESS.DOWNVOTED');
+
+/// @dev The ID of the action to remove a vote on something (e.g. content, topic, proposal)
+bytes32 constant UNVOTED = keccak256('PERMISSIONLESS.UNVOTED');
