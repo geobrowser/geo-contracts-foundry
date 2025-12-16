@@ -1465,18 +1465,60 @@ contract UnitDAOSpace is TestHelper {
 
   /// FETCH ///
 
-  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput) external view {
+  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, bytes calldata _data) external view {
     // it returns bytes32(proposalCounter)
     assertEq(
-      daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_CREATED, _topicInput), bytes32(daoSpaceProxy.proposalCounter())
+      daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_CREATED, _topicInput, _data),
+      bytes32(daoSpaceProxy.proposalCounter())
     );
   }
 
-  function test_Fetch_When_actionEqualsAnythingElse(bytes32 _action, bytes32 _topicInput) external view {
+  function test_Fetch_When_actionEqualsPROPOSAL_VOTED(
+    bytes32 _topicInput,
+    uint256 _proposalId,
+    uint256 _voteOption
+  ) external {
+    _voteOption = bound(_voteOption, 0, 3);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption));
+
+    // it returns bytes32(_proposalId)
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
+  }
+
+  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external {
+    bytes memory _data = abi.encode(_proposalId);
+
+    // it returns bytes32(_proposalId)
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_EXECUTED, _topicInput, _data), bytes32(_proposalId));
+  }
+
+  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external {
+    bytes memory _data = abi.encode(_role);
+
+    // it returns role
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
+  }
+
+  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external {
+    bytes memory _data = abi.encode(_flaggedEditor);
+
+    // it returns bytes32(bytes20(_flaggedEditor))
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.EDITOR_FLAGGED, _topicInput, _data), bytes32(bytes20(_flaggedEditor)));
+  }
+
+  function test_Fetch_When_actionEqualsAnythingElse(
+    bytes32 _action,
+    bytes32 _topicInput,
+    bytes calldata _data
+  ) external view {
     vm.assume(_action != ActionsConstants.PROPOSAL_CREATED);
+    vm.assume(_action != ActionsConstants.PROPOSAL_VOTED);
+    vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
+    vm.assume(_action != ActionsConstants.EDITOR_FLAGGED);
+    vm.assume(_action != ActionsConstants.SPACE_LEFT);
 
     // it returns _topicInput
-    assertEq(daoSpaceProxy.fetch(_action, _topicInput), _topicInput);
+    assertEq(daoSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
   /// IS SUPPORT THRESHOLD REACHED ///

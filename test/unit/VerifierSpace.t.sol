@@ -274,11 +274,11 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.write(_fromSpace, _action, _topic, _data);
   }
 
-  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput) external view {
+  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput, bytes calldata _data) external view {
     // when called
 
     // it returns _topicInput
-    assertEq(verifierSpaceProxy.fetch(_action, _topicInput), _topicInput);
+    assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
   function test_Version_WhenCalled() external view {
