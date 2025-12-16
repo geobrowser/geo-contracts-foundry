@@ -1501,7 +1501,7 @@ contract UnitDAOSpace is TestHelper {
     bytes32 _topicInput,
     uint256 _proposalId,
     uint256 _voteOption
-  ) external {
+  ) external view {
     _voteOption = bound(_voteOption, 0, 3);
     bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption));
 
@@ -1509,21 +1509,21 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external {
+  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external view {
     bytes memory _data = abi.encode(_proposalId);
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_EXECUTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external {
+  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external view {
     bytes memory _data = abi.encode(_role);
 
     // it returns role
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external {
+  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external view {
     bytes memory _data = abi.encode(_flaggedEditor);
 
     // it returns bytes32(bytes20(_flaggedEditor))

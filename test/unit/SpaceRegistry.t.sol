@@ -160,7 +160,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.assume(_action != _permissionlessAction);
 
     // it calls toSpace to fetch _topicOutput
-    _mockFetch(_toSpace, _action, _topicInput, _topicOutput, _data);
+    _mockFetch(_toSpace, _action, _topicInput, _data, _topicOutput);
 
     // it emits Action
     vm.expectEmit();
@@ -376,8 +376,8 @@ contract UnitSpaceRegistry is TestHelper {
     address __toSpace,
     bytes32 _action,
     bytes32 _topicInput,
-    bytes32 _topicOutput,
-    bytes calldata _data
+    bytes calldata _data,
+    bytes32 _topicOutput
   ) internal {
     _mockAndExpect(__toSpace, abi.encodeCall(ISpace.fetch, (_action, _topicInput, _data)), abi.encode(_topicOutput));
   }
