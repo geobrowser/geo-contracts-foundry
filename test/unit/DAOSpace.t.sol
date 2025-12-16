@@ -907,11 +907,11 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_LEFT
   {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })
@@ -1118,18 +1118,42 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeEditor(_oldEditor);
   }
 
-  function test_RemoveEditor_WhenTheVotingSettingsQuorumIsGreaterThanTotalEditorsMinusOne() external whenCalledByDAO {
+  function test_RemoveEditor_WhenTheVotingSettingsQuorumEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: 0,
+        quorum: _votingSettings.quorum,
+        duration: _votingSettings.duration
+      })
+    );
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.removeEditor(_initialEditor);
+  }
+
+  function test_RemoveEditor_WhenTheVotingSettingsFastPathFlatThresholdEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        quorum: 0,
+        duration: _votingSettings.duration
+      })
+    );
+
     // it reverts with InvalidSetting
     vm.expectRevert(IDAOSpace.InvalidSetting.selector);
     daoSpaceProxy.removeEditor(_initialEditor);
   }
 
   function test_RemoveEditor_WhenInputParamsAreValid() external whenCalledByDAO {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })

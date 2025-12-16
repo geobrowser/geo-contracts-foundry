@@ -146,7 +146,9 @@ UnitDAOSpace::removeEditor
 ├── when called by DAO
 │   ├── when _oldEditor is not an editor
 │   │   └── it reverts with InvalidAddressForRole
-│   ├── when the voting settings quorum is greater than total editors minus one
+│   ├── when the voting settings quorum equals total editors
+│   │   └── it reverts with InvalidSetting
+│   ├── when the voting settings fast path flat threshold equals total editors
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       ├── it removes the EDITOR role from _oldEditor

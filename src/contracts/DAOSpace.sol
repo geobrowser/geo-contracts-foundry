@@ -445,11 +445,15 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Internal function to remove an editor
    * @param _oldEditor The address of the editor to remove
+   * @dev If removal fails due to invalid settings, first update the settings to lower the quorum and/or the
+   * fastPathFlatThreshold. Both the settings update and editor removal operations may be bundled into one proposal
+   * for convenience.
    */
   function _removeEditor(address _oldEditor) internal virtual {
     if (!hasRole(EDITOR, _oldEditor)) revert InvalidAddressForRole();
-    // May not remove editor if doing so would prevent slow path proposals from being executed
+    // May not remove editor if doing so would prevent proposals from being executed
     if (votingSettings.quorum == totalEditors) revert InvalidSetting();
+    if (votingSettings.fastPathFlatThreshold == totalEditors) revert InvalidSetting();
     // Revoke the role for access control
     _revokeRole(EDITOR, _oldEditor);
     // Update counter
