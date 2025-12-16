@@ -1,3 +1,7 @@
+UnitVerifierSpace::constants
+└── when deployed
+    └── it sets the MESSAGE_TYPEHASH
+
 UnitVerifierSpace::constructor
 └── when called
     └── it disables initializers
@@ -6,6 +10,7 @@ UnitVerifierSpace::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
+│   │   ├── it initializes EIP712
 │   │   ├── it sets spaceRegistry
 │   │   ├── it calls spaceRegistry to register space ID
 │   │   ├── it sets validWriters
@@ -24,10 +29,13 @@ UnitVerifierSpace::setValidWriters
     └── it reverts with OwnableUnauthorizedAccount
 
 UnitVerifierSpace::verify
-├── when signature is valid
-│   └── it increments replayNonce
-└── when signature is not valid
-    └── it reverts with InvalidSignature
+├── when caller is spaceRegistry
+│   ├── when signature is valid
+│   │   └── it increments replayNonce
+│   └── when signature is not valid
+│       └── it reverts with InvalidSignature
+└── when caller is not spaceRegistry
+    └── it reverts with InvalidCaller
 
 UnitVerifierSpace::write
 ├── when caller is spaceRegistry

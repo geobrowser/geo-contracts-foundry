@@ -33,9 +33,14 @@ interface ISpace {
 
   /**
    * @notice Fetches future output data for emission before execution
-   * @param _action The action to use as the basis for future outputs
-   * @param _topicInput The topic input to use as the basis for future outputs
+   * @param _action The action that may be used as the basis for future outputs
+   * @param _topicInput The topic input that may be used as the basis for future outputs
+   * @param _data The data input that may be used as the basis for future outputs
    * @return _topicOutput The topic output to be emitted
    */
-  function fetch(bytes32 _action, bytes32 _topicInput) external view returns (bytes32 _topicOutput);
+  function fetch(
+    bytes32 _action,
+    bytes32 _topicInput,
+    bytes calldata _data
+  ) external view returns (bytes32 _topicOutput);
 }

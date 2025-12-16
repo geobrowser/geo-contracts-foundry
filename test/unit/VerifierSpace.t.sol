@@ -41,6 +41,14 @@ contract UnitVerifierSpace is TestHelper {
     );
   }
 
+  function test_Constants_WhenDeployed() external view {
+    // it sets the MESSAGE_TYPEHASH
+    assertEq(
+      verifierSpaceProxy.MESSAGE_TYPEHASH(),
+      keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+    );
+  }
+
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
@@ -80,6 +88,10 @@ contract UnitVerifierSpace is TestHelper {
 
     // it sets owner
     assertEq(verifierSpaceProxy.owner(), __owner);
+
+    // it initializes EIP712
+    assertEq(verifierSpaceProxy.workaround_exposeEIP712NameHash(), keccak256('VERIFIER_SPACE'));
+    assertEq(verifierSpaceProxy.workaround_exposeEIP712VersionHash(), keccak256(bytes(verifierSpaceProxy.version())));
 
     // it sets spaceRegistry
     assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
@@ -159,14 +171,39 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.setValidWriters(_account, _valid);
   }
 
-  function test_Verify_WhenSignatureIsValid(bytes32 _action, bytes32 _topic, bytes calldata _data) external {
+  modifier whenCallerIsSpaceRegistry() {
+    vm.startPrank(address(_spaceRegistry));
+    _;
+  }
+
+  function test_Verify_WhenSignatureIsValid(
+    bytes32 _action,
+    bytes32 _topic,
+    bytes calldata _data
+  ) external whenCallerIsSpaceRegistry {
     // when signature is valid
     uint256 _replayNonce = verifierSpaceProxy.replayNonce();
-    bytes32 _messageHash =
-      keccak256(abi.encodePacked(_toSpace, _action, _topic, _data, _replayNonce, verifierSpaceProxy));
-    (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, _messageHash);
-    bytes memory _signature = abi.encodePacked(_r, _s, _v);
 
+    // struct hash
+    bytes32 structHash = keccak256(
+      abi.encode(verifierSpaceProxy.MESSAGE_TYPEHASH(), _toSpace, _action, _topic, _replayNonce, keccak256(_data))
+    );
+    // domain separator
+    bytes32 domainSeparator = keccak256(
+      abi.encode(
+        keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+        keccak256(bytes('VERIFIER_SPACE')),
+        keccak256(bytes(verifierSpaceProxy.version())),
+        block.chainid,
+        address(verifierSpaceProxy)
+      )
+    );
+    // digest
+    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
+
+    // signature
+    (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, digest);
+    bytes memory _signature = abi.encodePacked(_r, _s, _v);
     verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
 
     // it increments replayNonce
@@ -178,7 +215,7 @@ contract UnitVerifierSpace is TestHelper {
     bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
-  ) external {
+  ) external whenCallerIsSpaceRegistry {
     // when signature is not valid
 
     // it reverts with InvalidSignature
@@ -187,9 +224,19 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
   }
 
-  modifier whenCallerIsSpaceRegistry() {
-    vm.startPrank(address(_spaceRegistry));
-    _;
+  function test_Verify_WhenCallerIsNotSpaceRegistry(
+    bytes32 _action,
+    bytes32 _topic,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external {
+    // when caller is not spaceRegistry
+    vm.startPrank(_randomCaller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
+
+    verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
   }
 
   function test_Write_WhenWriterIsValid(
@@ -227,11 +274,11 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.write(_fromSpace, _action, _topic, _data);
   }
 
-  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput) external view {
+  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput, bytes calldata _data) external view {
     // when called
 
     // it returns _topicInput
-    assertEq(verifierSpaceProxy.fetch(_action, _topicInput), _topicInput);
+    assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
   function test_Version_WhenCalled() external view {

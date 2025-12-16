@@ -70,7 +70,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
       emit Action(fromId, toId, _action, _topic, _data);
     } else {
       // Fetch future output variable and update `_topic` for emission if relevant
-      if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic);
+      if (msg.sender != _to) _topic = ISpace(_to).fetch(_action, _topic, _data);
 
       emit Action(fromId, toId, _action, _topic, _data);
 

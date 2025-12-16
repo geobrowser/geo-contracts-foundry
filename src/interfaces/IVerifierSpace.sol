@@ -11,6 +11,23 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
  */
 interface IVerifierSpace is ISpace, ISemver {
   /**
+   * @notice Message struct used to create offchain signatures for onchain verification
+   * @dev Uses EIP 712 for hashing and signing of typed structured data
+   * @param toSpace The space that will be written to
+   * @param action The action identifier
+   * @param topic The topid identifier
+   * @param nonce The incremental counter to prevent signature reuse
+   * @param data The data used for further execution
+   */
+  struct Message {
+    address toSpace;
+    bytes32 action;
+    bytes32 topic;
+    uint256 nonce;
+    bytes data;
+  }
+
+  /**
    * @notice Emitted when a writer validity status is set
    * @param account The address of the writer
    * @param valid Whether the writer is valid or not
@@ -44,6 +61,12 @@ interface IVerifierSpace is ISpace, ISemver {
    * @return _replayNonce The nonce used to prevent replay
    */
   function replayNonce() external view returns (uint256 _replayNonce);
+
+  /**
+   * @notice The message typehash for the struct used in the signature verification
+   * @return _messageTypehash The message typehash constant
+   */
+  function MESSAGE_TYPEHASH() external view returns (bytes32 _messageTypehash);
 
   /**
    * @notice Initializes the contract
