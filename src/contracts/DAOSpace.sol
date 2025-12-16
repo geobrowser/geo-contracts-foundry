@@ -190,9 +190,24 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32 _action, bytes32 _topicInput) public view virtual returns (bytes32) {
-    if (_action == ActionsConstants.PROPOSAL_CREATED) return bytes32(proposalCounter);
-    else return _topicInput;
+  function fetch(bytes32 _action, bytes32 _topicInput, bytes calldata _data) public view virtual returns (bytes32) {
+    if (_action == ActionsConstants.PROPOSAL_CREATED) {
+      return bytes32(proposalCounter);
+    } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
+      (uint256 _proposalId,) = abi.decode(_data, (uint256, VoteOption));
+      return bytes32(_proposalId);
+    } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
+      uint256 _proposalId = abi.decode(_data, (uint256));
+      return bytes32(_proposalId);
+    } else if (_action == ActionsConstants.SPACE_LEFT) {
+      bytes32 role = abi.decode(_data, (bytes32));
+      return role;
+    } else if (_action == ActionsConstants.EDITOR_FLAGGED) {
+      address _flaggedEditor = abi.decode(_data, (address));
+      return bytes32(bytes20(_flaggedEditor));
+    } else {
+      return _topicInput;
+    }
   }
 
   /// @inheritdoc IDAOSpace

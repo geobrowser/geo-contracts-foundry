@@ -72,7 +72,7 @@ contract VerifierSpace is OwnableUpgradeable, IVerifierSpace {
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32, bytes32 _topicInput) public pure virtual returns (bytes32 _topicOutput) {
+  function fetch(bytes32, bytes32 _topicInput, bytes calldata) public pure virtual returns (bytes32 _topicOutput) {
     _topicOutput = _topicInput;
   }
 

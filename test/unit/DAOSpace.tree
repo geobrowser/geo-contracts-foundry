@@ -228,6 +228,14 @@ UnitDAOSpace::updateVotingSettings
 UnitDAOSpace::fetch
 ├── when _action equals PROPOSAL_CREATED
 │   └── it returns bytes32(proposalCounter)
+├── when _action equals PROPOSAL_VOTED
+│   └── it returns bytes32(_proposalId)
+├── when _action equals PROPOSAL_EXECUTED
+│   └── it returns bytes32(_proposalId)
+├── when _action equals SPACE_LEFT
+│   └── it returns role
+├── when _action equals EDITOR_FLAGGED
+│   └── it returns bytes32(bytes20(_flaggedEditor))
 └── when _action equals anything else
     └── it returns _topicInput
 
