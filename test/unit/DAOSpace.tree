@@ -1,5 +1,6 @@
 UnitDAOSpace::constants
 └── when deployed
+    ├── it sets MINIMUM_VOTING_DURATION to 1 minutes
     ├── it sets RATIO_BASE to 10e6
     ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
     ├── it sets EDITOR to keccak256('EDITOR')
@@ -218,6 +219,8 @@ UnitDAOSpace::updateVotingSettings
 │   ├── when fastPathFlatThreshold is greater than totalEditors
 │   │   └── it reverts with InvalidSetting
 │   ├── when quorum is greater than totalEditors
+│   │   └── it reverts with InvalidSetting
+│   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       └── it updates the voting settings
