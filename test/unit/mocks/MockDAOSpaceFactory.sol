@@ -11,4 +11,12 @@ contract MockDAOSpaceFactory is DAOSpaceFactory {
   function exposed__authorizeUpgrade(address _newImplementation) external {
     _authorizeUpgrade(_newImplementation);
   }
+
+  function exposed__DAO_SPACE_FACTORY_STORAGE_LOCATION()
+    external
+    pure
+    returns (bytes32 _daoSpaceFactoryStorageLocation)
+  {
+    _daoSpaceFactoryStorageLocation = _DAO_SPACE_FACTORY_STORAGE_LOCATION;
+  }
 }

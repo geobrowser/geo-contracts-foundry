@@ -9,7 +9,8 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
  */
 contract MockDAOSpace is DAOSpace {
   function workaround_setEditorToFlagged(address _account, bool _flagged) external {
-    isEditorFlagged[_account] = _flagged;
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    $.isEditorFlagged[_account] = _flagged;
   }
 
   function workaround_createProposal(
@@ -22,7 +23,8 @@ contract MockDAOSpace is DAOSpace {
     Action[] memory _actions,
     bool _executed
   ) external {
-    Proposal storage proposal_ = _proposals[_proposalId];
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    Proposal storage proposal_ = $._proposals[_proposalId];
     proposal_.parameters.startDate = _startDate;
     proposal_.parameters.lastDate = _lastDate;
     proposal_.parameters.votingMode = _votingMode;
@@ -35,7 +37,8 @@ contract MockDAOSpace is DAOSpace {
   }
 
   function workaround_setFormerVote(uint256 _proposalId, address _account, VoteOption _voteOption) external {
-    Proposal storage proposal_ = _proposals[_proposalId];
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    Proposal storage proposal_ = $._proposals[_proposalId];
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
     } else if (_voteOption == VoteOption.No) {
@@ -47,13 +50,19 @@ contract MockDAOSpace is DAOSpace {
   }
 
   function workaround_setTally(uint256 _proposalId, uint256 _yes, uint256 _no, uint256 _abstain) external {
-    Proposal storage proposal_ = _proposals[_proposalId];
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    Proposal storage proposal_ = $._proposals[_proposalId];
     proposal_.tally.yes = _yes;
     proposal_.tally.no = _no;
     proposal_.tally.abstain = _abstain;
   }
 
   function workaround_setVotingSettings(VotingSettings calldata _votingSettings) external {
-    votingSettings = _votingSettings;
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    $.votingSettings = _votingSettings;
+  }
+
+  function exposed__DAO_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _daoSpaceStorageLocation) {
+    _daoSpaceStorageLocation = _DAO_SPACE_STORAGE_LOCATION;
   }
 }

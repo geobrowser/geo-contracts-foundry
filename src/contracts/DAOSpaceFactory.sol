@@ -16,11 +16,12 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
  * @notice Produces beacon-proxy-upgradeable DAO spaces
  */
 contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactory {
-  /// @inheritdoc IDAOSpaceFactory
-  address public daoSpaceBeacon;
-
-  /// @inheritdoc IDAOSpaceFactory
-  ISpaceRegistry public spaceRegistry;
+  /**
+   * @notice The storage location of the DAO space factory contract
+   * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
+   */
+  bytes32 internal constant _DAO_SPACE_FACTORY_STORAGE_LOCATION =
+    0x79f182c2bed0e30afe0ad6b057fc5f574a8b461be8bd0d1c0aab98f3c2fef400;
 
   /// @notice Constructor
   constructor() {
@@ -33,10 +34,10 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
 
     __Ownable_init(_owner);
 
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
     address daoSpaceImplementation = address(new DAOSpace());
-    daoSpaceBeacon = address(new UpgradeableBeacon(daoSpaceImplementation, _owner));
-
-    spaceRegistry = _spaceRegistry;
+    $.daoSpaceBeacon = address(new UpgradeableBeacon(daoSpaceImplementation, _owner));
+    $.spaceRegistry = _spaceRegistry;
   }
 
   /// @inheritdoc IDAOSpaceFactory
@@ -45,12 +46,25 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     address[] calldata _initialEditors,
     address[] calldata _initialMembers
   ) external virtual returns (address _newDAOSpaceProxy) {
-    bytes memory _initializerData = abi.encode(spaceRegistry, _votingSettings, _initialEditors, _initialMembers);
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
 
+    bytes memory _initializerData = abi.encode($.spaceRegistry, _votingSettings, _initialEditors, _initialMembers);
     _newDAOSpaceProxy =
-      address(new BeaconProxy(daoSpaceBeacon, abi.encodeCall(DAOSpace.initialize, (_initializerData))));
+      address(new BeaconProxy($.daoSpaceBeacon, abi.encodeCall(DAOSpace.initialize, (_initializerData))));
 
     emit DAOSpaceProxyCreated(_newDAOSpaceProxy);
+  }
+
+  /// @inheritdoc IDAOSpaceFactory
+  function daoSpaceBeacon() public view returns (address _daoSpaceBeacon) {
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
+    _daoSpaceBeacon = $.daoSpaceBeacon;
+  }
+
+  /// @inheritdoc IDAOSpaceFactory
+  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
+    _spaceRegistry = $.spaceRegistry;
   }
 
   /// @inheritdoc ISemver
@@ -60,4 +74,15 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
 
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+  /**
+   * @notice Returns the DAO space factory contract storage
+   * @return $ The storage of the DAO space factory contract
+   * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
+   */
+  function _getDAOSpaceFactoryStorage() internal pure returns (DAOSpaceFactoryStorage storage $) {
+    assembly {
+      $.slot := _DAO_SPACE_FACTORY_STORAGE_LOCATION
+    }
+  }
 }

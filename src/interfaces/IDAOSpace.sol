@@ -105,6 +105,27 @@ interface IDAOSpace is ISpace, ISemver {
   }
 
   /**
+   * @notice The storage struct of the DAO space contract
+   * @param spaceRegistry The address of the space registry contract
+   * @param votingSettings Voting settings for proposals
+   * @param proposalCounter Proposal counter
+   * @param totalEditors Total editors
+   * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
+   * @param isEditorFlagged Maps editor addresses to whether they are flagged (restricted from fast path)
+   * @param _proposals Stores information about a proposal by its ID
+   * @custom:storage-location erc7201:geo.storage.DAOSpace
+   */
+  struct DAOSpaceStorage {
+    ISpaceRegistry spaceRegistry;
+    VotingSettings votingSettings;
+    uint256 proposalCounter;
+    uint256 totalEditors;
+    mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
+    mapping(address _editor => bool _isFlagged) isEditorFlagged;
+    mapping(uint256 _proposalId => Proposal _proposal) _proposals;
+  }
+
+  /**
    * @notice Thrown when the caller is not authorized to perform the action
    */
   error InvalidCaller();
@@ -250,54 +271,48 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice Space Registry contract
-   * @return The address of the space registry singleton
+   * @return _spaceRegistry The address of the space registry singleton
    */
-  function spaceRegistry() external view returns (ISpaceRegistry);
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Proposal counter
-   * @return The current proposal counter value
+   * @return _proposalCounter The current proposal counter value
    */
-  function proposalCounter() external view returns (uint256);
+  function proposalCounter() external view returns (uint256 _proposalCounter);
 
   /**
    * @notice Total editors
-   * @return The total number of editors
+   * @return _totalEditors The total number of editors
    */
-  function totalEditors() external view returns (uint256);
+  function totalEditors() external view returns (uint256 _totalEditors);
 
   /**
    * @notice Voting settings for proposals
-   * @return slowPathPercentageThreshold Percentage threshold for slow path
-   * @return fastPathFlatThreshold Flat count threshold for fast path
-   * @return quorum The minimum number of votes (participation) required for a slow path proposal
-   * @return duration Voting window duration in seconds
+   * @return _votingSettings The voting settings to use for proposals
    */
-  function votingSettings()
-    external
-    view
-    returns (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration);
+  function votingSettings() external view returns (VotingSettings memory _votingSettings);
 
   /**
    * @notice Maps action selectors to whether they are valid for fast path proposals
    * @param _selector Action selector to check
-   * @return True if action selector is valid for fast path
+   * @return _isValid True if action selector is valid for fast path
    */
-  function actionIsFastPathValid(bytes4 _selector) external view returns (bool);
+  function actionIsFastPathValid(bytes4 _selector) external view returns (bool _isValid);
 
   /**
    * @notice Maps editor addresses to whether they are flagged (restricted from fast path)
-   * @param _space Editor address to check
-   * @return True if editor is flagged
+   * @param _editor Editor address to check
+   * @return _isFlagged True if editor is flagged
    */
-  function isEditorFlagged(address _space) external view returns (bool);
+  function isEditorFlagged(address _editor) external view returns (bool _isFlagged);
 
   /**
    * @notice Checks if a proposal has reached its support threshold
    * @param _proposalId ID of the proposal to check
-   * @return True if support threshold is reached
+   * @return _isSupportThresholdReached True if support threshold is reached
    */
-  function isSupportThresholdReached(uint256 _proposalId) external view returns (bool);
+  function isSupportThresholdReached(uint256 _proposalId) external view returns (bool _isSupportThresholdReached);
 
   /**
    * @notice Gets the information for a proposal
@@ -322,37 +337,37 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice Returns the minimum voting duration for a slow path proposal
-   * @return The minimum voting duration in seconds
+   * @return _minimumVotingDuration The minimum voting duration in seconds
    */
-  function MINIMUM_VOTING_DURATION() external view returns (uint256);
+  function MINIMUM_VOTING_DURATION() external view returns (uint256 _minimumVotingDuration);
 
   /**
    * @notice Returns the ratio base used for percentage calculations
-   * @return The ratio base (10^6)
+   * @return _ratioBase The ratio base (10^6)
    */
-  function RATIO_BASE() external view returns (uint256);
+  function RATIO_BASE() external view returns (uint256 _ratioBase);
 
   /**
    * @notice Returns the SPACE_REGISTRY role identifier
-   * @return The SPACE_REGISTRY role identifier
+   * @return _spaceRegistry The SPACE_REGISTRY role identifier
    */
-  function SPACE_REGISTRY() external view returns (bytes32);
+  function SPACE_REGISTRY() external view returns (bytes32 _spaceRegistry);
 
   /**
    * @notice Returns the editor role identifier
-   * @return The editor role identifier
+   * @return _editor The editor role identifier
    */
-  function EDITOR() external view returns (bytes32);
+  function EDITOR() external view returns (bytes32 _editor);
 
   /**
    * @notice Returns the member role identifier
-   * @return The member role identifier
+   * @return _member The member role identifier
    */
-  function MEMBER() external view returns (bytes32);
+  function MEMBER() external view returns (bytes32 _member);
 
   /**
    * @notice Returns the DAO role identifier
-   * @return The DAO role identifier
+   * @return _dao The DAO role identifier
    */
-  function DAO() external view returns (bytes32);
+  function DAO() external view returns (bytes32 _dao);
 }

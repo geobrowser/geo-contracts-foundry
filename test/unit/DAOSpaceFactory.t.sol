@@ -52,6 +52,16 @@ contract UnitDAOSpaceFactory is TestHelper {
     );
   }
 
+  function test_Constants_WhenDeployed() external view {
+    // when deployed
+
+    // it sets _DAO_SPACE_FACTORY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpaceFactory")) - 1)) & ~bytes32(uint256(0xff))
+    assertEq(
+      daoSpaceFactoryProxy.exposed__DAO_SPACE_FACTORY_STORAGE_LOCATION(),
+      keccak256(abi.encode(uint256(keccak256('geo.storage.DAOSpaceFactory')) - 1)) & ~bytes32(uint256(0xff))
+    );
+  }
+
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();
@@ -190,20 +200,13 @@ contract UnitDAOSpaceFactory is TestHelper {
       address(_daoSpaceProxy)
     );
 
-    (
-      _votingSettings.slowPathPercentageThreshold,
-      _votingSettings.fastPathFlatThreshold,
-      _votingSettings.quorum,
-      _votingSettings.duration
-    ) = _daoSpaceProxy.votingSettings();
-
     // it deploys and initializes DAO space proxy
     assertEq(
       address(uint160(uint256(vm.load(address(_daoSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
     assertEq(address(_daoSpaceProxy.spaceRegistry()), address(daoSpaceFactoryProxy.spaceRegistry()));
-    assertEq(abi.encode(_votingSettings), abi.encode(__votingSettings));
+    assertEq(abi.encode(_daoSpaceProxy.votingSettings()), abi.encode(__votingSettings));
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.EDITOR(), _initialEditor), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.MEMBER(), _initialMember), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.DAO(), address(_daoSpaceProxy)), true);
