@@ -85,8 +85,8 @@ contract UnitDAOSpace is TestHelper {
   /// CONSTANTS ///
 
   function test_Constants_WhenDeployed() external view {
-    // it sets MINIMUM_VOTING_DURATION to 2 days
-    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
+    // it sets MINIMUM_VOTING_DURATION to 1 minute
+    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 1 minutes);
 
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
@@ -907,11 +907,11 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_LEFT
   {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })
@@ -1118,18 +1118,42 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeEditor(_oldEditor);
   }
 
-  function test_RemoveEditor_WhenTheVotingSettingsQuorumIsGreaterThanTotalEditorsMinusOne() external whenCalledByDAO {
+  function test_RemoveEditor_WhenTheVotingSettingsQuorumEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: 0,
+        quorum: _votingSettings.quorum,
+        duration: _votingSettings.duration
+      })
+    );
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.removeEditor(_initialEditor);
+  }
+
+  function test_RemoveEditor_WhenTheVotingSettingsFastPathFlatThresholdEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        quorum: 0,
+        duration: _votingSettings.duration
+      })
+    );
+
     // it reverts with InvalidSetting
     vm.expectRevert(IDAOSpace.InvalidSetting.selector);
     daoSpaceProxy.removeEditor(_initialEditor);
   }
 
   function test_RemoveEditor_WhenInputParamsAreValid() external whenCalledByDAO {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })
@@ -1477,7 +1501,7 @@ contract UnitDAOSpace is TestHelper {
     bytes32 _topicInput,
     uint256 _proposalId,
     uint256 _voteOption
-  ) external {
+  ) external view {
     _voteOption = bound(_voteOption, 0, 3);
     bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption));
 
@@ -1485,21 +1509,21 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external {
+  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external view {
     bytes memory _data = abi.encode(_proposalId);
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_EXECUTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external {
+  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external view {
     bytes memory _data = abi.encode(_role);
 
     // it returns role
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external {
+  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external view {
     bytes memory _data = abi.encode(_flaggedEditor);
 
     // it returns bytes32(bytes20(_flaggedEditor))
