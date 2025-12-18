@@ -4,13 +4,13 @@ UnitSpaceRegistry::constants
 
 UnitSpaceRegistry::constructor
 └── when called
-    ├── it disables initializers
-    └── it adds the permissionless actions
+    └── it disables initializers
 
 UnitSpaceRegistry::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
+│   │   ├── it adds the permissionless actions
 │   │   └── when delegate called again
 │   │       └── it reverts with InvalidInitialization
 │   └── when owner is zero address

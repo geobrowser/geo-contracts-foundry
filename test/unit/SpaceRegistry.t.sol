@@ -53,11 +53,6 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectEmit();
     emit Initializable.Initialized(type(uint64).max);
 
-    // it adds the permissionless actions
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
-
     // when called
     new MockSpaceRegistry();
   }
@@ -87,6 +82,11 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it sets owner
     assertEq(spaceRegistryProxy.owner(), __owner);
+
+    // it adds the permissionless actions
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __owner)

@@ -42,6 +42,12 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
+    // it sets the _MESSAGE_TYPEHASH
+    assertEq(
+      verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(),
+      keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+    );
+
     // it sets _VERIFIER_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
     assertEq(
       verifierSpaceProxy.exposed__VERIFIER_SPACE_STORAGE_LOCATION(),
@@ -187,7 +193,7 @@ contract UnitVerifierSpace is TestHelper {
     // struct hash
     bytes32 structHash = keccak256(
       abi.encode(
-        verifierSpaceProxy.exposed_MESSAGE_TYPEHASH(), _toSpace, _action, _topic, _replayNonce, keccak256(_data)
+        verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(), _toSpace, _action, _topic, _replayNonce, keccak256(_data)
       )
     );
     // domain separator
