@@ -105,6 +105,11 @@ interface ISpaceRegistry is ISemver {
   function registerSpaceId() external;
 
   /**
+   * @notice Clears a space id from the registry and disconnects it from any address
+   */
+  function clearSpaceId() external;
+
+  /**
    * @notice Allows an address to propose to migrate its space ID to a new address
    * @dev Can only be called by an existing address in the registry
    * @param _newAccount The proposed address of the space

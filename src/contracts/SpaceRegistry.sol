@@ -88,6 +88,18 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
+  function clearSpaceId() external virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    bytes16 spaceId = $.addressToSpaceId[msg.sender];
+    $.addressToSpaceId[msg.sender] = bytes16(0);
+    $.spaceIdToAddress[spaceId] = address(0);
+    $.spaceIdToProposedAddress[spaceId] = address(0);
+
+    emit Action(spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
   function proposeSpaceMigration(address _newAccount) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 

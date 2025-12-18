@@ -37,9 +37,16 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it increments _spaceIdNonce
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
-│   └── it emits Action
+│   └── it emits Action with SPACE_ID_REGISTERED
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
+
+UnitSpaceRegistry::clearSpaceId
+└── when called
+    ├── it resets addressToSpaceId
+    ├── it resets spaceIdToAddress
+    ├── it resets spaceIdToProposedAddress
+    └── it emits Action with SPACE_ID_CLEARED
 
 UnitSpaceRegistry::proposeSpaceMigration
 ├── when caller is space
