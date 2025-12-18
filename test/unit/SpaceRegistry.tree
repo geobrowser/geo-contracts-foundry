@@ -1,3 +1,7 @@
+UnitSpaceRegistry::constants
+└── when deployed
+    └── it sets _SPACE_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
+
 UnitSpaceRegistry::constructor
 └── when called
     └── it disables initializers

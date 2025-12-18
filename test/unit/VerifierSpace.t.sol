@@ -47,6 +47,12 @@ contract UnitVerifierSpace is TestHelper {
       verifierSpaceProxy.MESSAGE_TYPEHASH(),
       keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     );
+
+    // it sets _VERIFIER_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
+    assertEq(
+      verifierSpaceProxy.exposed__VERIFIER_SPACE_STORAGE_LOCATION(),
+      keccak256(abi.encode(uint256(keccak256('geo.storage.VerifierSpace')) - 1)) & ~bytes32(uint256(0xff))
+    );
   }
 
   function test_Constructor_WhenCalled() external {
@@ -90,8 +96,8 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.owner(), __owner);
 
     // it initializes EIP712
-    assertEq(verifierSpaceProxy.workaround_exposeEIP712NameHash(), keccak256('VERIFIER_SPACE'));
-    assertEq(verifierSpaceProxy.workaround_exposeEIP712VersionHash(), keccak256(bytes(verifierSpaceProxy.version())));
+    assertEq(verifierSpaceProxy.exposed__EIP712NameHash(), keccak256('VERIFIER_SPACE'));
+    assertEq(verifierSpaceProxy.exposed__EIP712VersionHash(), keccak256(bytes(verifierSpaceProxy.version())));
 
     // it sets spaceRegistry
     assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));

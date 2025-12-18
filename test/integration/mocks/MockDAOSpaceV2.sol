@@ -9,10 +9,11 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
  */
 contract MockDAOSpaceV2 is DAOSpace {
   function initialize(bytes calldata) external virtual override reinitializer(2) {
-    actionIsFastPathValid[DAOSpace.addMember.selector] = false;
-    actionIsFastPathValid[DAOSpace.removeMember.selector] = false;
-    actionIsFastPathValid[DAOSpace.addEditor.selector] = true;
-    actionIsFastPathValid[DAOSpace.removeEditor.selector] = true;
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    $.actionIsFastPathValid[DAOSpace.addMember.selector] = false;
+    $.actionIsFastPathValid[DAOSpace.removeMember.selector] = false;
+    $.actionIsFastPathValid[DAOSpace.addEditor.selector] = true;
+    $.actionIsFastPathValid[DAOSpace.removeEditor.selector] = true;
   }
 
   function version() public pure virtual override returns (string memory _version) {

@@ -85,8 +85,8 @@ contract UnitDAOSpace is TestHelper {
   /// CONSTANTS ///
 
   function test_Constants_WhenDeployed() external view {
-    // it sets MINIMUM_VOTING_DURATION to 2 days
-    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 2 days);
+    // it sets MINIMUM_VOTING_DURATION to 1 minute
+    assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 1 minutes);
 
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
@@ -102,6 +102,12 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets DAO to keccak256('DAO')
     assertEq(daoSpaceProxy.DAO(), keccak256('DAO'));
+
+    // it sets _DAO_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpace")) - 1)) & ~bytes32(uint256(0xff))
+    assertEq(
+      daoSpaceProxy.exposed__DAO_SPACE_STORAGE_LOCATION(),
+      keccak256(abi.encode(uint256(keccak256('geo.storage.DAOSpace')) - 1)) & ~bytes32(uint256(0xff))
+    );
   }
 
   /// CONSTRUCTOR ///
@@ -165,12 +171,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(address(daoSpaceProxy.spaceRegistry()), __spaceRegistry);
 
     // it sets the voting settings
-    (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration) =
-      daoSpaceProxy.votingSettings();
-    assertEq(slowPathPercentageThreshold, _votingSettings.slowPathPercentageThreshold);
-    assertEq(fastPathFlatThreshold, _votingSettings.fastPathFlatThreshold);
-    assertEq(quorum, _votingSettings.quorum);
-    assertEq(duration, _votingSettings.duration);
+    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
 
     // it grants the new editor the EDITOR role
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
@@ -690,19 +691,18 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     (, parameters,,) = daoSpaceProxy.getProposalInformation(0);
-    (uint256 slowPathPercentageThreshold,,, uint256 duration) = daoSpaceProxy.votingSettings();
 
     // it updates the proposal voting mode to the slow path
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
     // it updates the proposal support threshold to the slow path percentage threshold
-    assertEq(parameters.supportThreshold, slowPathPercentageThreshold);
+    assertEq(parameters.supportThreshold, daoSpaceProxy.votingSettings().slowPathPercentageThreshold);
 
     // it updates the proposal start date to block.timestamp
     assertEq(parameters.startDate, block.timestamp);
 
     // it updates the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(parameters.lastDate, block.timestamp + duration);
+    assertEq(parameters.lastDate, block.timestamp + daoSpaceProxy.votingSettings().duration);
   }
 
   modifier whenTheCurrent_fromSpaceVoteEqualsYes() {
@@ -907,11 +907,11 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_LEFT
   {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })
@@ -1118,18 +1118,42 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeEditor(_oldEditor);
   }
 
-  function test_RemoveEditor_WhenTheVotingSettingsQuorumIsGreaterThanTotalEditorsMinusOne() external whenCalledByDAO {
+  function test_RemoveEditor_WhenTheVotingSettingsQuorumEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: 0,
+        quorum: _votingSettings.quorum,
+        duration: _votingSettings.duration
+      })
+    );
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.removeEditor(_initialEditor);
+  }
+
+  function test_RemoveEditor_WhenTheVotingSettingsFastPathFlatThresholdEqualsTotalEditors() external whenCalledByDAO {
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        quorum: 0,
+        duration: _votingSettings.duration
+      })
+    );
+
     // it reverts with InvalidSetting
     vm.expectRevert(IDAOSpace.InvalidSetting.selector);
     daoSpaceProxy.removeEditor(_initialEditor);
   }
 
   function test_RemoveEditor_WhenInputParamsAreValid() external whenCalledByDAO {
-    // Set quorum to 0 so that an editor can be removed
+    // Set quorum and fast path flat threshold to 0 so that an editor can be removed
     daoSpaceProxy.workaround_setVotingSettings(
       IDAOSpace.VotingSettings({
         slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
-        fastPathFlatThreshold: _votingSettings.fastPathFlatThreshold,
+        fastPathFlatThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration
       })
@@ -1426,29 +1450,22 @@ contract UnitDAOSpace is TestHelper {
   }
 
   function test_UpdateVotingSettings_WhenInputParamsAreValid(
-    uint256 _slowPathPercentageThreshold,
-    uint256 _fastPathFlatThreshold,
-    uint256 _quorum,
-    uint256 _duration
+    IDAOSpace.VotingSettings memory __votingSettings
   ) external whenCalledByDAO {
-    _slowPathPercentageThreshold = bound(_slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE());
-    _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
-    _quorum = bound(_quorum, 0, daoSpaceProxy.totalEditors());
-    _duration = bound(_duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100);
-    _votingSettings.slowPathPercentageThreshold = _slowPathPercentageThreshold;
-    _votingSettings.fastPathFlatThreshold = _fastPathFlatThreshold;
-    _votingSettings.quorum = _quorum;
-    _votingSettings.duration = _duration;
+    __votingSettings.slowPathPercentageThreshold = bound(
+      __votingSettings.slowPathPercentageThreshold, 0, daoSpaceProxy.RATIO_BASE()
+    );
+    __votingSettings.fastPathFlatThreshold =
+      bound(__votingSettings.fastPathFlatThreshold, 0, daoSpaceProxy.totalEditors());
+    __votingSettings.quorum = bound(__votingSettings.quorum, 0, daoSpaceProxy.totalEditors());
+    __votingSettings.duration = bound(
+      __votingSettings.duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100
+    );
 
-    daoSpaceProxy.updateVotingSettings(_votingSettings);
+    daoSpaceProxy.updateVotingSettings(__votingSettings);
 
     // it updates the voting settings
-    (uint256 slowPathPercentageThreshold, uint256 fastPathFlatThreshold, uint256 quorum, uint256 duration) =
-      daoSpaceProxy.votingSettings();
-    assertEq(slowPathPercentageThreshold, _slowPathPercentageThreshold);
-    assertEq(fastPathFlatThreshold, _fastPathFlatThreshold);
-    assertEq(quorum, _quorum);
-    assertEq(duration, _duration);
+    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(__votingSettings));
   }
 
   function test_UpdateVotingSettings_WhenCalledByNon_DAO(
@@ -1477,7 +1494,7 @@ contract UnitDAOSpace is TestHelper {
     bytes32 _topicInput,
     uint256 _proposalId,
     uint256 _voteOption
-  ) external {
+  ) external view {
     _voteOption = bound(_voteOption, 0, 3);
     bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption));
 
@@ -1485,21 +1502,21 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external {
+  function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput, uint256 _proposalId) external view {
     bytes memory _data = abi.encode(_proposalId);
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_EXECUTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external {
+  function test_Fetch_When_actionEqualsSPACE_LEFT(bytes32 _topicInput, bytes32 _role) external view {
     bytes memory _data = abi.encode(_role);
 
     // it returns role
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external {
+  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external view {
     bytes memory _data = abi.encode(_flaggedEditor);
 
     // it returns bytes32(bytes20(_flaggedEditor))
@@ -1532,14 +1549,13 @@ contract UnitDAOSpace is TestHelper {
     whenTheProposalVotingModeIsUsingTheSlowPath
   {
     // set up
-    (uint256 slowPathPercentageThreshold,, uint256 quorum, uint256 duration) = daoSpaceProxy.votingSettings();
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
-      slowPathPercentageThreshold,
-      quorum,
+      daoSpaceProxy.votingSettings().slowPathPercentageThreshold,
+      daoSpaceProxy.votingSettings().quorum,
       new IDAOSpace.Action[](0),
       false
     );
@@ -1556,7 +1572,6 @@ contract UnitDAOSpace is TestHelper {
     uint256 _slowPathPercentageThreshold
   ) external whenTheProposalVotingModeIsUsingTheSlowPath {
     // set up
-    (,,, uint256 duration) = daoSpaceProxy.votingSettings();
     _yes = bound(_yes, 0, 1e3);
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
@@ -1565,7 +1580,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
       _slowPathPercentageThreshold,
       _quorum,
@@ -1573,7 +1588,7 @@ contract UnitDAOSpace is TestHelper {
       false
     );
     daoSpaceProxy.workaround_setTally(0, _yes, _no, _abstain);
-    vm.warp(block.timestamp + duration + 1);
+    vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns false
     assertEq(daoSpaceProxy.isSupportThresholdReached(0), false);
@@ -1586,7 +1601,6 @@ contract UnitDAOSpace is TestHelper {
     uint256 _slowPathPercentageThreshold
   ) external whenTheProposalVotingModeIsUsingTheSlowPath {
     // set up
-    (,, uint256 quorum, uint256 duration) = daoSpaceProxy.votingSettings();
     _yes = bound(_yes, 0, 1e3);
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
@@ -1598,15 +1612,15 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
       _slowPathPercentageThreshold,
-      quorum,
+      daoSpaceProxy.votingSettings().quorum,
       new IDAOSpace.Action[](0),
       false
     );
     daoSpaceProxy.workaround_setTally(0, _yes, _no, _abstain);
-    vm.warp(block.timestamp + duration + 1);
+    vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns false
     assertEq(daoSpaceProxy.isSupportThresholdReached(0), false);
@@ -1619,7 +1633,6 @@ contract UnitDAOSpace is TestHelper {
     uint256 _slowPathPercentageThreshold
   ) external whenTheProposalVotingModeIsUsingTheSlowPath {
     // set up
-    (,, uint256 quorum, uint256 duration) = daoSpaceProxy.votingSettings();
     _yes = bound(_yes, 0, 1e3);
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
@@ -1631,15 +1644,15 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
       _slowPathPercentageThreshold,
-      quorum,
+      daoSpaceProxy.votingSettings().quorum,
       new IDAOSpace.Action[](0),
       false
     );
     daoSpaceProxy.workaround_setTally(0, _yes, _no, _abstain);
-    vm.warp(block.timestamp + duration + 1);
+    vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns true
     assertEq(daoSpaceProxy.isSupportThresholdReached(0), true);
@@ -1650,17 +1663,16 @@ contract UnitDAOSpace is TestHelper {
     uint256 _fastPathFlatThreshold
   ) external whenTheProposalVotingModeIsUsingTheFastPath {
     // set up
-    (,, uint256 quorum, uint256 duration) = daoSpaceProxy.votingSettings();
     _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 1, 1e3);
     _yes = bound(_yes, 0, 1e3);
     vm.assume(_yes <= (_fastPathFlatThreshold - 1));
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Fast,
       _fastPathFlatThreshold,
-      quorum,
+      daoSpaceProxy.votingSettings().quorum,
       new IDAOSpace.Action[](0),
       false
     );
@@ -1675,17 +1687,16 @@ contract UnitDAOSpace is TestHelper {
     uint256 _fastPathFlatThreshold
   ) external whenTheProposalVotingModeIsUsingTheFastPath {
     // set up
-    (,, uint256 quorum, uint256 duration) = daoSpaceProxy.votingSettings();
     _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 1, 1e3);
     _yes = bound(_yes, 0, 1e3);
     vm.assume(_yes > (_fastPathFlatThreshold - 1));
     daoSpaceProxy.workaround_createProposal(
       0,
       block.timestamp,
-      block.timestamp + duration,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Fast,
       _fastPathFlatThreshold,
-      quorum,
+      daoSpaceProxy.votingSettings().quorum,
       new IDAOSpace.Action[](0),
       false
     );

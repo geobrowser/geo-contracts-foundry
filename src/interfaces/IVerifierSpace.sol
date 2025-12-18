@@ -28,6 +28,19 @@ interface IVerifierSpace is ISpace, ISemver {
   }
 
   /**
+   * @notice The storage struct of the verifier space contract
+   * @param spaceRegistry The address of the space registry contract
+   * @param validWriters Maps each address to its writer validity status
+   * @param replayNonce Prevents transaction replay
+   * @custom:storage-location erc7201:geo.storage.VerifierSpace
+   */
+  struct VerifierSpaceStorage {
+    ISpaceRegistry spaceRegistry;
+    mapping(address _account => bool _valid) validWriters;
+    uint256 replayNonce;
+  }
+
+  /**
    * @notice Emitted when a writer validity status is set
    * @param account The address of the writer
    * @param valid Whether the writer is valid or not

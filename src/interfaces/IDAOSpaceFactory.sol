@@ -11,6 +11,17 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
  */
 interface IDAOSpaceFactory is ISemver {
   /**
+   * @notice The storage struct of the DAO space factory contract
+   * @param daoSpaceBeacon The address of the DAO space beacon contract
+   * @param spaceRegistry The address of the space registry contract
+   * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
+   */
+  struct DAOSpaceFactoryStorage {
+    address daoSpaceBeacon;
+    ISpaceRegistry spaceRegistry;
+  }
+
+  /**
    * @notice Emitted when a DAO space proxy is created
    * @param newDAOSpaceProxy The address of the new DAO space proxy contract
    */

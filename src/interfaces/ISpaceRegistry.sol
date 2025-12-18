@@ -9,15 +9,32 @@ import {ISemver} from 'interfaces/ISemver.sol';
  */
 interface ISpaceRegistry is ISemver {
   /**
+   * @notice The storage struct of the space registry contract
+   * @param spaceIdToAddress Maps each unique space ID to its current address
+   * @param spaceIdToProposedAddress Maps each unique space ID to its proposed address
+   * @param addressToSpaceId Reverse mapping: address to its space ID
+   * @param permissionlessActions Records each permissionless action
+   * @param _spaceIdNonce The nonce used to generate a space ID for registration
+   * @custom:storage-location erc7201:geo.storage.SpaceRegistry
+   */
+  struct SpaceRegistryStorage {
+    mapping(bytes16 _spaceId => address _account) spaceIdToAddress;
+    mapping(bytes16 _spaceId => address _account) spaceIdToProposedAddress;
+    mapping(address _account => bytes16 _spaceId) addressToSpaceId;
+    mapping(bytes32 _action => bool _isPermissionless) permissionlessActions;
+    uint256 _spaceIdNonce;
+  }
+
+  /**
    * @notice Emitted when a user calls the enter function
-   * @param fromId The from space ID involved
-   * @param toId The to space ID involved
+   * @param fromSpaceId The from space ID involved
+   * @param toSpaceId The to space ID involved
    * @param action An action, which is passed to the space contract
    * @param topic A topic, which is passed to the space contract
    * @param data Some extra arbitrary data that may be used for space contract execution
    */
   event Action(
-    bytes16 indexed fromId, bytes16 indexed toId, bytes32 indexed action, bytes32 indexed topic, bytes data
+    bytes16 indexed fromSpaceId, bytes16 indexed toSpaceId, bytes32 indexed action, bytes32 indexed topic, bytes data
   ) anonymous;
 
   /// @notice Thrown when the caller is not authorized for the operation
@@ -66,16 +83,16 @@ interface ISpaceRegistry is ISemver {
 
   /**
    * @notice Generalized entry point for all users across all spaces
-   * @param _from The space contract on which to call the verify function
-   * @param _to The space contract on which to call the write function
+   * @param _fromSpace The space contract on which to call the verify function
+   * @param _toSpace The space contract on which to call the write function
    * @param _action The action that is passed to the space contract
    * @param _topic The topic that is passed to the space contract
    * @param _data The arbitrary data for space contract execution
    * @param _signature The signature for account verification
    */
   function enter(
-    address _from,
-    address _to,
+    address _fromSpace,
+    address _toSpace,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,

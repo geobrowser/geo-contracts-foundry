@@ -35,6 +35,16 @@ contract UnitVerifierSpaceFactory is TestHelper {
     );
   }
 
+  function test_Constants_WhenDeployed() external view {
+    // when deployed
+
+    // it sets _VERIFIER_SPACE_FACTORY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpaceFactory")) - 1)) & ~bytes32(uint256(0xff))
+    assertEq(
+      verifierSpaceFactoryProxy.exposed__VERIFIER_SPACE_FACTORY_STORAGE_LOCATION(),
+      keccak256(abi.encode(uint256(keccak256('geo.storage.VerifierSpaceFactory')) - 1)) & ~bytes32(uint256(0xff))
+    );
+  }
+
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();

@@ -11,4 +11,12 @@ contract MockVerifierSpaceFactory is VerifierSpaceFactory {
   function exposed__authorizeUpgrade(address _newImplementation) external {
     _authorizeUpgrade(_newImplementation);
   }
+
+  function exposed__VERIFIER_SPACE_FACTORY_STORAGE_LOCATION()
+    external
+    pure
+    returns (bytes32 _verifierSpaceFactoryStorageLocation)
+  {
+    _verifierSpaceFactoryStorageLocation = _VERIFIER_SPACE_FACTORY_STORAGE_LOCATION;
+  }
 }
