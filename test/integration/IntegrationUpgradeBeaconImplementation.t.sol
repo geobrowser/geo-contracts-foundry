@@ -16,8 +16,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   UpgradeableBeacon public daoSpaceBeacon;
   DAOSpace public daoSpaceImplementationA;
   MockDAOSpaceV2 public daoSpaceImplementationB;
-  DAOSpace public daoSpaceProxyA;
-  DAOSpace public daoSpaceProxyB;
+  MockDAOSpaceV2 public daoSpaceProxyA;
+  MockDAOSpaceV2 public daoSpaceProxyB;
 
   UpgradeableBeacon public verifierSpaceBeacon;
   VerifierSpace public verifierSpaceImplementationA;
@@ -36,12 +36,16 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     verifierSpaceImplementationA = VerifierSpace(verifierSpaceBeacon.implementation());
 
     _votingSettings.duration = daoSpaceImplementationA.MINIMUM_VOTING_DURATION();
+    _initialSpaceMembers = new address[](1);
+    _initialSpaceMembers[0] = address(this);
     _initialSpaceOwner = address(this);
 
-    daoSpaceProxyA =
-      DAOSpace(daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers));
-    daoSpaceProxyB =
-      DAOSpace(daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers));
+    daoSpaceProxyA = MockDAOSpaceV2(
+      daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers)
+    );
+    daoSpaceProxyB = MockDAOSpaceV2(
+      daoSpaceFactoryProxy.createDAOSpaceProxy(_votingSettings, _initialSpaceEditors, _initialSpaceMembers)
+    );
     verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
     verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
 
@@ -54,6 +58,9 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceImplementationA.version(), '1.0.0');
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
+    // _initialMembers
+    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), address(this)));
+    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), address(this)));
     // actionIsFastPathValid
     assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
@@ -67,13 +74,22 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
     daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationB));
 
-    daoSpaceProxyA.initialize('');
-    daoSpaceProxyB.initialize('');
+    uint256 _initialTotalMembers = _initialSpaceMembers.length;
+    daoSpaceProxyA.initialize(abi.encode(_initialTotalMembers));
+    daoSpaceProxyB.initialize(abi.encode(_initialTotalMembers));
+
+    vm.prank(address(daoSpaceProxyA));
+    daoSpaceProxyA.addMember(address(daoSpaceProxyA));
+    vm.prank(address(daoSpaceProxyB));
+    daoSpaceProxyB.addMember(address(daoSpaceProxyB));
 
     assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationB));
     assertEq(daoSpaceImplementationB.version(), '2.0.0');
     assertEq(daoSpaceProxyA.version(), '2.0.0');
     assertEq(daoSpaceProxyB.version(), '2.0.0');
+    // totalMembers
+    assertEq(daoSpaceProxyA.totalMembers(), _initialTotalMembers + 1);
+    assertEq(daoSpaceProxyB.totalMembers(), _initialTotalMembers + 1);
     // actionIsFastPathValid
     assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), false);
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), false);
