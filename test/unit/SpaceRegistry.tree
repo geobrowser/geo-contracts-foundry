@@ -10,6 +10,7 @@ UnitSpaceRegistry::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
+│   │   ├── it adds the permissionless actions
 │   │   └── when delegate called again
 │   │       └── it reverts with InvalidInitialization
 │   └── when owner is zero address
@@ -36,9 +37,16 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it increments _spaceIdNonce
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
-│   └── it emits Action
+│   └── it emits Action with SPACE_ID_REGISTERED
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
+
+UnitSpaceRegistry::clearSpaceId
+└── when called
+    ├── it resets addressToSpaceId
+    ├── it resets spaceIdToAddress
+    ├── it resets spaceIdToProposedAddress
+    └── it emits Action with SPACE_ID_CLEARED
 
 UnitSpaceRegistry::proposeSpaceMigration
 ├── when caller is space
@@ -60,7 +68,12 @@ UnitSpaceRegistry::acceptSpaceMigration
 
 UnitSpaceRegistry::setPermissionlessAction
 ├── when called by owner
-│   └── it updates the permissionlessActions mapping
+│   ├── when _set is true
+│   │   ├── it updates the permissionlessActions mapping to add the action
+│   │   └── it emits Action with PERMISSIONLESS_ACTION_ADDED
+│   └── when _set is false
+│       ├── it updates the permissionlessActions mapping to remove the action
+│       └── it emits Action with PERMISSIONLESS_ACTION_REMOVED
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 

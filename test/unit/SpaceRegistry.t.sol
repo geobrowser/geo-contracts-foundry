@@ -37,14 +37,10 @@ contract UnitSpaceRegistry is TestHelper {
         address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(_owner)))
       )
     );
-    // set one permissionless action
-    vm.prank(_owner);
-    spaceRegistryProxy.setPermissionlessAction(_permissionlessAction, true);
   }
 
   function test_Constants_WhenDeployed() external view {
     // when deployed
-
     // it sets _SPACE_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
     assertEq(
       spaceRegistryProxy.exposed__SPACE_REGISTRY_STORAGE_LOCATION(),
@@ -86,6 +82,11 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it sets owner
     assertEq(spaceRegistryProxy.owner(), __owner);
+
+    // it adds the permissionless actions
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __owner)
@@ -167,7 +168,9 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
     // when _action is not permissionless
-    vm.assume(_action != _permissionlessAction);
+    vm.assume(_action != ActionsConstants.UPVOTED);
+    vm.assume(_action != ActionsConstants.DOWNVOTED);
+    vm.assume(_action != ActionsConstants.UNVOTED);
 
     // it calls toSpace to fetch _topicOutput
     _mockFetch(_toSpace, _action, _topicInput, _data, _topicOutput);
@@ -189,9 +192,8 @@ contract UnitSpaceRegistry is TestHelper {
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _permissionlessAction, _topicInput, _data);
-
-    spaceRegistryProxy.enter(_fromSpace, _toSpace, _permissionlessAction, _topicInput, _data, _signature);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _topicInput, _data);
+    spaceRegistryProxy.enter(_fromSpace, _toSpace, ActionsConstants.UPVOTED, _topicInput, _data, _signature);
   }
 
   function test_Enter_WhenSpaceIsNotRegistered(
@@ -216,7 +218,7 @@ contract UnitSpaceRegistry is TestHelper {
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
-    // it emits Action
+    // it emits Action with SPACE_ID_REGISTERED
     vm.expectEmit();
     emit ISpaceRegistry.Action(
       bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), ''
@@ -243,6 +245,31 @@ contract UnitSpaceRegistry is TestHelper {
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
+  }
+
+  function test_ClearSpaceId_WhenCalled() external {
+    // set caller up as proposer from space
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockSpaceIdToProposedAddress(_fromSpaceId, _toSpace);
+    vm.startPrank(_fromSpace);
+
+    // it emits Action with SPACE_ID_CLEARED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(_fromSpace)), ''
+    );
+
+    spaceRegistryProxy.clearSpaceId();
+
+    // it resets addressToSpaceId
+    assertEq(spaceRegistryProxy.addressToSpaceId(_fromSpace), bytes16(0));
+
+    // it resets spaceIdToAddress
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_fromSpaceId), address(0));
+
+    // it resets spaceIdToProposedAddress
+    assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
   }
 
   function test_ProposeSpaceMigration_WhenCallerIsSpace(address _newAccount) external {
@@ -315,18 +342,40 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.acceptSpaceMigration(_spaceId);
   }
 
-  function test_SetPermissionlessAction_WhenCalledByOwner(bytes32 _action, bool _set) external {
-    // when called by owner
+  modifier whenCalledByOwner() {
     vm.startPrank(_owner);
+    _;
+    vm.stopPrank();
+  }
 
-    (_action == _permissionlessAction)
-      ? assertEq(spaceRegistryProxy.permissionlessActions(_action), true)
-      : assertEq(spaceRegistryProxy.permissionlessActions(_action), false);
+  function test_SetPermissionlessAction_When_setIsTrue(bytes32 _action) external whenCalledByOwner {
+    vm.assume(_action != ActionsConstants.UPVOTED);
+    vm.assume(_action != ActionsConstants.DOWNVOTED);
+    vm.assume(_action != ActionsConstants.UNVOTED);
 
-    spaceRegistryProxy.setPermissionlessAction(_action, _set);
+    assertEq(spaceRegistryProxy.permissionlessActions(_action), false);
 
-    // it updates the permissionlessActions mapping
-    assertEq(spaceRegistryProxy.permissionlessActions(_action), _set);
+    // it emits Action with PERMISSIONLESS_ACTION_ADDED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_ADDED, _action, '');
+    spaceRegistryProxy.setPermissionlessAction(_action, true);
+
+    // it updates the permissionlessActions mapping to add the action
+    assertEq(spaceRegistryProxy.permissionlessActions(_action), true);
+  }
+
+  function test_SetPermissionlessAction_When_setIsFalse() external whenCalledByOwner {
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
+
+    // it emits Action with PERMISSIONLESS_ACTION_REMOVED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_REMOVED, ActionsConstants.UPVOTED, ''
+    );
+    spaceRegistryProxy.setPermissionlessAction(ActionsConstants.UPVOTED, false);
+
+    // it updates the permissionlessActions mapping to remove the action
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), false);
   }
 
   function test_SetPermissionlessAction_WhenCalledByNon_owner(bytes32 _action, bool _set) external {
