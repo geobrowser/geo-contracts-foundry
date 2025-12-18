@@ -218,7 +218,7 @@ contract UnitSpaceRegistry is TestHelper {
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
-    // it emits Action
+    // it emits Action with SPACE_ID_REGISTERED
     vm.expectEmit();
     emit ISpaceRegistry.Action(
       bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), ''
@@ -245,6 +245,31 @@ contract UnitSpaceRegistry is TestHelper {
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId();
+  }
+
+  function test_ClearSpaceId_WhenCalled() external {
+    // set caller up as proposer from space
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockSpaceIdToProposedAddress(_fromSpaceId, _toSpace);
+    vm.startPrank(_fromSpace);
+
+    // it emits Action with SPACE_ID_CLEARED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(_fromSpace)), ''
+    );
+
+    spaceRegistryProxy.clearSpaceId();
+
+    // it resets addressToSpaceId
+    assertEq(spaceRegistryProxy.addressToSpaceId(_fromSpace), bytes16(0));
+
+    // it resets spaceIdToAddress
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_fromSpaceId), address(0));
+
+    // it resets spaceIdToProposedAddress
+    assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
   }
 
   function test_ProposeSpaceMigration_WhenCallerIsSpace(address _newAccount) external {
