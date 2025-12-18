@@ -4,8 +4,17 @@ pragma solidity 0.8.30;
 /// @dev The ID of the action to register a space
 bytes32 constant SPACE_ID_REGISTERED = keccak256('GOVERNANCE.SPACE_ID_REGISTERED');
 
+/// @dev The ID of the action to clear a space from the registry
+bytes32 constant SPACE_ID_CLEARED = keccak256('GOVERNANCE.SPACE_ID_CLEARED');
+
 /// @dev The ID of the action to migrate a space
 bytes32 constant SPACE_ID_MIGRATED = keccak256('GOVERNANCE.SPACE_ID_MIGRATED');
+
+/// @dev The ID of the action when a permissionless action is added to the space registry
+bytes32 constant PERMISSIONLESS_ACTION_ADDED = keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_ADDED');
+
+/// @dev The ID of the action when a permissionless action is removed from the space registry
+bytes32 constant PERMISSIONLESS_ACTION_REMOVED = keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED');
 
 /// @dev The ID of the action to create a proposal
 bytes32 constant PROPOSAL_CREATED = keccak256('GOVERNANCE.PROPOSAL_CREATED');

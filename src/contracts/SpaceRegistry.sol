@@ -33,8 +33,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   function initialize(bytes calldata _initializerData) external virtual initializer {
     address _owner = abi.decode(_initializerData, (address));
-
     __Ownable_init(_owner);
+    _permissionlessActionAdded(ActionsConstants.UPVOTED);
+    _permissionlessActionAdded(ActionsConstants.DOWNVOTED);
+    _permissionlessActionAdded(ActionsConstants.UNVOTED);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -47,12 +49,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes calldata _signature
   ) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
-    // Translate addresses into space IDs
     bytes16 fromSpaceId = $.addressToSpaceId[_fromSpace];
     bytes16 toSpaceId = $.addressToSpaceId[_toSpace];
-
-    // Check that the space IDs exist
     if (fromSpaceId == bytes16(0) || toSpaceId == bytes16(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
@@ -90,6 +88,18 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
+  function clearSpaceId() external virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    bytes16 spaceId = $.addressToSpaceId[msg.sender];
+    $.addressToSpaceId[msg.sender] = bytes16(0);
+    $.spaceIdToAddress[spaceId] = address(0);
+    $.spaceIdToProposedAddress[spaceId] = address(0);
+
+    emit Action(spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
   function proposeSpaceMigration(address _newAccount) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
@@ -123,9 +133,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function setPermissionlessAction(bytes32 _action, bool _isPermissionless) external virtual onlyOwner {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.permissionlessActions[_action] = _isPermissionless;
-    // REVIEW: emit PermissionlessActionSet(_action, _isPermissionless);
+    (_isPermissionless) ? _permissionlessActionAdded(_action) : _permissionlessActionRemoved(_action);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -164,6 +172,26 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+  /**
+   * @notice Adds a permissionless action to the registry
+   * @param _action The action identifier
+   */
+  function _permissionlessActionAdded(bytes32 _action) internal virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.permissionlessActions[_action] = true;
+    emit Action(bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_ADDED, _action, '');
+  }
+
+  /**
+   * @notice Removes a permissionless action from the registry
+   * @param _action The action identifier
+   */
+  function _permissionlessActionRemoved(bytes32 _action) internal virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.permissionlessActions[_action] = false;
+    emit Action(bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_REMOVED, _action, '');
+  }
 
   /**
    * @notice Returns the space registry contract storage
