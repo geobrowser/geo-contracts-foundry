@@ -4,7 +4,8 @@ UnitSpaceRegistry::constants
 
 UnitSpaceRegistry::constructor
 └── when called
-    └── it disables initializers
+    ├── it disables initializers
+    └── it adds the permissionless actions
 
 UnitSpaceRegistry::initialize
 ├── when delegate called
@@ -60,7 +61,12 @@ UnitSpaceRegistry::acceptSpaceMigration
 
 UnitSpaceRegistry::setPermissionlessAction
 ├── when called by owner
-│   └── it updates the permissionlessActions mapping
+│   ├── when _set is true
+│   │   ├── it updates the permissionlessActions mapping to add the action
+│   │   └── it emits Action with PERMISSIONLESS_ACTION_ADDED
+│   └── when _set is false
+│       ├── it updates the permissionlessActions mapping to remove the action
+│       └── it emits Action with PERMISSIONLESS_ACTION_REMOVED
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 

@@ -76,12 +76,6 @@ interface IVerifierSpace is ISpace, ISemver {
   function replayNonce() external view returns (uint256 _replayNonce);
 
   /**
-   * @notice The message typehash for the struct used in the signature verification
-   * @return _messageTypehash The message typehash constant
-   */
-  function MESSAGE_TYPEHASH() external view returns (bytes32 _messageTypehash);
-
-  /**
    * @notice Initializes the contract
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
