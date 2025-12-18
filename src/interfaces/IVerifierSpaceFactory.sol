@@ -10,6 +10,17 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
  */
 interface IVerifierSpaceFactory is ISemver {
   /**
+   * @notice The storage struct of the verifier space factory contract
+   * @param verifierSpaceBeacon The address of the verifier space beacon contract
+   * @param spaceRegistry The address of the space registry contract
+   * @custom:storage-location erc7201:geo.storage.VerifierSpaceFactory
+   */
+  struct VerifierSpaceFactoryStorage {
+    address verifierSpaceBeacon;
+    ISpaceRegistry spaceRegistry;
+  }
+
+  /**
    * @notice Emitted when a verifier space proxy is created
    * @param newVerifierSpaceProxy The address of the new verifier space proxy contract
    */

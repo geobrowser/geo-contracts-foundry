@@ -5,7 +5,8 @@ UnitDAOSpace::constants
     ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
     ├── it sets EDITOR to keccak256('EDITOR')
     ├── it sets MEMBER to keccak256('MEMBER')
-    └── it sets DAO to keccak256('DAO')
+    ├── it sets DAO to keccak256('DAO')
+    └── it sets _DAO_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpace")) - 1)) & ~bytes32(uint256(0xff))
 
 UnitDAOSpace::constructor
 └── when called

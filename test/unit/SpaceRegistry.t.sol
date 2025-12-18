@@ -42,6 +42,16 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.setPermissionlessAction(_permissionlessAction, true);
   }
 
+  function test_Constants_WhenDeployed() external view {
+    // when deployed
+
+    // it sets _SPACE_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
+    assertEq(
+      spaceRegistryProxy.exposed__SPACE_REGISTRY_STORAGE_LOCATION(),
+      keccak256(abi.encode(uint256(keccak256('geo.storage.SpaceRegistry')) - 1)) & ~bytes32(uint256(0xff))
+    );
+  }
+
   function test_Constructor_WhenCalled() external {
     // it disables initializers
     vm.expectEmit();

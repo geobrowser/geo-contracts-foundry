@@ -9,22 +9,30 @@ import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
  */
 contract MockSpaceRegistry is SpaceRegistry {
   function workaround_setSpaceIdToAddress(bytes16 _spaceId, address _account) external {
-    spaceIdToAddress[_spaceId] = _account;
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.spaceIdToAddress[_spaceId] = _account;
   }
 
   function workaround_setSpaceIdToProposedAddress(bytes16 _spaceId, address _account) external {
-    spaceIdToProposedAddress[_spaceId] = _account;
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.spaceIdToProposedAddress[_spaceId] = _account;
   }
 
   function workaround_setAddressToSpaceId(address _account, bytes16 _spaceId) external {
-    addressToSpaceId[_account] = _spaceId;
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.addressToSpaceId[_account] = _spaceId;
   }
 
   function exposed__authorizeUpgrade(address _newImplementation) external {
     _authorizeUpgrade(_newImplementation);
   }
 
+  function exposed__SPACE_REGISTRY_STORAGE_LOCATION() external pure returns (bytes32 _spaceRegistryStorageLocation) {
+    _spaceRegistryStorageLocation = _SPACE_REGISTRY_STORAGE_LOCATION;
+  }
+
   function exposed__spaceIdNonce() external view returns (uint256 __spaceIdNonce) {
-    return _spaceIdNonce;
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    __spaceIdNonce = $._spaceIdNonce;
   }
 }

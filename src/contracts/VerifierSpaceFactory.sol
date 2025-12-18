@@ -16,11 +16,12 @@ import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
  * @notice Produces beacon-proxy-upgradeable verifier spaces
  */
 contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpaceFactory {
-  /// @inheritdoc IVerifierSpaceFactory
-  address public verifierSpaceBeacon;
-
-  /// @inheritdoc IVerifierSpaceFactory
-  ISpaceRegistry public spaceRegistry;
+  /**
+   * @notice The storage location of the verifier space factory contract
+   * @custom:storage-location erc7201:geo.storage.VerifierSpaceFactory
+   */
+  bytes32 internal constant _VERIFIER_SPACE_FACTORY_STORAGE_LOCATION =
+    0x83d3ab5f19d81a7926e12e3baadc64405a79e75661a4c7f5ad3f370d8dc93500;
 
   /// @notice Constructor
   constructor() {
@@ -33,20 +34,33 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
 
     __Ownable_init(_owner);
 
+    VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
     address verifierSpaceImplementation = address(new VerifierSpace());
-    verifierSpaceBeacon = address(new UpgradeableBeacon(verifierSpaceImplementation, _owner));
-
-    spaceRegistry = _spaceRegistry;
+    $.verifierSpaceBeacon = address(new UpgradeableBeacon(verifierSpaceImplementation, _owner));
+    $.spaceRegistry = _spaceRegistry;
   }
 
   /// @inheritdoc IVerifierSpaceFactory
   function createVerifierSpaceProxy(address _owner) external virtual returns (address _newVerifierSpaceProxy) {
-    bytes memory _initializerData = abi.encode(spaceRegistry, _owner);
+    VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
 
+    bytes memory _initializerData = abi.encode($.spaceRegistry, _owner);
     _newVerifierSpaceProxy =
-      address(new BeaconProxy(verifierSpaceBeacon, abi.encodeCall(VerifierSpace.initialize, (_initializerData))));
+      address(new BeaconProxy($.verifierSpaceBeacon, abi.encodeCall(VerifierSpace.initialize, (_initializerData))));
 
     emit VerifierSpaceProxyCreated(_newVerifierSpaceProxy);
+  }
+
+  /// @inheritdoc IVerifierSpaceFactory
+  function verifierSpaceBeacon() public view returns (address _verifierSpaceBeacon) {
+    VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
+    _verifierSpaceBeacon = $.verifierSpaceBeacon;
+  }
+
+  /// @inheritdoc IVerifierSpaceFactory
+  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
+    VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
+    _spaceRegistry = $.spaceRegistry;
   }
 
   /// @inheritdoc ISemver
@@ -56,4 +70,15 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
 
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+  /**
+   * @notice Returns the verifier space factory contract storage
+   * @return $ The storage of the verifier space factory contract
+   * @custom:storage-location erc7201:geo.storage.VerifierSpaceFactory
+   */
+  function _getVerifierSpaceFactoryStorage() internal pure returns (VerifierSpaceFactoryStorage storage $) {
+    assembly {
+      $.slot := _VERIFIER_SPACE_FACTORY_STORAGE_LOCATION
+    }
+  }
 }
