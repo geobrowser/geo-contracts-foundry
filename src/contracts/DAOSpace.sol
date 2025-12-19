@@ -341,6 +341,18 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     for (uint256 i; i < actions.length; i++) {
       proposal_.actions.push(actions[i]);
     }
+    // Ping the registry to emit the proposal settings
+    _ping(
+      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      bytes32($.proposalCounter - 1),
+      abi.encode(
+        proposal_.parameters.startDate,
+        proposal_.parameters.lastDate,
+        proposal_.parameters.votingMode,
+        proposal_.parameters.quorum,
+        proposal_.parameters.supportThreshold
+      )
+    );
   }
 
   /**
@@ -386,6 +398,18 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
         proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
+        // Ping the registry to emit the updated proposal settings
+        _ping(
+          ActionsConstants.PROPOSAL_SETTINGS_USED,
+          bytes32(_proposalId),
+          abi.encode(
+            proposal_.parameters.startDate,
+            proposal_.parameters.lastDate,
+            proposal_.parameters.votingMode,
+            proposal_.parameters.quorum,
+            proposal_.parameters.supportThreshold
+          )
+        );
       } else if (_voteOption == VoteOption.Yes) {
         // immediate execution if possible
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);

@@ -325,8 +325,25 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsPROPOSAL_CREATED
     whenTheVotingModeIsSlow
   {
-    // get initial proposal count
+    // get initial proposal count and voting settings
     uint256 initialProposalCounter = daoSpaceProxy.proposalCounter();
+    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    _mockEnter(
+      _spaceRegistry,
+      address(daoSpaceProxy),
+      address(daoSpaceProxy),
+      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      bytes32(0),
+      abi.encode(
+        block.timestamp,
+        block.timestamp + votingSettings.duration,
+        IDAOSpace.VotingMode.Slow,
+        votingSettings.quorum,
+        votingSettings.slowPathPercentageThreshold
+      )
+    );
 
     // when called
     bytes memory proposalData = _createSlowPathProposalToAddEditor();
@@ -421,8 +438,25 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsPROPOSAL_CREATED
     whenTheVotingModeIsFast
   {
-    // get initial proposal count
+    // get initial proposal count and voting settings
     uint256 initialProposalCounter = daoSpaceProxy.proposalCounter();
+    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    _mockEnter(
+      _spaceRegistry,
+      address(daoSpaceProxy),
+      address(daoSpaceProxy),
+      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      bytes32(0),
+      abi.encode(
+        block.timestamp,
+        block.timestamp + votingSettings.duration,
+        IDAOSpace.VotingMode.Fast,
+        votingSettings.quorum,
+        votingSettings.fastPathFlatThreshold
+      )
+    );
 
     // when called
     bytes memory proposalData = _createFastPathProposalToAddMember();
@@ -723,6 +757,24 @@ contract UnitDAOSpace is TestHelper {
 
     // warp forwards to ensure start date is reset
     vm.warp(block.timestamp + 100);
+
+    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    _mockEnter(
+      _spaceRegistry,
+      address(daoSpaceProxy),
+      address(daoSpaceProxy),
+      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      bytes32(0),
+      abi.encode(
+        block.timestamp,
+        block.timestamp + votingSettings.duration,
+        IDAOSpace.VotingMode.Slow,
+        votingSettings.quorum,
+        votingSettings.slowPathPercentageThreshold
+      )
+    );
 
     // vote no
     bytes memory voteData = _createVoteForFirstProposal(IDAOSpace.VoteOption(3));
