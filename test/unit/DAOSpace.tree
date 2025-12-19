@@ -39,8 +39,9 @@ UnitDAOSpace::write
 │   │   ├── when the voting mode is slow
 │   │   │   ├── when _fromSpace is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
+│   │   │   ├── when _proposalId has already been used
+│   │   │   │   └── it reverts with InvalidProposalId
 │   │   │   └── when _createProposal params are valid
-│   │   │       ├── it incremments the proposal counter
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │   │       ├── it sets the proposal voting mode
@@ -50,6 +51,8 @@ UnitDAOSpace::write
 │   │   └── when the voting mode is fast
 │   │       ├── when _fromSpace is not an editor
 │   │       │   └── it reverts with InvalidFromSpace
+│   │       ├── when _proposalId has already been used
+│   │       │   └── it reverts with InvalidProposalId
 │   │       ├── when _fromSpace is a flagged editor
 │   │       │   └── it reverts with EditorFlagged
 │   │       ├── when the decoded proposal action is not limited to one call
@@ -57,7 +60,6 @@ UnitDAOSpace::write
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
 │   │       │   └── it reverts with InvalidAction
 │   │       └── when _createProposal params are valid
-│   │           ├── it incremments the proposal counter
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │           ├── it sets the proposal voting mode
@@ -234,7 +236,7 @@ UnitDAOSpace::updateVotingSettings
 
 UnitDAOSpace::fetch
 ├── when _action equals PROPOSAL_CREATED
-│   └── it returns bytes32(proposalCounter)
+│   └── it returns bytes32(_proposalId)
 ├── when _action equals PROPOSAL_VOTED
 │   └── it returns bytes32(_proposalId)
 ├── when _action equals PROPOSAL_EXECUTED

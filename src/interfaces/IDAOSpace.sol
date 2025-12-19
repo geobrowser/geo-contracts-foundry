@@ -108,7 +108,6 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice The storage struct of the DAO space contract
    * @param spaceRegistry The address of the space registry contract
    * @param votingSettings Voting settings for proposals
-   * @param proposalCounter Proposal counter
    * @param totalEditors Total editors
    * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
    * @param isEditorFlagged Maps editor addresses to whether they are flagged (restricted from fast path)
@@ -118,11 +117,10 @@ interface IDAOSpace is ISpace, ISemver {
   struct DAOSpaceStorage {
     ISpaceRegistry spaceRegistry;
     VotingSettings votingSettings;
-    uint256 proposalCounter;
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
     mapping(address _editor => bool _isFlagged) isEditorFlagged;
-    mapping(uint256 _proposalId => Proposal _proposal) _proposals;
+    mapping(bytes16 _proposalId => Proposal _proposal) _proposals;
   }
 
   /**
@@ -154,6 +152,11 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice Thrown when attempting to update the voting settings with invalid parameters
    */
   error InvalidSetting();
+
+  /**
+   * @notice Thrown when attempting to create a proposal with an id that has already been used
+   */
+  error InvalidProposalId();
 
   /**
    * @notice Thrown when a voter cannot vote on a proposal
@@ -276,12 +279,6 @@ interface IDAOSpace is ISpace, ISemver {
   function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
-   * @notice Proposal counter
-   * @return _proposalCounter The current proposal counter value
-   */
-  function proposalCounter() external view returns (uint256 _proposalCounter);
-
-  /**
    * @notice Total editors
    * @return _totalEditors The total number of editors
    */
@@ -312,7 +309,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _proposalId ID of the proposal to check
    * @return _isSupportThresholdReached True if support threshold is reached
    */
-  function isSupportThresholdReached(uint256 _proposalId) external view returns (bool _isSupportThresholdReached);
+  function isSupportThresholdReached(bytes16 _proposalId) external view returns (bool _isSupportThresholdReached);
 
   /**
    * @notice Gets the information for a proposal
@@ -322,7 +319,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @return _tally The current vote tally for the proposal
    * @return _actions The actions to be executed when the proposal passes
    */
-  function getProposalInformation(uint256 _proposalId)
+  function getProposalInformation(bytes16 _proposalId)
     external
     view
     returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions);
@@ -333,7 +330,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _account The address of the account to check
    * @return _voteOption The vote option cast by the account (None if not voted)
    */
-  function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption);
+  function getProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption);
 
   /**
    * @notice Returns the minimum voting duration for a slow path proposal
