@@ -37,6 +37,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     _permissionlessActionAdded(ActionsConstants.UPVOTED);
     _permissionlessActionAdded(ActionsConstants.DOWNVOTED);
     _permissionlessActionAdded(ActionsConstants.UNVOTED);
+    _permissionlessActionAdded(ActionsConstants.COMMENTED);
   }
 
   /// @inheritdoc ISpaceRegistry

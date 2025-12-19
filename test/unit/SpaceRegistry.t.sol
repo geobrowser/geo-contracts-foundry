@@ -87,6 +87,7 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
+    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.COMMENTED), true);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __owner)
@@ -168,9 +169,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
     // when _action is not permissionless
-    vm.assume(_action != ActionsConstants.UPVOTED);
-    vm.assume(_action != ActionsConstants.DOWNVOTED);
-    vm.assume(_action != ActionsConstants.UNVOTED);
+    _whenActionIsNotPermissionless(_action);
 
     // it calls toSpace to fetch _topicOutput
     _mockFetch(_toSpace, _action, _topicInput, _data, _topicOutput);
@@ -349,9 +348,7 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_SetPermissionlessAction_When_setIsTrue(bytes32 _action) external whenCalledByOwner {
-    vm.assume(_action != ActionsConstants.UPVOTED);
-    vm.assume(_action != ActionsConstants.DOWNVOTED);
-    vm.assume(_action != ActionsConstants.UNVOTED);
+    _whenActionIsNotPermissionless(_action);
 
     assertEq(spaceRegistryProxy.permissionlessActions(_action), false);
 
@@ -462,5 +459,12 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _data
   ) internal {
     _mockAndExpect(__toSpace, abi.encodeCall(ISpace.write, (__fromSpace, _action, _topic, _data)), abi.encode());
+  }
+
+  function _whenActionIsNotPermissionless(bytes32 _action) internal pure {
+    vm.assume(_action != ActionsConstants.UPVOTED);
+    vm.assume(_action != ActionsConstants.DOWNVOTED);
+    vm.assume(_action != ActionsConstants.UNVOTED);
+    vm.assume(_action != ActionsConstants.COMMENTED);
   }
 }
