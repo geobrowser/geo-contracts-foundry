@@ -42,7 +42,7 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
-    // it sets the _MESSAGE_TYPEHASH
+    // it sets the _MESSAGE_TYPEHASH to keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     assertEq(
       verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(),
       keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
