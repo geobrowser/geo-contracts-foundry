@@ -211,7 +211,13 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.enter(_from, _to, _action, _topic, _data, _signature);
   }
 
-  function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external {
+  function test_RegisterSpaceId_WhenSpaceIsNotRegistered(
+    address _account,
+    bytes32 _type,
+    bytes calldata _version
+  ) external {
+    vm.assume(_type != bytes32(0));
+
     // when space is not registered
 
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
@@ -223,8 +229,12 @@ contract UnitSpaceRegistry is TestHelper {
       bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), ''
     );
 
+    // it emits Action with SPACE_TYPE_DECLARED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_spaceId, _spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
+
     vm.startPrank(_account);
-    spaceRegistryProxy.registerSpaceId();
+    spaceRegistryProxy.registerSpaceId(_type, _version);
 
     // it increments _spaceIdNonce
     assertEq(spaceRegistryProxy.exposed__spaceIdNonce(), _spaceIdNonce + 1);
@@ -234,7 +244,12 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.spaceIdToAddress(_spaceId), _account);
   }
 
-  function test_RegisterSpaceId_WhenSpaceIsRegistered(address _account, bytes16 _spaceId) external {
+  function test_RegisterSpaceId_WhenSpaceIsRegistered(
+    address _account,
+    bytes16 _spaceId,
+    bytes32 _type,
+    bytes calldata _version
+  ) external {
     // when space is registered
     vm.assume(_spaceId != bytes16(0));
     _mockAddressToSpaceId(_account, _spaceId);
@@ -243,7 +258,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
 
     vm.startPrank(_account);
-    spaceRegistryProxy.registerSpaceId();
+    spaceRegistryProxy.registerSpaceId(_type, _version);
   }
 
   function test_ClearSpaceId_WhenCalled() external {
@@ -301,16 +316,25 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  function test_AcceptSpaceMigration_WhenProposedSpaceIsNotRegistered() external whenCallerIsProposedSpace {
+  function test_AcceptSpaceMigration_WhenProposedSpaceIsNotRegistered(
+    bytes32 _type,
+    bytes calldata _version
+  ) external whenCallerIsProposedSpace {
+    vm.assume(_type != bytes32(0));
+
     // when proposed space is not registered
 
-    // it emits Action
+    // it emits Action with SPACE_ID_MIGRATED
     vm.expectEmit();
     emit ISpaceRegistry.Action(
       _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(_toSpace)), ''
     );
 
-    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
+    // it emits Action with SPACE_TYPE_DECLARED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
+
+    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId, _type, _version);
 
     // it updates spaceIdToProposedAddress
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
@@ -321,24 +345,31 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.addressToSpaceId(_toSpace), _fromSpaceId);
   }
 
-  function test_AcceptSpaceMigration_WhenProposedSpaceIsRegistered() external whenCallerIsProposedSpace {
+  function test_AcceptSpaceMigration_WhenProposedSpaceIsRegistered(
+    bytes32 _type,
+    bytes calldata _version
+  ) external whenCallerIsProposedSpace {
     // when proposed space is registered
     _mockAddressToSpaceId(_toSpace, _toSpaceId);
 
     // it reverts with SpaceAlreadyRegistered
     vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
 
-    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId);
+    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId, _type, _version);
   }
 
-  function test_AcceptSpaceMigration_WhenCallerIsNotProposedSpace(bytes16 _spaceId) external {
+  function test_AcceptSpaceMigration_WhenCallerIsNotProposedSpace(
+    bytes16 _spaceId,
+    bytes32 _type,
+    bytes calldata _version
+  ) external {
     // when caller is not proposed space
     vm.startPrank(_randomCaller);
 
     // it reverts with InvalidCaller
     vm.expectRevert(ISpaceRegistry.InvalidCaller.selector);
 
-    spaceRegistryProxy.acceptSpaceMigration(_spaceId);
+    spaceRegistryProxy.acceptSpaceMigration(_spaceId, _type, _version);
   }
 
   modifier whenCalledByOwner() {
@@ -389,6 +420,13 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it returns spaceId
     assertEq(spaceRegistryProxy.generateSpaceId(_account, _nonce), _spaceId);
+  }
+
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(spaceRegistryProxy.name(), 'SPACE_REGISTRY');
   }
 
   function test_Version_WhenCalled() external view {

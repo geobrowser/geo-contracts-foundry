@@ -153,10 +153,6 @@ contract UnitVerifierSpaceFactory is TestHelper {
     VerifierSpace _verifierSpaceProxy =
       VerifierSpace(vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce));
 
-    // it emits VerifierSpaceProxyCreated
-    vm.expectEmit(address(verifierSpaceFactoryProxy));
-    emit IVerifierSpaceFactory.VerifierSpaceProxyCreated(address(_verifierSpaceProxy));
-
     _mockRegisterSpaceId(_spaceRegistry);
 
     // it returns new verifier space proxy
@@ -181,6 +177,13 @@ contract UnitVerifierSpaceFactory is TestHelper {
     vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableInvalidOwner.selector, __owner));
 
     verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner);
+  }
+
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(verifierSpaceFactoryProxy.name(), 'VERIFIER_SPACE_FACTORY');
   }
 
   function test_Version_WhenCalled() external view {
@@ -209,6 +212,10 @@ contract UnitVerifierSpaceFactory is TestHelper {
   }
 
   function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+    _mockAndExpect(
+      address(__spaceRegistry),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('VERIFIER_SPACE'), abi.encode('1.0.0'))),
+      abi.encode()
+    );
   }
 }

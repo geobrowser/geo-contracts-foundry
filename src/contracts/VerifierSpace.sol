@@ -40,12 +40,12 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
     // Initialise
     __Ownable_init(_owner);
-    __EIP712_init('VERIFIER_SPACE', version());
+    __EIP712_init(name(), version());
 
     // Set Space Registry and register new DAO Space
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
-    _spaceRegistry.registerSpaceId();
+    _spaceRegistry.registerSpaceId(keccak256(bytes(name())), abi.encode(version()));
 
     // Set valid writers
     _setValidWriters(_owner, true);
@@ -108,6 +108,11 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   /// @inheritdoc ISpace
   function fetch(bytes32, bytes32 _topicInput, bytes calldata) public pure virtual returns (bytes32 _topicOutput) {
     _topicOutput = _topicInput;
+  }
+
+  /// @inheritdoc ISemver
+  function name() public pure virtual returns (string memory _name) {
+    _name = 'VERIFIER_SPACE';
   }
 
   /// @inheritdoc ISemver

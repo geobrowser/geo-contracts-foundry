@@ -47,8 +47,6 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
     bytes memory _initializerData = abi.encode($.spaceRegistry, _owner);
     _newVerifierSpaceProxy =
       address(new BeaconProxy($.verifierSpaceBeacon, abi.encodeCall(VerifierSpace.initialize, (_initializerData))));
-
-    emit VerifierSpaceProxyCreated(_newVerifierSpaceProxy);
   }
 
   /// @inheritdoc IVerifierSpaceFactory
@@ -61,6 +59,11 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
     _spaceRegistry = $.spaceRegistry;
+  }
+
+  /// @inheritdoc ISemver
+  function name() public pure virtual returns (string memory _name) {
+    _name = 'VERIFIER_SPACE_FACTORY';
   }
 
   /// @inheritdoc ISemver

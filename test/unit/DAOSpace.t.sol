@@ -943,7 +943,7 @@ contract UnitDAOSpace is TestHelper {
     // proposal set up to with a deliberately faulty call
     IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
     actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.registerSpaceId, ())
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.registerSpaceId, (bytes32(0), ''))
     });
     daoSpaceProxy.workaround_createProposal(
       0, block.timestamp, block.timestamp + 1, IDAOSpace.VotingMode.Slow, 0, 1, actions, false
@@ -1796,6 +1796,13 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.isSupportThresholdReached(0), true);
   }
 
+  /// NAME ///
+
+  function test_Name_WhenCalled() external view {
+    // it returns the name
+    assertEq(daoSpaceProxy.name(), 'DAO_SPACE');
+  }
+
   /// VERSION ///
 
   function test_Version_WhenCalled() external view {
@@ -1806,7 +1813,11 @@ contract UnitDAOSpace is TestHelper {
   /// HELPERS ///
 
   function _mockRegisterSpaceId(address __spaceRegistry) internal {
-    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+    _mockAndExpect(
+      __spaceRegistry,
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('DAO_SPACE'), abi.encode('1.0.0'))),
+      abi.encode()
+    );
   }
 
   function _mockEnter(

@@ -62,7 +62,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Set Space Registry and register new DAO Space
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
-    _spaceRegistry.registerSpaceId();
+    _spaceRegistry.registerSpaceId(keccak256(bytes(name())), abi.encode(version()));
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
@@ -282,6 +282,11 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function getProposalVote(uint256 _proposalId, address _account) external view returns (VoteOption _voteOption) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _voteOption = $._proposals[_proposalId].voters[_account];
+  }
+
+  /// @inheritdoc ISemver
+  function name() public pure virtual returns (string memory _name) {
+    _name = 'DAO_SPACE';
   }
 
   /// @inheritdoc ISemver

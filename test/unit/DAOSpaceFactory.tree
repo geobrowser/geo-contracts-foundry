@@ -24,8 +24,11 @@ UnitDAOSpaceFactory::initialize
 UnitDAOSpaceFactory::createDAOSpaceProxy
 └── when called
     ├── it deploys and initializes DAO space proxy
-    ├── it emits DAOSpaceProxyCreated
     └── it returns new DAO space proxy
+
+UnitDAOSpaceFactory::name
+└── when called
+    └── it returns the name
 
 UnitDAOSpaceFactory::version
 └── when called

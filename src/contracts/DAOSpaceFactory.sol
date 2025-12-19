@@ -59,8 +59,6 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     );
     _newDAOSpaceProxy =
       address(new BeaconProxy($.daoSpaceBeacon, abi.encodeCall(DAOSpace.initialize, (_initializerData))));
-
-    emit DAOSpaceProxyCreated(_newDAOSpaceProxy);
   }
 
   /// @inheritdoc IDAOSpaceFactory
@@ -73,6 +71,11 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
     _spaceRegistry = $.spaceRegistry;
+  }
+
+  /// @inheritdoc ISemver
+  function name() public pure virtual returns (string memory _name) {
+    _name = 'DAO_SPACE_FACTORY';
   }
 
   /// @inheritdoc ISemver

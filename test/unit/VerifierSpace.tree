@@ -51,6 +51,10 @@ UnitVerifierSpace::fetch
 └── when called
     └── it returns _topicInput
 
+UnitVerifierSpace::name
+└── when called
+    └── it returns the name
+
 UnitVerifierSpace::version
 └── when called
     └── it returns semantic version

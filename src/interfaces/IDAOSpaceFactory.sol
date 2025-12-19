@@ -22,12 +22,6 @@ interface IDAOSpaceFactory is ISemver {
   }
 
   /**
-   * @notice Emitted when a DAO space proxy is created
-   * @param newDAOSpaceProxy The address of the new DAO space proxy contract
-   */
-  event DAOSpaceProxyCreated(address newDAOSpaceProxy);
-
-  /**
    * @notice Returns the DAO space beacon contract address
    * @return _daoSpaceBeacon The address of the DAO space beacon contract
    */

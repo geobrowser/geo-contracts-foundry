@@ -173,10 +173,6 @@ contract UnitDAOSpaceFactory is TestHelper {
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     DAOSpace _daoSpaceProxy = DAOSpace(vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce));
 
-    // it emits DAOSpaceProxyCreated
-    vm.expectEmit(address(daoSpaceFactoryProxy));
-    emit IDAOSpaceFactory.DAOSpaceProxyCreated(address(_daoSpaceProxy));
-
     _mockRegisterSpaceId(_spaceRegistry);
     _mockEnter(
       _spaceRegistry,
@@ -215,6 +211,13 @@ contract UnitDAOSpaceFactory is TestHelper {
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.EDITOR(), _initialEditor), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.MEMBER(), _initialMember), true);
     assertEq(_daoSpaceProxy.hasRole(_daoSpaceProxy.DAO(), address(_daoSpaceProxy)), true);
+  }
+
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(daoSpaceFactoryProxy.name(), 'DAO_SPACE_FACTORY');
   }
 
   function test_Version_WhenCalled() external view {
@@ -259,6 +262,10 @@ contract UnitDAOSpaceFactory is TestHelper {
   }
 
   function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+    _mockAndExpect(
+      address(__spaceRegistry),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('DAO_SPACE'), abi.encode('1.0.0'))),
+      abi.encode()
+    );
   }
 }

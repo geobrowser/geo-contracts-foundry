@@ -262,6 +262,10 @@ UnitDAOSpace::isSupportThresholdReached
     └── when the yes votes are greater than the flat support threshold
         └── it returns true
 
+UnitDAOSpace::name
+└── when called
+    └── it returns the name
+
 UnitDAOSpace::version
 └── when called
     └── it returns semantic version

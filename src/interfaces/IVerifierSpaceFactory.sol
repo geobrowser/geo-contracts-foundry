@@ -21,12 +21,6 @@ interface IVerifierSpaceFactory is ISemver {
   }
 
   /**
-   * @notice Emitted when a verifier space proxy is created
-   * @param newVerifierSpaceProxy The address of the new verifier space proxy contract
-   */
-  event VerifierSpaceProxyCreated(address newVerifierSpaceProxy);
-
-  /**
    * @notice Returns the verifier space beacon contract address
    * @return _verifierSpaceBeacon The address of the verifier space beacon contract
    */

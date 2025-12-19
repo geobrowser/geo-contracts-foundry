@@ -7,6 +7,12 @@ pragma solidity 0.8.30;
  */
 interface ISemver {
   /**
+   * @notice Returns the name of the contract
+   * @return _name The name of the contract
+   */
+  function name() external pure returns (string memory _name);
+
+  /**
    * @notice Returns the semantic version of the contract
    * @return _version The semantic version string
    */

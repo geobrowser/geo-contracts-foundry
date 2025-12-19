@@ -289,6 +289,13 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(verifierSpaceProxy.name(), 'VERIFIER_SPACE');
+  }
+
   function test_Version_WhenCalled() external view {
     // when called
 
@@ -301,6 +308,10 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+    _mockAndExpect(
+      address(__spaceRegistry),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('VERIFIER_SPACE'), abi.encode('1.0.0'))),
+      abi.encode()
+    );
   }
 }

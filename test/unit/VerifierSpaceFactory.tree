@@ -24,10 +24,13 @@ UnitVerifierSpaceFactory::initialize
 UnitVerifierSpaceFactory::createVerifierSpaceProxy
 ├── when owner is not zero address
 │   ├── it deploys and initializes verifier space proxy
-│   ├── it emits VerifierSpaceProxyCreated
 │   └── it returns new verifier space proxy
 └── when owner is zero address
     └── it reverts with OwnableInvalidOwner
+
+UnitVerifierSpaceFactory::name
+└── when called
+    └── it returns the name
 
 UnitVerifierSpaceFactory::version
 └── when called
