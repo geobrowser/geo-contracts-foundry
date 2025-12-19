@@ -55,13 +55,17 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       ISpaceRegistry _spaceRegistry,
       VotingSettings memory _votingSettings,
       address[] memory _initialEditors,
-      address[] memory _initialMembers
-    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[]));
+      address[] memory _initialMembers,
+      bytes memory _publishEditsData
+    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[], bytes));
 
     // Set Space Registry and register new DAO Space
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId();
+
+    // Ping the registry with initial edit if it exists
+    if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
 
     // Add initial editors
     uint256 length = _initialEditors.length;

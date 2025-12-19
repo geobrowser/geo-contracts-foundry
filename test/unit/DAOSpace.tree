@@ -16,6 +16,7 @@ UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings
+│   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it grants the new editor the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 │   ├── it grants the new member the MEMBER role

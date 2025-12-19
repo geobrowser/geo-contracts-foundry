@@ -30,6 +30,9 @@ contract UnitDAOSpaceFactory is TestHelper {
   address internal _initialEditor = makeAddr('_initialEditor');
   address[] internal _initialMembers = new address[](1);
   address internal _initialMember = makeAddr('_initialMember');
+  bytes internal _initialEditsContentUri = 'Down the Rabbit-Hole';
+  bytes internal _initialEditsMetadata =
+    'Alice was beginning to get very tired of sitting by her sister on the bank...';
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
 
@@ -196,7 +199,9 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     // it returns new DAO space proxy
     assertEq(
-      daoSpaceFactoryProxy.createDAOSpaceProxy(__votingSettings, _initialEditors, _initialMembers),
+      daoSpaceFactoryProxy.createDAOSpaceProxy(
+        __votingSettings, _initialEditors, _initialMembers, _initialEditsContentUri, _initialEditsMetadata
+      ),
       address(_daoSpaceProxy)
     );
 

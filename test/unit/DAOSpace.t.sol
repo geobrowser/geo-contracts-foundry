@@ -29,6 +29,7 @@ contract UnitDAOSpace is TestHelper {
   address internal _toSpace = makeAddr('_toSpace');
   address internal _initialEditor = makeAddr('_initialEditor');
   address internal _initialMember = makeAddr('_initialMember');
+  bytes internal _publishEditsData = 'Curiouser and curiouser!';
 
   function setUp() external {
     // set up
@@ -50,6 +51,16 @@ contract UnitDAOSpace is TestHelper {
 
     // when delegate called
     _mockRegisterSpaceId(_spaceRegistry);
+
+    // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
+    _mockEnter(
+      _spaceRegistry,
+      predictedDAOSpaceProxy,
+      predictedDAOSpaceProxy,
+      ActionsConstants.EDITS_PUBLISHED,
+      '',
+      _publishEditsData
+    );
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
@@ -76,7 +87,8 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
+          IDAOSpace.initialize,
+          (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
         )
       )
     );
@@ -137,6 +149,16 @@ contract UnitDAOSpace is TestHelper {
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
 
+    // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxy,
+      predictedDAOSpaceProxy,
+      ActionsConstants.EDITS_PUBLISHED,
+      '',
+      _publishEditsData
+    );
+
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
@@ -162,7 +184,8 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
+          IDAOSpace.initialize,
+          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
         )
       )
     );
@@ -207,6 +230,16 @@ contract UnitDAOSpace is TestHelper {
     // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(__spaceRegistry);
 
+    // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxy,
+      predictedDAOSpaceProxy,
+      ActionsConstants.EDITS_PUBLISHED,
+      '',
+      _publishEditsData
+    );
+
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
@@ -232,7 +265,8 @@ contract UnitDAOSpace is TestHelper {
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
         abi.encodeCall(
-          IDAOSpace.initialize, (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers))
+          IDAOSpace.initialize,
+          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
         )
       )
     );
@@ -241,7 +275,9 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    daoSpaceProxy.initialize(abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers));
+    daoSpaceProxy.initialize(
+      abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+    );
   }
 
   function test_Initialize_WhenCalled() external {
@@ -249,7 +285,9 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called again
-    daoSpaceProxy.initialize(abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers));
+    daoSpaceProxy.initialize(
+      abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+    );
   }
 
   /// WRITE - PROPOSAL CREATED ///

@@ -53,11 +53,15 @@ interface IDAOSpaceFactory is ISemver {
    * @param _votingSettings The voting settings to use for proposals
    * @param _initialEditors The initial list of editor addresses
    * @param _initialMembers The initial list of member addresses
+   * @param _initialEditsContentUri The initial edit publish content uri
+   * @param _initialEditsMetadata The initial edit publish metadata
    * @return _newDAOSpaceProxy The address of the new DAO space proxy contract
    */
   function createDAOSpaceProxy(
     IDAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
-    address[] calldata _initialMembers
+    address[] calldata _initialMembers,
+    bytes memory _initialEditsContentUri,
+    bytes memory _initialEditsMetadata
   ) external returns (address _newDAOSpaceProxy);
 }
