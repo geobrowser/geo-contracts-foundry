@@ -13,7 +13,7 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {MockDAOSpaceFactory} from 'mocks/MockDAOSpaceFactory.sol';
+import {MockDAOSpaceFactory} from 'test/unit/mocks/MockDAOSpaceFactory.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 

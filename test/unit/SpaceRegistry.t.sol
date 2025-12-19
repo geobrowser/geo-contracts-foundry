@@ -9,7 +9,7 @@ import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {MockSpaceRegistry} from 'mocks/MockSpaceRegistry.sol';
+import {MockSpaceRegistry} from 'test/unit/mocks/MockSpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
