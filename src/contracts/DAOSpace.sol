@@ -103,6 +103,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       _createProposal(_fromSpace, _data);
     } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
       _vote(_fromSpace, _data);
+    } else if (_action == ActionsConstants.PROPOSAL_UPDATED) {
+      _updateProposal(_fromSpace, _data);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
@@ -267,10 +269,19 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function getProposalInformation(bytes16 _proposalId)
     public
     view
-    returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions)
+    returns (
+      bool _executed,
+      uint8 _version,
+      address _creator,
+      ProposalParameters memory _parameters,
+      Tally memory _tally,
+      Action[] memory _actions
+    )
   {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _executed = $._proposals[_proposalId].executed;
+    _version = $._proposals[_proposalId].version;
+    _creator = $._proposals[_proposalId].creator;
     _parameters = $._proposals[_proposalId].parameters;
     _tally = $._proposals[_proposalId].tally;
     _actions = $._proposals[_proposalId].actions;
@@ -279,7 +290,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /// @inheritdoc IDAOSpace
   function getProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _voteOption = $._proposals[_proposalId].voters[_account];
+    _voteOption = $._proposals[_proposalId].voters[$._proposals[_proposalId].version][_account];
   }
 
   /// @inheritdoc ISemver
@@ -308,11 +319,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /**
-   * @notice Creates a new governance proposal
+   * @notice Decodes input data and then creates a new proposal
    * @param _fromSpace The address of the space creating the proposal
    * @param _data The encoded proposal data containing the voting mode and actions
-   * @dev Fast path: only editors can create, creator must not be flagged, single action required,
-   * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(address _fromSpace, bytes calldata _data) internal virtual {
     // Decode data to construct proposal
@@ -322,6 +331,32 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     Proposal storage proposal_ = $._proposals[_proposalId];
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
     // Update proposal storage
+    _createProposal(_fromSpace, _proposalId, _votingMode, _actions);
+  }
+
+  /**
+   * @notice Creates a new governance proposal
+   * @param _fromSpace The address of the space creating the proposal
+   * @param _proposalId The proposal identifier
+   * @param _votingMode The voting mode (slow or fast) of the proposal
+   * @param _actions The actions to be undertaken if the proposal is successful
+   * @dev Fast path: only editors can create, creator must not be flagged, single action required,
+   * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
+   */
+  function _createProposal(
+    address _fromSpace,
+    bytes16 _proposalId,
+    VotingMode _votingMode,
+    Action[] memory _actions
+  ) internal virtual {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    Proposal storage proposal_ = $._proposals[_proposalId];
+    // Clear any previous voting state
+    delete proposal_.tally;
+    delete proposal_.actions;
+    proposal_.version++;
+    // Update proposal storage
+    proposal_.creator = _fromSpace;
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
     proposal_.parameters.votingMode = _votingMode;
@@ -375,7 +410,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     Proposal storage proposal_ = $._proposals[_proposalId];
     // Remove the previous vote.
-    VoteOption state = proposal_.voters[_fromSpace];
+    VoteOption state = proposal_.voters[proposal_.version][_fromSpace];
     if (state == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes - 1;
     } else if (state == VoteOption.No) {
@@ -391,7 +426,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     } else if (_voteOption == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
-    proposal_.voters[_fromSpace] = _voteOption;
+    proposal_.voters[proposal_.version][_fromSpace] = _voteOption;
     // extra fast path logic
     if (proposal_.parameters.votingMode == VotingMode.Fast) {
       // fast path to slow path if rejection occurs
@@ -420,6 +455,25 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
       }
     }
+  }
+
+  /**
+   * @notice Allows a proposal creator to update and reset a proposal if it has not been executed
+   * @param _fromSpace The address of the space updating the proposal
+   * @param _data The encoded role data used to determine which role a user wants to leave
+   */
+  function _updateProposal(address _fromSpace, bytes calldata _data) internal virtual {
+    // Decode data to construct new proposal
+    (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
+      abi.decode(_data, (bytes16, VotingMode, Action[]));
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    Proposal storage proposal_ = $._proposals[_proposalId];
+    // Check proposal exists and that only the creator can update it
+    if (proposal_.creator != _fromSpace) revert InvalidCaller();
+    // May not update an already executed proposal
+    if (proposal_.executed) revert InvalidProposalId();
+    // Update proposal storage
+    _createProposal(_fromSpace, _proposalId, _votingMode, _actions);
   }
 
   /**

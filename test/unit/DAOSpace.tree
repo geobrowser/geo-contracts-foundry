@@ -42,6 +42,8 @@ UnitDAOSpace::write
 │   │   │   ├── when _proposalId has already been used
 │   │   │   │   └── it reverts with InvalidProposalId
 │   │   │   └── when _createProposal params are valid
+│   │   │       ├── it increments the proposal version
+│   │   │       ├── it sets the proposal creator to _fromSpace
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │   │       ├── it sets the proposal voting mode
@@ -60,6 +62,8 @@ UnitDAOSpace::write
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
 │   │       │   └── it reverts with InvalidAction
 │   │       └── when _createProposal params are valid
+│   │           ├── it increments the proposal version
+│   │           ├── it sets the proposal creator to _fromSpace
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │           ├── it sets the proposal voting mode
@@ -101,6 +105,14 @@ UnitDAOSpace::write
 │   │           └── when the current _fromSpace vote equals yes
 │   │               └── when the proposal can be executed
 │   │                   └── it loops over the stored proposal actions and performs the external calls
+│   ├── when _action equals PROPOSAL_UPDATED
+│   │   ├── when the proposal creator is not the _fromSpace
+│   │   │   └── it reverts with InvalidCaller
+│   │   ├── when the proposal has already been executed
+│   │   │   └── it reverts with InvalidProposalId
+│   │   └── when the proposal can be updated
+│   │       ├── it resets the voting state
+│   │       └── it updates the proposal with a new version
 │   ├── when _action equals PROPOSAL_EXECUTED
 │   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute

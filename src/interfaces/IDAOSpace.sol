@@ -67,16 +67,20 @@ interface IDAOSpace is ISpace, ISemver {
   /**
    * @notice Proposal information
    * @param executed Whether proposal has been executed
+   * @param version The version of the proposal
+   * @param creator The creator of the proposal
    * @param parameters Proposal parameters (may change if fast path escalates)
    * @param tally Vote tally (yes, no, abstain counts)
-   * @param voters Mapping of editor addresses to vote options
+   * @param voters Mapping of editor addresses to vote options (nested with versioning to support upgrades)
    * @param actions Actions to execute when proposal passes (fast path: 1 action max)
    */
   struct Proposal {
     bool executed;
+    uint8 version;
+    address creator;
     ProposalParameters parameters;
     Tally tally;
-    mapping(address => VoteOption) voters;
+    mapping(uint8 _version => mapping(address _voter => VoteOption _vote)) voters;
     Action[] actions;
   }
 
@@ -315,6 +319,8 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice Gets the information for a proposal
    * @param _proposalId The ID of the proposal
    * @return _executed Whether the proposal has been executed
+   * @return _version The current version of the proposal
+   * @return _creator The creator of the proposal
    * @return _parameters The proposal parameters at the time of creation
    * @return _tally The current vote tally for the proposal
    * @return _actions The actions to be executed when the proposal passes
@@ -322,7 +328,14 @@ interface IDAOSpace is ISpace, ISemver {
   function getProposalInformation(bytes16 _proposalId)
     external
     view
-    returns (bool _executed, ProposalParameters memory _parameters, Tally memory _tally, Action[] memory _actions);
+    returns (
+      bool _executed,
+      uint8 _version,
+      address _creator,
+      ProposalParameters memory _parameters,
+      Tally memory _tally,
+      Action[] memory _actions
+    );
 
   /**
    * @notice Gets the vote option cast by a given account on a proposal
