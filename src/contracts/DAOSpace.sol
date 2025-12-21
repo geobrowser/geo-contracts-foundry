@@ -194,6 +194,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
       (bytes16 _proposalId,) = abi.decode(_data, (bytes16, VoteOption));
       return bytes32(_proposalId);
+    } else if (_action == ActionsConstants.PROPOSAL_UPDATED) {
+      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VoteOption, Action[]));
+      return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       bytes16 _proposalId = abi.decode(_data, (bytes16));
       return bytes32(_proposalId);

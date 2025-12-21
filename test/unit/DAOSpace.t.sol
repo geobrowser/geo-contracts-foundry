@@ -1910,6 +1910,14 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
+  function test_Fetch_When_actionEqualsPROPOSAL_UPDATED(bytes32 _topicInput, uint256 _voteOption) external view {
+    _voteOption = bound(_voteOption, 0, 3);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption), new IDAOSpace.Action[](0));
+
+    // it returns bytes32(_proposalId)
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_UPDATED, _topicInput, _data), bytes32(_proposalId));
+  }
+
   function test_Fetch_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _topicInput) external view {
     bytes memory _data = abi.encode(_proposalId);
 
@@ -1938,6 +1946,7 @@ contract UnitDAOSpace is TestHelper {
   ) external view {
     vm.assume(_action != ActionsConstants.PROPOSAL_CREATED);
     vm.assume(_action != ActionsConstants.PROPOSAL_VOTED);
+    vm.assume(_action != ActionsConstants.PROPOSAL_UPDATED);
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
     vm.assume(_action != ActionsConstants.EDITOR_FLAGGED);
     vm.assume(_action != ActionsConstants.SPACE_LEFT);

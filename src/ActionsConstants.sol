@@ -55,17 +55,26 @@ bytes32 constant EDITOR_FLAGGED = keccak256('GOVERNANCE.EDITOR_FLAGGED');
 /// @dev The ID of the action to unflag an editor (restores fast path access)
 bytes32 constant EDITOR_UNFLAGGED = keccak256('GOVERNANCE.EDITOR_UNFLAGGED');
 
-/// @dev The ID of the action to publish content edits
-bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
-
 /// @dev The ID of the action to flag something (e.g. content, topic, proposal)
 bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');
 
 /// @dev The ID of the action to unflag something (e.g. content, topic, proposal)
 bytes32 constant UNFLAGGED = keccak256('GOVERNANCE.UNFLAGGED');
 
-/// @dev The ID of the action to declare a new topic identifier
+/// @dev The ID of the action to declare a new topic for a space
 bytes32 constant TOPIC_DECLARED = keccak256('GOVERNANCE.TOPIC_DECLARED');
+
+/// @dev The ID of the action to remove a topic for a space
+bytes32 constant TOPIC_REMOVED = keccak256('GOVERNANCE.TOPIC_REMOVED');
+
+/// @dev The ID of the action to publish content edits
+bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
+
+/// @dev The ID of the action to link entites together (e.g. a proposal to a bounty or another proposal)
+bytes32 constant ENTITIES_LINKED = keccak256('GOVERNANCE.ENTITIES_LINKED');
+
+/// @dev The ID of the action to break the link between entities
+bytes32 constant ENTITY_LINK_BROKEN = keccak256('GOVERNANCE.ENTITY_LINK_BROKEN');
 
 /// @dev The ID of the action to add a subspace
 bytes32 constant SUBSPACE_ADDED = keccak256('GOVERNANCE.SUBSPACE_ADDED');
@@ -76,14 +85,20 @@ bytes32 constant SUBSPACE_REMOVED = keccak256('GOVERNANCE.SUBSPACE_REMOVED');
 /// @dev The ID of the action to verify a subspace
 bytes32 constant SUBSPACE_VERIFIED = keccak256('GOVERNANCE.SUBSPACE_VERIFIED');
 
-/// @dev The ID of the action to relate a subspace (e.g. link subspaces)
+/// @dev The ID of the action to unverify a subspace
+bytes32 constant SUBSPACE_UNVERIFIED = keccak256('GOVERNANCE.SUBSPACE_UNVERIFIED');
+
+/// @dev The ID of the action to relate a subspace to something (e.g. link subspaces)
 bytes32 constant SUBSPACE_RELATED = keccak256('GOVERNANCE.SUBSPACE_RELATED');
 
-/// @dev The ID of the action to declare a new topic identifier in a subspace
+/// @dev The ID of the action to break a subspace relation (e.g. linked subspaces)
+bytes32 constant SUBSPACE_RELATION_BROKEN = keccak256('GOVERNANCE.SUBSPACE_RELATION_BROKEN');
+
+/// @dev The ID of the action to declare a new topic for in a subspace
 bytes32 constant SUBSPACE_TOPIC_DECLARED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_DECLARED');
 
-/// @dev The ID of the action to link entites together (e.g. a proposal to a bounty or another proposal)
-bytes32 constant ENTITIES_LINKED = keccak256('GOVERNANCE.ENTITIES_LINKED');
+/// @dev The ID of the action to remove a topic for in a subspace
+bytes32 constant SUBSPACE_TOPIC_REMOVED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_REMOVED');
 
 /// @dev The ID of the action to upvote something (e.g. content, topic, proposal)
 bytes32 constant UPVOTED = keccak256('PERMISSIONLESS.UPVOTED');
