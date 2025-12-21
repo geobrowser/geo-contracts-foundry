@@ -10,7 +10,7 @@ UnitDAOSpaceFactory::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
-│   │   ├── it deploys DAO space implementation
+│   │   ├── it uses provided DAO space implementation
 │   │   ├── it deploys DAO space beacon
 │   │   ├── it sets daoSpaceBeacon
 │   │   ├── it sets spaceRegistry

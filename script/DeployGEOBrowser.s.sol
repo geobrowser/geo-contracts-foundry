@@ -5,8 +5,10 @@ import {Script} from 'forge-std/Script.sol';
 
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
+import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {DAOSpaceFactory} from 'contracts/DAOSpaceFactory.sol';
 import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
+import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {VerifierSpaceFactory} from 'contracts/VerifierSpaceFactory.sol';
 
 import 'script/Constants.s.sol' as Constants;
@@ -18,8 +20,12 @@ contract DeployGEOBrowser is Script {
   DAOSpaceFactory public daoSpaceFactoryImplementation;
   DAOSpaceFactory public daoSpaceFactoryProxy;
 
+  DAOSpace public daoSpaceImplementation;
+
   VerifierSpaceFactory public verifierSpaceFactoryImplementation;
   VerifierSpaceFactory public verifierSpaceFactoryProxy;
+
+  VerifierSpace public verifierSpaceImplementation;
 
   function setUp() public virtual {}
 
@@ -29,7 +35,9 @@ contract DeployGEOBrowser is Script {
     // Deploy the implementation contracts
     spaceRegistryImplementation = new SpaceRegistry();
     daoSpaceFactoryImplementation = new DAOSpaceFactory();
+    daoSpaceImplementation = new DAOSpace();
     verifierSpaceFactoryImplementation = new VerifierSpaceFactory();
+    verifierSpaceImplementation = new VerifierSpace();
 
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
@@ -42,7 +50,8 @@ contract DeployGEOBrowser is Script {
       UnsafeUpgrades.deployUUPSProxy(
         address(daoSpaceFactoryImplementation),
         abi.encodeCall(
-          DAOSpaceFactory.initialize, (abi.encode(spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))
+          DAOSpaceFactory.initialize,
+          (abi.encode(spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)))
         )
       )
     );
@@ -50,7 +59,10 @@ contract DeployGEOBrowser is Script {
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
         abi.encodeCall(
-          VerifierSpaceFactory.initialize, (abi.encode(spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))
+          VerifierSpaceFactory.initialize,
+          (abi.encode(
+              spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
+            ))
         )
       )
     );

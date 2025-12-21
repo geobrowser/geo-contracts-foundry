@@ -37,6 +37,7 @@ interface IVerifierSpaceFactory is ISemver {
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
    *        _owner The address of the owner
+   *        _verifierSpaceImplementation The address of a pre-deployed VerifierSpace implementation
    */
   function initialize(bytes calldata _initializerData) external;
 

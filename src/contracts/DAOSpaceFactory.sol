@@ -6,7 +6,7 @@ import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {BeaconProxy} from '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 
-import {DAOSpace} from 'contracts/DAOSpace.sol';
+import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
@@ -30,19 +30,19 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
 
   /// @inheritdoc IDAOSpaceFactory
   function initialize(bytes calldata _initializerData) external virtual initializer {
-    (ISpaceRegistry _spaceRegistry, address _owner) = abi.decode(_initializerData, (ISpaceRegistry, address));
+    (ISpaceRegistry _spaceRegistry, address _owner, address _daoSpaceImplementation) =
+      abi.decode(_initializerData, (ISpaceRegistry, address, address));
 
     __Ownable_init(_owner);
 
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
-    address daoSpaceImplementation = address(new DAOSpace());
-    $.daoSpaceBeacon = address(new UpgradeableBeacon(daoSpaceImplementation, _owner));
+    $.daoSpaceBeacon = address(new UpgradeableBeacon(_daoSpaceImplementation, _owner));
     $.spaceRegistry = _spaceRegistry;
   }
 
   /// @inheritdoc IDAOSpaceFactory
   function createDAOSpaceProxy(
-    DAOSpace.VotingSettings calldata _votingSettings,
+    IDAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
     bytes memory _initialEditsContentUri,
@@ -58,7 +58,7 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
       abi.encode(_initialEditsContentUri, _initialEditsMetadata)
     );
     _newDAOSpaceProxy =
-      address(new BeaconProxy($.daoSpaceBeacon, abi.encodeCall(DAOSpace.initialize, (_initializerData))));
+      address(new BeaconProxy($.daoSpaceBeacon, abi.encodeCall(IDAOSpace.initialize, (_initializerData))));
   }
 
   /// @inheritdoc IDAOSpaceFactory
