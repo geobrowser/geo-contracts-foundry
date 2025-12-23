@@ -268,6 +268,12 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
+  function latestProposalVersion(bytes16 _proposalId) public view returns (uint8 _version) {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    _version = $.latestProposalVersion[_proposalId];
+  }
+
+  /// @inheritdoc IDAOSpace
   function getProposalInformation(
     bytes16 _proposalId,
     uint8 _version
@@ -296,7 +302,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     view
     returns (
       bool _executed,
-      uint8 _version,
       address _creator,
       ProposalParameters memory _parameters,
       Tally memory _tally,
@@ -305,7 +310,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     _executed = proposal_.executed;
-    _version = proposal_.version;
     _creator = proposal_.creator;
     _parameters = proposal_.parameters;
     _tally = proposal_.tally;
@@ -387,7 +391,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     $.latestProposalVersion[_proposalId]++;
     // Update proposal storage
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    proposal_.version++;
     proposal_.creator = _fromSpace;
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
@@ -701,10 +704,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _proposalId The proposal id
    * @return _proposal The storage of a proposal
    */
-  function _getLatestProposalStorage(bytes16 _proposalId) internal view virtual returns (Proposal storage _proposal) {
+  function _getLatestProposalStorage(bytes16 _proposalId) internal view returns (Proposal storage _proposal) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    uint8 _verion = $.latestProposalVersion[_proposalId];
-    _proposal = $.proposals[_proposalId][_verion];
+    uint8 _version = $.latestProposalVersion[_proposalId];
+    _proposal = $.proposals[_proposalId][_version];
   }
 
   /**

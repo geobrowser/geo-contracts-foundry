@@ -162,7 +162,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
     VerifierSpace _verifierSpaceProxy =
       VerifierSpace(vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce));
 
-    _mockRegisterSpaceId(_spaceRegistry);
+    _mockRegisterSpaceId(_spaceRegistry, keccak256('VERIFIER_SPACE'), abi.encode('1.0.0'));
 
     // it returns new verifier space proxy
     assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), address(_verifierSpaceProxy));
@@ -220,10 +220,14 @@ contract UnitVerifierSpaceFactory is TestHelper {
     verifierSpaceFactoryProxy.exposed__authorizeUpgrade(_newImplementation);
   }
 
-  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
+  function _mockRegisterSpaceId(
+    ISpaceRegistry __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion
+  ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('VERIFIER_SPACE'), abi.encode('1.0.0'))),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
       abi.encode()
     );
   }

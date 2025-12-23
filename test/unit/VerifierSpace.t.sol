@@ -19,6 +19,8 @@ contract UnitVerifierSpace is TestHelper {
   address internal _owner;
   uint256 internal _ownerPrivateKey;
   address internal _randomCaller = makeAddr('_randomCaller');
+  bytes32 internal _spaceType;
+  bytes internal _spaceVersion;
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
   address internal _fromSpace = makeAddr('_fromSpace');
@@ -31,7 +33,11 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceImplementation = new MockVerifierSpace();
     verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
 
-    _mockRegisterSpaceId(_spaceRegistry);
+    // And the space type and version
+    _spaceType = keccak256(bytes(verifierSpaceImplementation.name()));
+    _spaceVersion = abi.encode(verifierSpaceImplementation.version());
+
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -82,7 +88,7 @@ contract UnitVerifierSpace is TestHelper {
     _assumeFuzzable(address(__spaceRegistry));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -112,7 +118,7 @@ contract UnitVerifierSpace is TestHelper {
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -307,10 +313,14 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
   }
 
-  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
+  function _mockRegisterSpaceId(
+    ISpaceRegistry __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion
+  ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('VERIFIER_SPACE'), abi.encode('1.0.0'))),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
       abi.encode()
     );
   }

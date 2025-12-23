@@ -25,9 +25,10 @@ contract MockDAOSpace is DAOSpace {
     uint256 _quorum,
     Action[] memory _actions
   ) external {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    $.latestProposalVersion[_proposalId] = _version;
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.executed = _executed;
-    proposal_.version = _version;
     proposal_.creator = _creator;
     proposal_.parameters.startDate = _startDate;
     proposal_.parameters.lastDate = _lastDate;

@@ -373,16 +373,11 @@ contract UnitDAOSpace is TestHelper {
     bytes memory proposalData = _createSlowPathProposalToAddEditor();
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
 
-    (
-      ,
-      uint8 version,
-      address creator,
-      IDAOSpace.ProposalParameters memory parameters,,
-      IDAOSpace.Action[] memory actions
-    ) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (, address creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
-    assertEq(version, 1);
+    assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
 
     // it sets the proposal creator to _fromSpace
     assertEq(creator, _initialEditor);
@@ -510,16 +505,11 @@ contract UnitDAOSpace is TestHelper {
     bytes memory proposalData = _createFastPathProposalToAddMember();
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
 
-    (
-      ,
-      uint8 version,
-      address creator,
-      IDAOSpace.ProposalParameters memory parameters,,
-      IDAOSpace.Action[] memory actions
-    ) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (, address creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
-    assertEq(version, 1);
+    assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
 
     // it sets the proposal creator to _fromSpace
     assertEq(creator, _initialEditor);
@@ -723,7 +713,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to yes and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(2));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 1);
 
     // vote no
@@ -731,7 +721,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the yes vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 0);
   }
 
@@ -756,7 +746,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to no and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(3));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 1);
 
     // vote yes
@@ -764,7 +754,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the no vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 0);
   }
 
@@ -789,7 +779,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to abstain and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(1));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 1);
 
     // vote yes
@@ -797,7 +787,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the abstain vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 0);
   }
 
@@ -826,7 +816,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the yes vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 1);
   }
 
@@ -855,7 +845,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the no vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 1);
   }
 
@@ -884,7 +874,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the abstain vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 1);
   }
 
@@ -913,7 +903,7 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
 
-    (, uint8 version, address creator, IDAOSpace.ProposalParameters memory parameters,,) =
+    (, address creator, IDAOSpace.ProposalParameters memory parameters,,) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
     assertEq(parameters.supportThreshold, 1);
@@ -945,7 +935,7 @@ contract UnitDAOSpace is TestHelper {
     bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(3));
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
-    (, version, creator, parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (, creator, parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it updates the proposal voting mode to the slow path
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
@@ -1109,7 +1099,7 @@ contract UnitDAOSpace is TestHelper {
     bytes memory proposalData = _createFastPathProposalToAddMember();
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_UPDATED, _topic, proposalData);
 
-    (, uint8 version,,, IDAOSpace.Tally memory tally, IDAOSpace.Action[] memory actions) =
+    (,,, IDAOSpace.Tally memory tally, IDAOSpace.Action[] memory actions) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     IDAOSpace.VoteOption _vote = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditor);
 
@@ -1120,7 +1110,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(uint256(_vote), 0);
 
     // it updates the proposal with a new version
-    assertEq(version, 1);
+    assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
     assertEq(actions.length, 1);
 
     (,,, tally, actions) = daoSpaceProxy.getProposalInformation(_proposalId, 0);

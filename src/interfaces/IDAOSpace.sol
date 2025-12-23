@@ -67,7 +67,6 @@ interface IDAOSpace is ISpace, ISemver {
   /**
    * @notice Proposal information
    * @param executed Whether proposal has been executed
-   * @param version The version of the proposal
    * @param creator The creator of the proposal
    * @param parameters Proposal parameters (may change if fast path escalates)
    * @param tally Vote tally (yes, no, abstain counts)
@@ -76,7 +75,6 @@ interface IDAOSpace is ISpace, ISemver {
    */
   struct Proposal {
     bool executed;
-    uint8 version;
     address creator;
     ProposalParameters parameters;
     Tally tally;
@@ -311,6 +309,13 @@ interface IDAOSpace is ISpace, ISemver {
   function isEditorFlagged(address _editor) external view returns (bool _isFlagged);
 
   /**
+   * @notice Maps a proposal id to a version number
+   * @param _proposalId ID of the proposal to fetch the latest version
+   * @return _version The version of the proposal
+   */
+  function latestProposalVersion(bytes16 _proposalId) external view returns (uint8 _version);
+
+  /**
    * @notice Checks if a proposal has reached its support threshold
    * @param _proposalId ID of the proposal to check
    * @return _isSupportThresholdReached True if support threshold is reached
@@ -345,7 +350,6 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice Gets the latest information for a proposal
    * @param _proposalId The ID of the proposal
    * @return _executed Whether the proposal has been executed
-   * @return _version The current version of the proposal
    * @return _creator The creator of the proposal
    * @return _parameters The proposal parameters at the time of creation
    * @return _tally The current vote tally for the proposal
@@ -356,7 +360,6 @@ interface IDAOSpace is ISpace, ISemver {
     view
     returns (
       bool _executed,
-      uint8 _version,
       address _creator,
       ProposalParameters memory _parameters,
       Tally memory _tally,

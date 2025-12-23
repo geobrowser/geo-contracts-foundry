@@ -173,7 +173,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     DAOSpace _daoSpaceProxy = DAOSpace(vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce));
 
-    _mockRegisterSpaceId(_spaceRegistry);
+    _mockRegisterSpaceId(_spaceRegistry, keccak256('DAO_SPACE'), abi.encode('1.0.0'));
     _mockEnter(
       _spaceRegistry,
       address(_daoSpaceProxy),
@@ -261,10 +261,14 @@ contract UnitDAOSpaceFactory is TestHelper {
     );
   }
 
-  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
+  function _mockRegisterSpaceId(
+    ISpaceRegistry __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion
+  ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('DAO_SPACE'), abi.encode('1.0.0'))),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
       abi.encode()
     );
   }
