@@ -22,6 +22,9 @@ contract UnitDAOSpace is TestHelper {
   IDAOSpace.VotingSettings internal _votingSettings;
   address[] internal _initialEditors;
   address[] internal _initialMembers;
+  bytes32 internal _spaceType;
+  bytes internal _spaceVersion;
+  uint8 internal _proposalVersion;
 
   address internal _randomCaller = makeAddr('_randomCaller');
   address internal _spaceRegistry = makeAddr('_spaceRegistry');
@@ -50,8 +53,12 @@ contract UnitDAOSpace is TestHelper {
     // get predicted DAO Space address for external calls and event emissions
     address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
+    // And the space type and version
+    _spaceType = keccak256(bytes(daoSpaceImplementation.name()));
+    _spaceVersion = abi.encode(daoSpaceImplementation.version());
+
     // when delegate called
-    _mockRegisterSpaceId(_spaceRegistry);
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     _mockEnter(
@@ -148,7 +155,7 @@ contract UnitDAOSpace is TestHelper {
     address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     _mockEnter(
@@ -229,7 +236,7 @@ contract UnitDAOSpace is TestHelper {
     address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     _mockEnter(
@@ -346,12 +353,12 @@ contract UnitDAOSpace is TestHelper {
     // get voting settings
     IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
 
-    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
       address(daoSpaceProxy),
       address(daoSpaceProxy),
-      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         vm.getBlockTimestamp(),
@@ -372,7 +379,7 @@ contract UnitDAOSpace is TestHelper {
       address creator,
       IDAOSpace.ProposalParameters memory parameters,,
       IDAOSpace.Action[] memory actions
-    ) = daoSpaceProxy.getProposalInformation(_proposalId);
+    ) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
     assertEq(version, 1);
@@ -483,12 +490,12 @@ contract UnitDAOSpace is TestHelper {
     // get voting settings
     IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
 
-    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
       address(daoSpaceProxy),
       address(daoSpaceProxy),
-      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         vm.getBlockTimestamp(),
@@ -509,7 +516,7 @@ contract UnitDAOSpace is TestHelper {
       address creator,
       IDAOSpace.ProposalParameters memory parameters,,
       IDAOSpace.Action[] memory actions
-    ) = daoSpaceProxy.getProposalInformation(_proposalId);
+    ) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
     assertEq(version, 1);
@@ -691,7 +698,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it stores the current _fromSpace vote
-    IDAOSpace.VoteOption storedVoteOption = daoSpaceProxy.getProposalVote(_proposalId, _initialEditor);
+    IDAOSpace.VoteOption storedVoteOption = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditor);
     assertEq(uint256(storedVoteOption), _voteOption);
   }
 
@@ -716,7 +723,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to yes and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(2));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 1);
 
     // vote no
@@ -724,7 +731,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the yes vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 0);
   }
 
@@ -749,7 +756,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to no and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(3));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 1);
 
     // vote yes
@@ -757,7 +764,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the no vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 0);
   }
 
@@ -782,7 +789,7 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to abstain and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(1));
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 1);
 
     // vote yes
@@ -790,7 +797,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the abstain vote tally by one
-    (,,,, tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 0);
   }
 
@@ -819,7 +826,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the yes vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 1);
   }
 
@@ -848,7 +855,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the no vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 1);
   }
 
@@ -877,7 +884,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the abstain vote tally by one
-    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getProposalInformation(_proposalId);
+    (,,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 1);
   }
 
@@ -907,7 +914,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     (, uint8 version, address creator, IDAOSpace.ProposalParameters memory parameters,,) =
-      daoSpaceProxy.getProposalInformation(_proposalId);
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
     assertEq(parameters.supportThreshold, 1);
     assertEq(parameters.startDate, block.timestamp);
@@ -918,12 +925,12 @@ contract UnitDAOSpace is TestHelper {
 
     IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
 
-    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
       address(daoSpaceProxy),
       address(daoSpaceProxy),
-      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         block.timestamp,
@@ -938,10 +945,7 @@ contract UnitDAOSpace is TestHelper {
     bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(3));
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
-    (, version, creator, parameters,,) = daoSpaceProxy.getProposalInformation(_proposalId);
-
-    // it updates the proposal voting mode to the slow path
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+    (, version, creator, parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it updates the proposal voting mode to the slow path
     assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
@@ -1081,17 +1085,17 @@ contract UnitDAOSpace is TestHelper {
       1,
       new IDAOSpace.Action[](0)
     );
-    daoSpaceProxy.workaround_setTally(_proposalId, 1, 1, 1);
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditor, IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.workaround_setTally(_proposalId, 1, 1, 1);
 
     IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
 
-    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
       address(daoSpaceProxy),
       address(daoSpaceProxy),
-      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         block.timestamp,
@@ -1106,9 +1110,8 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_UPDATED, _topic, proposalData);
 
     (, uint8 version,,, IDAOSpace.Tally memory tally, IDAOSpace.Action[] memory actions) =
-      daoSpaceProxy.getProposalInformation(_proposalId);
-
-    IDAOSpace.VoteOption _vote = daoSpaceProxy.getProposalVote(_proposalId, _initialEditor);
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    IDAOSpace.VoteOption _vote = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditor);
 
     // it resets the voting state
     assertEq(tally.abstain, 0);
@@ -1119,6 +1122,16 @@ contract UnitDAOSpace is TestHelper {
     // it updates the proposal with a new version
     assertEq(version, 1);
     assertEq(actions.length, 1);
+
+    (,,, tally, actions) = daoSpaceProxy.getProposalInformation(_proposalId, 0);
+    _vote = daoSpaceProxy.getProposalVote(_proposalId, 0, _initialEditor);
+
+    // it also retains the previous version data
+    assertEq(tally.abstain, 1);
+    assertEq(tally.yes, 1);
+    assertEq(tally.no, 1);
+    assertEq(uint256(_vote), _voteOption);
+    assertEq(actions.length, 0);
   }
 
   /// WRITE - EXECUTE PROPOSAL ///
@@ -2151,11 +2164,9 @@ contract UnitDAOSpace is TestHelper {
 
   /// HELPERS ///
 
-  function _mockRegisterSpaceId(address __spaceRegistry) internal {
+  function _mockRegisterSpaceId(address __spaceRegistry, bytes32 __spaceType, bytes memory __spaceVersion) internal {
     _mockAndExpect(
-      __spaceRegistry,
-      abi.encodeCall(ISpaceRegistry.registerSpaceId, (keccak256('DAO_SPACE'), abi.encode('1.0.0'))),
-      abi.encode()
+      __spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)), abi.encode()
     );
   }
 

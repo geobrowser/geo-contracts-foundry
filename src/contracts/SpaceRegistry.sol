@@ -74,7 +74,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function registerSpaceId(bytes32 _type, bytes memory _version) external virtual {
+  function registerSpaceId(bytes32 _type, bytes calldata _version) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Account must not be registered
@@ -113,7 +113,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function acceptSpaceMigration(bytes16 _spaceId, bytes32 _type, bytes memory _version) external virtual {
+  function acceptSpaceMigration(bytes16 _spaceId, bytes32 _type, bytes calldata _version) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Must be called by the proposed space itself

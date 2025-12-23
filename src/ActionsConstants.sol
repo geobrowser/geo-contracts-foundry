@@ -22,8 +22,8 @@ bytes32 constant PERMISSIONLESS_ACTION_REMOVED = keccak256('GOVERNANCE.PERMISSIO
 /// @dev The ID of the action to create a proposal
 bytes32 constant PROPOSAL_CREATED = keccak256('GOVERNANCE.PROPOSAL_CREATED');
 
-/// @dev The ID of the action to declare the proposal settings used. Should be emitted when a proposal is created or updated.
-bytes32 constant PROPOSAL_SETTINGS_USED = keccak256('GOVERNANCE.PROPOSAL_SETTINGS_USED');
+/// @dev The ID of the action to declare the proposal settings selected. Should be emitted when a proposal is created or updated.
+bytes32 constant PROPOSAL_SETTINGS_SELECTED = keccak256('GOVERNANCE.PROPOSAL_SETTINGS_SELECTED');
 
 /// @dev The ID of the action to update a proposal.
 bytes32 constant PROPOSAL_UPDATED = keccak256('GOVERNANCE.PROPOSAL_UPDATED');
@@ -74,7 +74,7 @@ bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
 bytes32 constant ENTITIES_LINKED = keccak256('GOVERNANCE.ENTITIES_LINKED');
 
 /// @dev The ID of the action to break the link between entities
-bytes32 constant ENTITY_LINK_BROKEN = keccak256('GOVERNANCE.ENTITY_LINK_BROKEN');
+bytes32 constant ENTITIES_UNLINKED = keccak256('GOVERNANCE.ENTITIES_UNLINKED');
 
 /// @dev The ID of the action to add a subspace
 bytes32 constant SUBSPACE_ADDED = keccak256('GOVERNANCE.SUBSPACE_ADDED');
@@ -92,7 +92,7 @@ bytes32 constant SUBSPACE_UNVERIFIED = keccak256('GOVERNANCE.SUBSPACE_UNVERIFIED
 bytes32 constant SUBSPACE_RELATED = keccak256('GOVERNANCE.SUBSPACE_RELATED');
 
 /// @dev The ID of the action to break a subspace relation (e.g. linked subspaces)
-bytes32 constant SUBSPACE_RELATION_BROKEN = keccak256('GOVERNANCE.SUBSPACE_RELATION_BROKEN');
+bytes32 constant SUBSPACE_UNRELATED = keccak256('GOVERNANCE.SUBSPACE_UNRELATED');
 
 /// @dev The ID of the action to declare a new topic for in a subspace
 bytes32 constant SUBSPACE_TOPIC_DECLARED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_DECLARED');

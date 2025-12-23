@@ -10,7 +10,6 @@ UnitVerifierSpaceFactory::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
-│   │   ├── it uses provided verifier space implementation
 │   │   ├── it deploys verifier space beacon
 │   │   ├── it sets verifierSpaceBeacon
 │   │   ├── it sets spaceRegistry

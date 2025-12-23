@@ -45,8 +45,8 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     IDAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
-    bytes memory _initialEditsContentUri,
-    bytes memory _initialEditsMetadata
+    bytes calldata _initialEditsContentUri,
+    bytes calldata _initialEditsMetadata
   ) external virtual returns (address _newDAOSpaceProxy) {
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
 

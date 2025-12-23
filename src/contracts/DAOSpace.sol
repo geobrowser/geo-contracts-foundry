@@ -218,8 +218,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     virtual
     returns (bool _isSupportThresholdReached)
   {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     uint256 supportThreshold =
       (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
@@ -269,7 +268,30 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function getProposalInformation(bytes16 _proposalId)
+  function getProposalInformation(
+    bytes16 _proposalId,
+    uint8 _version
+  )
+    public
+    view
+    returns (
+      bool _executed,
+      address _creator,
+      ProposalParameters memory _parameters,
+      Tally memory _tally,
+      Action[] memory _actions
+    )
+  {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    _executed = $.proposals[_proposalId][_version].executed;
+    _creator = $.proposals[_proposalId][_version].creator;
+    _parameters = $.proposals[_proposalId][_version].parameters;
+    _tally = $.proposals[_proposalId][_version].tally;
+    _actions = $.proposals[_proposalId][_version].actions;
+  }
+
+  /// @inheritdoc IDAOSpace
+  function getLatestProposalInformation(bytes16 _proposalId)
     public
     view
     returns (
@@ -281,19 +303,29 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       Action[] memory _actions
     )
   {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _executed = $._proposals[_proposalId].executed;
-    _version = $._proposals[_proposalId].version;
-    _creator = $._proposals[_proposalId].creator;
-    _parameters = $._proposals[_proposalId].parameters;
-    _tally = $._proposals[_proposalId].tally;
-    _actions = $._proposals[_proposalId].actions;
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    _executed = proposal_.executed;
+    _version = proposal_.version;
+    _creator = proposal_.creator;
+    _parameters = proposal_.parameters;
+    _tally = proposal_.tally;
+    _actions = proposal_.actions;
   }
 
   /// @inheritdoc IDAOSpace
-  function getProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption) {
+  function getProposalVote(
+    bytes16 _proposalId,
+    uint8 _version,
+    address _account
+  ) external view returns (VoteOption _voteOption) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _voteOption = $._proposals[_proposalId].voters[$._proposals[_proposalId].version][_account];
+    _voteOption = $.proposals[_proposalId][_version].voters[_account];
+  }
+
+  /// @inheritdoc IDAOSpace
+  function getLatestProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption) {
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    _voteOption = proposal_.voters[_account];
   }
 
   /// @inheritdoc ISemver
@@ -330,8 +362,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
     // Update proposal storage
     _createProposal(_fromSpace, _proposalId, _votingMode, _actions);
@@ -353,12 +384,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     Action[] memory _actions
   ) internal virtual {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
-    // Clear any previous voting state
-    delete proposal_.tally;
-    delete proposal_.actions;
-    proposal_.version++;
+    $.latestProposalVersion[_proposalId]++;
     // Update proposal storage
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    proposal_.version++;
     proposal_.creator = _fromSpace;
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
@@ -386,7 +415,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     }
     // Ping the registry to emit the proposal settings
     _ping(
-      ActionsConstants.PROPOSAL_SETTINGS_USED,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         proposal_.parameters.startDate,
@@ -411,9 +440,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Ensure _fromSpace can vote
     if (!_canVote(_fromSpace, _proposalId, _voteOption)) revert CanNotVote();
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Remove the previous vote.
-    VoteOption state = proposal_.voters[proposal_.version][_fromSpace];
+    VoteOption state = proposal_.voters[_fromSpace];
     if (state == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes - 1;
     } else if (state == VoteOption.No) {
@@ -429,7 +458,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     } else if (_voteOption == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
-    proposal_.voters[proposal_.version][_fromSpace] = _voteOption;
+    proposal_.voters[_fromSpace] = _voteOption;
     // extra fast path logic
     if (proposal_.parameters.votingMode == VotingMode.Fast) {
       // fast path to slow path if rejection occurs
@@ -443,7 +472,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
         proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
         // Ping the registry to emit the updated proposal settings
         _ping(
-          ActionsConstants.PROPOSAL_SETTINGS_USED,
+          ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
           bytes32(_proposalId),
           abi.encode(
             proposal_.parameters.startDate,
@@ -469,8 +498,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Decode data to construct new proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Check proposal exists and that only the creator can update it
     if (proposal_.creator != _fromSpace) revert InvalidCaller();
     // May not update an already executed proposal
@@ -497,8 +525,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev Anyone can call once execution criteria met. Actions executed sequentially. Reverts if any action fails.
    */
   function _executeProposal(bytes16 _proposalId) internal virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Set proposal as executed
     proposal_.executed = true;
     // Loop over actions
@@ -637,8 +664,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     bytes16 _proposalId,
     VoteOption _voteOption
   ) internal view virtual returns (bool) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
     // The proposal voting period has already ended.
@@ -660,8 +686,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * Slow path requires voting period to end; fast path can execute immediately.
    */
   function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Verify that the proposal has not been executed already.
     if (proposal_.executed) return false;
     // Proposal does not exist
@@ -669,6 +694,17 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     // Support threshold not reached
     if (!isSupportThresholdReached(_proposalId)) return false;
     return true;
+  }
+
+  /**
+   * @notice Returns the latest storage of a proposal
+   * @param _proposalId The proposal id
+   * @return _proposal The storage of a proposal
+   */
+  function _getLatestProposalStorage(bytes16 _proposalId) internal view virtual returns (Proposal storage _proposal) {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    uint8 _verion = $.latestProposalVersion[_proposalId];
+    _proposal = $.proposals[_proposalId][_verion];
   }
 
   /**

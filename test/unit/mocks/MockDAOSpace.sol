@@ -25,8 +25,7 @@ contract MockDAOSpace is DAOSpace {
     uint256 _quorum,
     Action[] memory _actions
   ) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.executed = _executed;
     proposal_.version = _version;
     proposal_.creator = _creator;
@@ -41,8 +40,7 @@ contract MockDAOSpace is DAOSpace {
   }
 
   function workaround_setFormerVote(bytes16 _proposalId, address _account, VoteOption _voteOption) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
     } else if (_voteOption == VoteOption.No) {
@@ -50,12 +48,11 @@ contract MockDAOSpace is DAOSpace {
     } else if (_voteOption == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
-    proposal_.voters[proposal_.version][_account] = _voteOption;
+    proposal_.voters[_account] = _voteOption;
   }
 
   function workaround_setTally(bytes16 _proposalId, uint256 _yes, uint256 _no, uint256 _abstain) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    Proposal storage proposal_ = $._proposals[_proposalId];
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.tally.yes = _yes;
     proposal_.tally.no = _no;
     proposal_.tally.abstain = _abstain;

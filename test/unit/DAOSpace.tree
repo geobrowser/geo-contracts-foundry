@@ -49,7 +49,7 @@ UnitDAOSpace::write
 │   │   │       ├── it sets the proposal voting mode
 │   │   │       ├── it sets the proposal support threshold to the slow path percentage threshold
 │   │   │       ├── it stores the decoded proposal actions
-│   │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+│   │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │   └── when the voting mode is fast
 │   │       ├── when _fromSpace is not an editor
 │   │       │   └── it reverts with InvalidFromSpace
@@ -69,7 +69,7 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal voting mode
 │   │           ├── it sets the proposal support threshold to the fast path flat threshold
 │   │           ├── it stores the decoded proposal actions
-│   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+│   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote
@@ -101,7 +101,7 @@ UnitDAOSpace::write
 │   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
 │   │           │   ├── it updates the proposal start date to block.timestamp
 │   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
-│   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_USED action
+│   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │           └── when the current _fromSpace vote equals yes
 │   │               └── when the proposal can be executed
 │   │                   └── it loops over the stored proposal actions and performs the external calls

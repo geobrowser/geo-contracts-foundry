@@ -38,7 +38,8 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
 │   ├── it emits Action with SPACE_ID_REGISTERED
-│   └── it emits Action with SPACE_TYPE_DECLARED
+│   └── when _type exists
+│       └── it emits Action with SPACE_TYPE_DECLARED
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
@@ -62,7 +63,8 @@ UnitSpaceRegistry::acceptSpaceMigration
 │   │   ├── it updates spaceIdToAddress
 │   │   ├── it updates addressToSpaceId
 │   │   ├── it emits Action with SPACE_ID_MIGRATED
-│   │   └── it emits Action with SPACE_TYPE_DECLARED
+│   │   └── when _type exists
+│   │       └── it emits Action with SPACE_TYPE_DECLARED
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space

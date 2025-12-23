@@ -71,7 +71,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @param creator The creator of the proposal
    * @param parameters Proposal parameters (may change if fast path escalates)
    * @param tally Vote tally (yes, no, abstain counts)
-   * @param voters Mapping of editor addresses to vote options (nested with versioning to support upgrades)
+   * @param voters Mapping of editor addresses to vote options
    * @param actions Actions to execute when proposal passes (fast path: 1 action max)
    */
   struct Proposal {
@@ -80,7 +80,7 @@ interface IDAOSpace is ISpace, ISemver {
     address creator;
     ProposalParameters parameters;
     Tally tally;
-    mapping(uint8 _version => mapping(address _voter => VoteOption _vote)) voters;
+    mapping(address _voter => VoteOption _vote) voters;
     Action[] actions;
   }
 
@@ -115,7 +115,8 @@ interface IDAOSpace is ISpace, ISemver {
    * @param totalEditors Total editors
    * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
    * @param isEditorFlagged Maps editor addresses to whether they are flagged (restricted from fast path)
-   * @param _proposals Stores information about a proposal by its ID
+   * @param latestProposalVersion The latest version for a proposal
+   * @param proposals Stores information about a proposal by its ID and version
    * @custom:storage-location erc7201:geo.storage.DAOSpace
    */
   struct DAOSpaceStorage {
@@ -124,7 +125,8 @@ interface IDAOSpace is ISpace, ISemver {
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
     mapping(address _editor => bool _isFlagged) isEditorFlagged;
-    mapping(bytes16 _proposalId => Proposal _proposal) _proposals;
+    mapping(bytes16 _proposalId => uint8 _version) latestProposalVersion;
+    mapping(bytes16 _proposalId => mapping(uint8 _version => Proposal _proposal)) proposals;
   }
 
   /**
@@ -252,7 +254,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _editsMetadata The uri for the metadata
    * @dev _from and _to are always the DAO's address
    */
-  function publish(bytes32 _topic, bytes memory _editsContentUri, bytes memory _editsMetadata) external;
+  function publish(bytes32 _topic, bytes calldata _editsContentUri, bytes calldata _editsMetadata) external;
 
   /**
    * @notice Flags something for additional consideration via an Action event emission
@@ -316,7 +318,31 @@ interface IDAOSpace is ISpace, ISemver {
   function isSupportThresholdReached(bytes16 _proposalId) external view returns (bool _isSupportThresholdReached);
 
   /**
-   * @notice Gets the information for a proposal
+   * @notice Gets the information for a proposal and version pair
+   * @param _proposalId The ID of the proposal
+   * @param _version The version of the proposal
+   * @return _executed Whether the proposal has been executed
+   * @return _creator The creator of the proposal
+   * @return _parameters The proposal parameters at the time of creation
+   * @return _tally The current vote tally for the proposal
+   * @return _actions The actions to be executed when the proposal passes
+   */
+  function getProposalInformation(
+    bytes16 _proposalId,
+    uint8 _version
+  )
+    external
+    view
+    returns (
+      bool _executed,
+      address _creator,
+      ProposalParameters memory _parameters,
+      Tally memory _tally,
+      Action[] memory _actions
+    );
+
+  /**
+   * @notice Gets the latest information for a proposal
    * @param _proposalId The ID of the proposal
    * @return _executed Whether the proposal has been executed
    * @return _version The current version of the proposal
@@ -325,7 +351,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @return _tally The current vote tally for the proposal
    * @return _actions The actions to be executed when the proposal passes
    */
-  function getProposalInformation(bytes16 _proposalId)
+  function getLatestProposalInformation(bytes16 _proposalId)
     external
     view
     returns (
@@ -338,12 +364,25 @@ interface IDAOSpace is ISpace, ISemver {
     );
 
   /**
-   * @notice Gets the vote option cast by a given account on a proposal
+   * @notice Gets the vote option cast by a given account on a proposal and version pairing
+   * @param _proposalId The ID of the proposal
+   * @param _version The version of the proposal to fetch
+   * @param _account The address of the account to check
+   * @return _voteOption The vote option cast by the account (None if not voted)
+   */
+  function getProposalVote(
+    bytes16 _proposalId,
+    uint8 _version,
+    address _account
+  ) external view returns (VoteOption _voteOption);
+
+  /**
+   * @notice Gets the vote option cast by a given account on the latest version of a proposal
    * @param _proposalId The ID of the proposal
    * @param _account The address of the account to check
    * @return _voteOption The vote option cast by the account (None if not voted)
    */
-  function getProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption);
+  function getLatestProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption);
 
   /**
    * @notice Returns the minimum voting duration for a slow path proposal

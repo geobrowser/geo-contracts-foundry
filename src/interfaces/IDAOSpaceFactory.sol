@@ -56,7 +56,7 @@ interface IDAOSpaceFactory is ISemver {
     IDAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
     address[] calldata _initialMembers,
-    bytes memory _initialEditsContentUri,
-    bytes memory _initialEditsMetadata
+    bytes calldata _initialEditsContentUri,
+    bytes calldata _initialEditsMetadata
   ) external returns (address _newDAOSpaceProxy);
 }
