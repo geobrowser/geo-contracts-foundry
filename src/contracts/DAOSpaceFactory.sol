@@ -74,6 +74,11 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   }
 
   /// @inheritdoc ISemver
+  function typeId() public pure virtual returns (bytes32 _type) {
+    _type = keccak256(bytes('DAO_SPACE_FACTORY'));
+  }
+
+  /// @inheritdoc ISemver
   function name() public pure virtual returns (string memory _name) {
     _name = 'DAO_SPACE_FACTORY';
   }

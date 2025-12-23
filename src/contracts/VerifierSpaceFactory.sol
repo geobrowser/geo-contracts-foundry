@@ -62,6 +62,11 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   }
 
   /// @inheritdoc ISemver
+  function typeId() public pure virtual returns (bytes32 _type) {
+    _type = keccak256(bytes('VERIFIER_SPACE_FACTORY'));
+  }
+
+  /// @inheritdoc ISemver
   function name() public pure virtual returns (string memory _name) {
     _name = 'VERIFIER_SPACE_FACTORY';
   }

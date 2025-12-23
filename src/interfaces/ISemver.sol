@@ -7,6 +7,12 @@ pragma solidity 0.8.30;
  */
 interface ISemver {
   /**
+   * @notice Returns the type of the contract
+   * @return _typeId The type identifier
+   */
+  function typeId() external pure returns (bytes32 _typeId);
+
+  /**
    * @notice Returns the name of the contract
    * @return _name The name of the contract
    */

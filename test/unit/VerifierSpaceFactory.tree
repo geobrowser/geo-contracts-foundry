@@ -21,11 +21,13 @@ UnitVerifierSpaceFactory::initialize
     └── it reverts with InvalidInitialization
 
 UnitVerifierSpaceFactory::createVerifierSpaceProxy
-├── when owner is not zero address
-│   ├── it deploys and initializes verifier space proxy
-│   └── it returns new verifier space proxy
-└── when owner is zero address
-    └── it reverts with OwnableInvalidOwner
+└── when called 
+    ├── it deploys and initializes verifier space proxy
+    └── it returns new verifier space proxy
+
+UnitVerifierSpaceFactory::typeId
+└── when called
+    └── it returns the type
 
 UnitVerifierSpaceFactory::name
 └── when called

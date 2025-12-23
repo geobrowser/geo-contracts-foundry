@@ -85,6 +85,10 @@ UnitSpaceRegistry::generateSpaceId
 └── when called
     └── it returns spaceId
 
+UnitSpaceRegistry::typeId
+└── when called
+    └── it returns the type
+
 UnitSpaceRegistry::name
 └── when called
     └── it returns the name

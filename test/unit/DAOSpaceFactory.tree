@@ -25,6 +25,10 @@ UnitDAOSpaceFactory::createDAOSpaceProxy
     ├── it deploys and initializes DAO space proxy
     └── it returns new DAO space proxy
 
+UnitDAOSpaceFactory::typeId
+└── when called
+    └── it returns the type
+
 UnitDAOSpaceFactory::name
 └── when called
     └── it returns the name

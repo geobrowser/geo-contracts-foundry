@@ -454,6 +454,13 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.generateSpaceId(_account, _nonce), _spaceId);
   }
 
+  function test_TypeId_WhenCalled() external view {
+    // when called
+
+    // it returns the type
+    assertEq(spaceRegistryProxy.typeId(), keccak256(bytes('SPACE_REGISTRY')));
+  }
+
   function test_Name_WhenCalled() external view {
     // when called
 

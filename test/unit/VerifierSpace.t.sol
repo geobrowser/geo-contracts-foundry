@@ -295,6 +295,13 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
+  function test_TypeId_WhenCalled() external view {
+    // when called
+
+    // it returns the type
+    assertEq(verifierSpaceProxy.typeId(), keccak256(bytes('VERIFIER_SPACE')));
+  }
+
   function test_Name_WhenCalled() external view {
     // when called
 

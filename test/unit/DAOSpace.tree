@@ -278,6 +278,10 @@ UnitDAOSpace::isSupportThresholdReached
     └── when the yes votes are greater than the flat support threshold
         └── it returns true
 
+UnitDAOSpace::typeId
+└── when called
+    └── it returns the type
+
 UnitDAOSpace::name
 └── when called
     └── it returns the name

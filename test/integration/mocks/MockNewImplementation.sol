@@ -11,6 +11,11 @@ import {ISemver} from 'interfaces/ISemver.sol';
  */
 contract MockNewImplementation is UUPSUpgradeable, ISemver {
   /// @inheritdoc ISemver
+  function typeId() public pure returns (bytes32 _type) {
+    _type = keccak256(bytes('MOCK'));
+  }
+
+  /// @inheritdoc ISemver
   function name() public pure returns (string memory _name) {
     _name = 'MOCK';
   }

@@ -2138,6 +2138,13 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), true);
   }
 
+  /// TYPEID ///
+
+  function test_TypeId_WhenCalled() external view {
+    // it returns the type
+    assertEq(daoSpaceProxy.typeId(), keccak256(bytes('DAO_SPACE')));
+  }
+
   /// NAME ///
 
   function test_Name_WhenCalled() external view {
