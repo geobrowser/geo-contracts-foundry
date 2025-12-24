@@ -3,17 +3,24 @@ pragma solidity 0.8.30;
 
 import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+
 /**
  * @title MockSpaceAccessControl
  * @notice Mock contract for testing SpaceAccessControl with additional test helper functions
  */
 contract MockSpaceAccessControl is SpaceAccessControl {
-  function workaround_grantRole(bytes32 _role, bytes16 _spaceId) external returns (bool _hasRole) {
-    return _grantRole(_role, _spaceId);
+  function initialize(bytes calldata _initializerData) external virtual initializer {
+    (ISpaceRegistry _spaceRegistry) = abi.decode(_initializerData, (ISpaceRegistry));
+    __spaceAccessControlControl_init(_spaceRegistry);
   }
 
-  function workaround_revokeRole(bytes32 _role, bytes16 _spaceId) external returns (bool _hasRole) {
-    return _revokeRole(_role, _spaceId);
+  function workaround_grantRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
+    return _grantRole(_role, _account);
+  }
+
+  function workaround_revokeRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
+    return _revokeRole(_role, _account);
   }
 
   function exposed__SPACE_ACCESS_CONTROL_STORAGE_LOCATION()

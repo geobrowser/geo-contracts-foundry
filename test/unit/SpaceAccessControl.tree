@@ -3,15 +3,19 @@ UnitSpaceAccessControl::constants
     └── it sets _SPACE_ACCESS_CONTROL_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceAccessControl")) - 1)) & ~bytes32(uint256(0xff))
 
 UnitSpaceAccessControl::grantRole
-├── when _spaceId does not have the _role
-│   ├── it grants _role to _spaceId
-│   └── it returns true
-└── when _spaceId already has the _role
-    └── it returns false
+├── when _account is not registered
+│   └── it reverts with SpaceNotRegistered
+├── when _spaceId already has the _role
+│   └── it returns the _spaceId
+└── when _spaceId does not have the _role
+    ├── it grants _role to _spaceId
+    └── it returns the _spaceId
 
 UnitSpaceAccessControl::revokeRole
-├── when _spaceId has the _role
-│   ├── it revokes _role from _spaceId
-│   └── it returns true
-└── when _spaceId does not have the _role
-    └── it returns false
+├── when _account is not registered
+│   └── it reverts with SpaceNotRegistered
+├── when _spaceId does not have the _role
+│   └── it returns the _spaceId
+└── when _spaceId has the _role
+    ├── it revokes _role from _spaceId
+    └── it returns the _spaceId
