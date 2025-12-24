@@ -10,7 +10,6 @@ UnitVerifierSpaceFactory::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
-│   │   ├── it deploys verifier space implementation
 │   │   ├── it deploys verifier space beacon
 │   │   ├── it sets verifierSpaceBeacon
 │   │   ├── it sets spaceRegistry
@@ -22,12 +21,17 @@ UnitVerifierSpaceFactory::initialize
     └── it reverts with InvalidInitialization
 
 UnitVerifierSpaceFactory::createVerifierSpaceProxy
-├── when owner is not zero address
-│   ├── it deploys and initializes verifier space proxy
-│   ├── it emits VerifierSpaceProxyCreated
-│   └── it returns new verifier space proxy
-└── when owner is zero address
-    └── it reverts with OwnableInvalidOwner
+└── when called 
+    ├── it deploys and initializes verifier space proxy
+    └── it returns new verifier space proxy
+
+UnitVerifierSpaceFactory::typeId
+└── when called
+    └── it returns the type
+
+UnitVerifierSpaceFactory::name
+└── when called
+    └── it returns the name
 
 UnitVerifierSpaceFactory::version
 └── when called

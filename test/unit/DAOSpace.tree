@@ -16,6 +16,7 @@ UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
 │   ├── it sets the voting settings
+│   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it grants the new editor the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 │   ├── it grants the new member the MEMBER role
@@ -38,16 +39,22 @@ UnitDAOSpace::write
 │   │   ├── when the voting mode is slow
 │   │   │   ├── when _fromSpace is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
+│   │   │   ├── when _proposalId has already been used
+│   │   │   │   └── it reverts with InvalidProposalId
 │   │   │   └── when _createProposal params are valid
-│   │   │       ├── it incremments the proposal counter
+│   │   │       ├── it increments the proposal version
+│   │   │       ├── it sets the proposal creator to _fromSpace
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │   │       ├── it sets the proposal voting mode
 │   │   │       ├── it sets the proposal support threshold to the slow path percentage threshold
-│   │   │       └── it stores the decoded proposal actions
+│   │   │       ├── it stores the decoded proposal actions
+│   │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │   └── when the voting mode is fast
 │   │       ├── when _fromSpace is not an editor
 │   │       │   └── it reverts with InvalidFromSpace
+│   │       ├── when _proposalId has already been used
+│   │       │   └── it reverts with InvalidProposalId
 │   │       ├── when _fromSpace is a flagged editor
 │   │       │   └── it reverts with EditorFlagged
 │   │       ├── when the decoded proposal action is not limited to one call
@@ -55,12 +62,14 @@ UnitDAOSpace::write
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
 │   │       │   └── it reverts with InvalidAction
 │   │       └── when _createProposal params are valid
-│   │           ├── it incremments the proposal counter
+│   │           ├── it increments the proposal version
+│   │           ├── it sets the proposal creator to _fromSpace
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │           ├── it sets the proposal voting mode
 │   │           ├── it sets the proposal support threshold to the fast path flat threshold
-│   │           └── it stores the decoded proposal actions
+│   │           ├── it stores the decoded proposal actions
+│   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote
@@ -91,10 +100,19 @@ UnitDAOSpace::write
 │   │           │   ├── it updates the proposal voting mode to the slow path
 │   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
 │   │           │   ├── it updates the proposal start date to block.timestamp
-│   │           │   └── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │           └── when the current _fromSpace vote equals yes
 │   │               └── when the proposal can be executed
 │   │                   └── it loops over the stored proposal actions and performs the external calls
+│   ├── when _action equals PROPOSAL_UPDATED
+│   │   ├── when the proposal creator is not the _fromSpace
+│   │   │   └── it reverts with InvalidCaller
+│   │   ├── when the proposal has already been executed
+│   │   │   └── it reverts with InvalidProposalId
+│   │   └── when the proposal can be updated
+│   │       ├── it resets the voting state
+│   │       └── it updates the proposal with a new version
 │   ├── when _action equals PROPOSAL_EXECUTED
 │   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute
@@ -230,8 +248,10 @@ UnitDAOSpace::updateVotingSettings
 
 UnitDAOSpace::fetch
 ├── when _action equals PROPOSAL_CREATED
-│   └── it returns bytes32(proposalCounter)
+│   └── it returns bytes32(_proposalId)
 ├── when _action equals PROPOSAL_VOTED
+│   └── it returns bytes32(_proposalId)
+├── when _action equals PROPOSAL_UPDATED
 │   └── it returns bytes32(_proposalId)
 ├── when _action equals PROPOSAL_EXECUTED
 │   └── it returns bytes32(_proposalId)
@@ -257,6 +277,14 @@ UnitDAOSpace::isSupportThresholdReached
     │   └── it returns false
     └── when the yes votes are greater than the flat support threshold
         └── it returns true
+
+UnitDAOSpace::typeId
+└── when called
+    └── it returns the type
+
+UnitDAOSpace::name
+└── when called
+    └── it returns the name
 
 UnitDAOSpace::version
 └── when called

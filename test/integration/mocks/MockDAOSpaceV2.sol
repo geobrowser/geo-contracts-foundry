@@ -4,6 +4,8 @@ pragma solidity 0.8.30;
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
 
+import 'src/ActionsConstants.sol' as ActionsConstants;
+
 /**
  * @title MockDAOSpaceV2
  * @notice Mock contract for testing new DAOSpace implementations
@@ -44,6 +46,9 @@ contract MockDAOSpaceV2 is DAOSpace {
     $.actionIsFastPathValid[DAOSpace.removeMember.selector] = false;
     $.actionIsFastPathValid[DAOSpace.addEditor.selector] = true;
     $.actionIsFastPathValid[DAOSpace.removeEditor.selector] = true;
+
+    // Ping the registry with the updated type
+    _ping(ActionsConstants.SPACE_TYPE_DECLARED, keccak256(bytes(name())), abi.encode(version()));
   }
 
   /**

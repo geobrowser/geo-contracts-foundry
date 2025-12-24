@@ -37,6 +37,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     _permissionlessActionAdded(ActionsConstants.UPVOTED);
     _permissionlessActionAdded(ActionsConstants.DOWNVOTED);
     _permissionlessActionAdded(ActionsConstants.UNVOTED);
+    _permissionlessActionAdded(ActionsConstants.COMMENTED);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -73,7 +74,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function registerSpaceId() external virtual {
+  function registerSpaceId(bytes32 _type, bytes calldata _version) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Account must not be registered
@@ -85,6 +86,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     $.spaceIdToAddress[spaceId] = msg.sender;
 
     emit Action(bytes16(0), spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(msg.sender)), '');
+    if (_type != bytes32(0)) emit Action(spaceId, spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -111,7 +113,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function acceptSpaceMigration(bytes16 _spaceId) external virtual {
+  function acceptSpaceMigration(bytes16 _spaceId, bytes32 _type, bytes calldata _version) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Must be called by the proposed space itself
@@ -129,6 +131,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     $.addressToSpaceId[msg.sender] = _spaceId;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
+    if (_type != bytes32(0)) emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -163,6 +166,16 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function permissionlessActions(bytes32 _action) public view returns (bool _isPermissionless) {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
     _isPermissionless = $.permissionlessActions[_action];
+  }
+
+  /// @inheritdoc ISemver
+  function typeId() public pure virtual returns (bytes32 _type) {
+    _type = keccak256(bytes('SPACE_REGISTRY'));
+  }
+
+  /// @inheritdoc ISemver
+  function name() public pure virtual returns (string memory _name) {
+    _name = 'SPACE_REGISTRY';
   }
 
   /// @inheritdoc ISemver

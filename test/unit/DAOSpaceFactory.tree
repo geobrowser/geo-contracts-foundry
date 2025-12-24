@@ -10,7 +10,6 @@ UnitDAOSpaceFactory::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
-│   │   ├── it deploys DAO space implementation
 │   │   ├── it deploys DAO space beacon
 │   │   ├── it sets daoSpaceBeacon
 │   │   ├── it sets spaceRegistry
@@ -24,8 +23,15 @@ UnitDAOSpaceFactory::initialize
 UnitDAOSpaceFactory::createDAOSpaceProxy
 └── when called
     ├── it deploys and initializes DAO space proxy
-    ├── it emits DAOSpaceProxyCreated
     └── it returns new DAO space proxy
+
+UnitDAOSpaceFactory::typeId
+└── when called
+    └── it returns the type
+
+UnitDAOSpaceFactory::name
+└── when called
+    └── it returns the name
 
 UnitDAOSpaceFactory::version
 └── when called

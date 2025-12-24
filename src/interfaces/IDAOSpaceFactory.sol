@@ -22,12 +22,6 @@ interface IDAOSpaceFactory is ISemver {
   }
 
   /**
-   * @notice Emitted when a DAO space proxy is created
-   * @param newDAOSpaceProxy The address of the new DAO space proxy contract
-   */
-  event DAOSpaceProxyCreated(address newDAOSpaceProxy);
-
-  /**
    * @notice Returns the DAO space beacon contract address
    * @return _daoSpaceBeacon The address of the DAO space beacon contract
    */
@@ -44,6 +38,7 @@ interface IDAOSpaceFactory is ISemver {
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
    *        _owner The address of the owner
+   *        _daoSpaceImplementation The address of a pre-deployed DAOSpace implementation
    */
   function initialize(bytes calldata _initializerData) external;
 
@@ -53,11 +48,15 @@ interface IDAOSpaceFactory is ISemver {
    * @param _votingSettings The voting settings to use for proposals
    * @param _initialEditors The initial list of editor addresses
    * @param _initialMembers The initial list of member addresses
+   * @param _initialEditsContentUri The initial edit publish content uri
+   * @param _initialEditsMetadata The initial edit publish metadata
    * @return _newDAOSpaceProxy The address of the new DAO space proxy contract
    */
   function createDAOSpaceProxy(
     IDAOSpace.VotingSettings calldata _votingSettings,
     address[] calldata _initialEditors,
-    address[] calldata _initialMembers
+    address[] calldata _initialMembers,
+    bytes calldata _initialEditsContentUri,
+    bytes calldata _initialEditsMetadata
   ) external returns (address _newDAOSpaceProxy);
 }

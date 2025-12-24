@@ -17,6 +17,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   address[] internal _initialSpaceEditors;
   address[] internal _initialSpaceMembers;
   address internal _initialSpaceOwner;
+  bytes internal _initialEditsContentUri;
+  bytes internal _initialEditsMetadata;
 
   function setUp() public virtual override {
     _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);

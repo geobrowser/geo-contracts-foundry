@@ -21,12 +21,6 @@ interface IVerifierSpaceFactory is ISemver {
   }
 
   /**
-   * @notice Emitted when a verifier space proxy is created
-   * @param newVerifierSpaceProxy The address of the new verifier space proxy contract
-   */
-  event VerifierSpaceProxyCreated(address newVerifierSpaceProxy);
-
-  /**
    * @notice Returns the verifier space beacon contract address
    * @return _verifierSpaceBeacon The address of the verifier space beacon contract
    */
@@ -43,6 +37,7 @@ interface IVerifierSpaceFactory is ISemver {
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
    *        _owner The address of the owner
+   *        _verifierSpaceImplementation The address of a pre-deployed VerifierSpace implementation
    */
   function initialize(bytes calldata _initializerData) external;
 

@@ -19,6 +19,8 @@ contract UnitVerifierSpace is TestHelper {
   address internal _owner;
   uint256 internal _ownerPrivateKey;
   address internal _randomCaller = makeAddr('_randomCaller');
+  bytes32 internal _spaceType;
+  bytes internal _spaceVersion;
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
   address internal _fromSpace = makeAddr('_fromSpace');
@@ -31,7 +33,11 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceImplementation = new MockVerifierSpace();
     verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
 
-    _mockRegisterSpaceId(_spaceRegistry);
+    // And the space type and version
+    _spaceType = keccak256(bytes(verifierSpaceImplementation.name()));
+    _spaceVersion = abi.encode(verifierSpaceImplementation.version());
+
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -42,7 +48,7 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
-    // it sets the _MESSAGE_TYPEHASH
+    // it sets the _MESSAGE_TYPEHASH to keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     assertEq(
       verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(),
       keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
@@ -82,7 +88,7 @@ contract UnitVerifierSpace is TestHelper {
     _assumeFuzzable(address(__spaceRegistry));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -112,7 +118,7 @@ contract UnitVerifierSpace is TestHelper {
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
-    _mockRegisterSpaceId(__spaceRegistry);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -289,6 +295,20 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
   }
 
+  function test_TypeId_WhenCalled() external view {
+    // when called
+
+    // it returns the type
+    assertEq(verifierSpaceProxy.typeId(), keccak256(bytes('VERIFIER_SPACE')));
+  }
+
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(verifierSpaceProxy.name(), 'VERIFIER_SPACE');
+  }
+
   function test_Version_WhenCalled() external view {
     // when called
 
@@ -300,7 +320,15 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
   }
 
-  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+  function _mockRegisterSpaceId(
+    ISpaceRegistry __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion
+  ) internal {
+    _mockAndExpect(
+      address(__spaceRegistry),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
+      abi.encode()
+    );
   }
 }

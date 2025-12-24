@@ -9,8 +9,8 @@ import {ERC1967Utils} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.s
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
-import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
 import {MockVerifierSpaceFactory} from 'test/unit/mocks/MockVerifierSpaceFactory.sol';
 
@@ -18,19 +18,26 @@ contract UnitVerifierSpaceFactory is TestHelper {
   MockVerifierSpaceFactory public verifierSpaceFactoryImplementation;
   MockVerifierSpaceFactory public verifierSpaceFactoryProxy;
 
+  address internal _verifierSpaceImplementation = makeAddr('_verifierSpaceImplementation');
   address internal _owner = makeAddr('_owner');
   address internal _randomCaller = makeAddr('_randomCaller');
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
 
   function setUp() external {
+    // Etch some code so that the beacon deploys
+    vm.etch(_verifierSpaceImplementation, hex'fe');
+
     // when deployed
     verifierSpaceFactoryImplementation = new MockVerifierSpaceFactory();
+
     // when delegate called
     verifierSpaceFactoryProxy = MockVerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(IVerifierSpaceFactory.initialize, (abi.encode(_spaceRegistry, _owner)))
+        abi.encodeCall(
+          IVerifierSpaceFactory.initialize, (abi.encode(_spaceRegistry, _owner, _verifierSpaceImplementation))
+        )
       )
     );
   }
@@ -73,23 +80,18 @@ contract UnitVerifierSpaceFactory is TestHelper {
     verifierSpaceFactoryProxy = MockVerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(IVerifierSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner)))
+        abi.encodeCall(
+          IVerifierSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner, _verifierSpaceImplementation))
+        )
       )
     );
 
-    uint256 _verifierSpaceImplementationNonce = vm.getNonce(address(verifierSpaceFactoryProxy)) - 2;
     uint256 _verifierSpaceBeaconNonce = vm.getNonce(address(verifierSpaceFactoryProxy)) - 1;
-
-    address _verifierSpaceImplementation =
-      vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceImplementationNonce);
     address _verifierSpaceBeacon =
       vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceBeaconNonce);
 
     // it sets owner
     assertEq(verifierSpaceFactoryProxy.owner(), __owner);
-
-    // it deploys verifier space implementation
-    assertEq(_verifierSpaceImplementation.code, type(VerifierSpace).runtimeCode);
 
     // it deploys verifier space beacon
     assertEq(UpgradeableBeacon(_verifierSpaceBeacon).implementation(), _verifierSpaceImplementation);
@@ -110,7 +112,9 @@ contract UnitVerifierSpaceFactory is TestHelper {
     verifierSpaceFactoryProxy = MockVerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(IVerifierSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner)))
+        abi.encodeCall(
+          IVerifierSpaceFactory.initialize, (abi.encode(__spaceRegistry, __owner, _verifierSpaceImplementation))
+        )
       )
     );
 
@@ -118,7 +122,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when delegate called again
-    verifierSpaceFactoryProxy.initialize(abi.encode(__spaceRegistry, __owner));
+    verifierSpaceFactoryProxy.initialize(abi.encode(__spaceRegistry, __owner, _verifierSpaceImplementation));
   }
 
   function test_Initialize_WhenOwnerIsZeroAddress() external whenDelegateCalled {
@@ -132,55 +136,56 @@ contract UnitVerifierSpaceFactory is TestHelper {
     verifierSpaceFactoryProxy = MockVerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(IVerifierSpaceFactory.initialize, (abi.encode(_spaceRegistry, __owner)))
+        abi.encodeCall(
+          IVerifierSpaceFactory.initialize, (abi.encode(_spaceRegistry, __owner, _verifierSpaceImplementation))
+        )
       )
     );
   }
 
-  function test_Initialize_WhenCalled(ISpaceRegistry __spaceRegistry, address __owner) external {
+  function test_Initialize_WhenCalled(
+    ISpaceRegistry __spaceRegistry,
+    address __owner,
+    address __verifierSpaceImplementation
+  ) external {
     // it reverts with InvalidInitialization
     vm.expectRevert(Initializable.InvalidInitialization.selector);
 
     // when called
-    verifierSpaceFactoryImplementation.initialize(abi.encode(__spaceRegistry, __owner));
+    verifierSpaceFactoryImplementation.initialize(abi.encode(__spaceRegistry, __owner, __verifierSpaceImplementation));
   }
 
-  function test_CreateVerifierSpaceProxy_WhenOwnerIsNotZeroAddress(address __owner)
-    external
-    whenOwnerIsNotZeroAddress(__owner)
-  {
+  function test_CreateVerifierSpaceProxy_WhenCalled(address __owner) external whenOwnerIsNotZeroAddress(__owner) {
     uint256 _verifierSpaceProxyNonce = vm.getNonce(address(verifierSpaceFactoryProxy));
-    VerifierSpace _verifierSpaceProxy =
-      VerifierSpace(vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce));
+    address _verifierSpaceProxy = vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce);
 
-    // it emits VerifierSpaceProxyCreated
-    vm.expectEmit(address(verifierSpaceFactoryProxy));
-    emit IVerifierSpaceFactory.VerifierSpaceProxyCreated(address(_verifierSpaceProxy));
-
-    _mockRegisterSpaceId(_spaceRegistry);
+    // it deploys and initializes verifier space proxy
+    bytes memory _initializerData = abi.encode(verifierSpaceFactoryProxy.spaceRegistry(), __owner);
+    _mockAndExpect(
+      _verifierSpaceImplementation, abi.encodeCall(IVerifierSpace.initialize, (_initializerData)), abi.encode()
+    );
 
     // it returns new verifier space proxy
     assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), address(_verifierSpaceProxy));
 
-    // it deploys and initializes verifier space proxy
     assertEq(
       address(uint160(uint256(vm.load(address(_verifierSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
       verifierSpaceFactoryProxy.verifierSpaceBeacon()
     );
-    assertEq(_verifierSpaceProxy.owner(), __owner);
-    assertEq(address(_verifierSpaceProxy.spaceRegistry()), address(verifierSpaceFactoryProxy.spaceRegistry()));
-    assertEq(_verifierSpaceProxy.validWriters(__owner), true);
-    assertEq(_verifierSpaceProxy.validWriters(address(_verifierSpaceProxy)), true);
   }
 
-  function test_CreateVerifierSpaceProxy_WhenOwnerIsZeroAddress() external {
-    // when owner is zero address
-    address __owner = address(0);
+  function test_TypeId_WhenCalled() external view {
+    // when called
 
-    // it reverts with OwnableInvalidOwner
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableInvalidOwner.selector, __owner));
+    // it returns the type
+    assertEq(verifierSpaceFactoryProxy.typeId(), keccak256(bytes('VERIFIER_SPACE_FACTORY')));
+  }
 
-    verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner);
+  function test_Name_WhenCalled() external view {
+    // when called
+
+    // it returns the name
+    assertEq(verifierSpaceFactoryProxy.name(), 'VERIFIER_SPACE_FACTORY');
   }
 
   function test_Version_WhenCalled() external view {
@@ -208,7 +213,15 @@ contract UnitVerifierSpaceFactory is TestHelper {
     verifierSpaceFactoryProxy.exposed__authorizeUpgrade(_newImplementation);
   }
 
-  function _mockRegisterSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.registerSpaceId, ()), abi.encode());
+  function _mockRegisterSpaceId(
+    ISpaceRegistry __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion
+  ) internal {
+    _mockAndExpect(
+      address(__spaceRegistry),
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
+      abi.encode()
+    );
   }
 }

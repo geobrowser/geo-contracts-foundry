@@ -37,7 +37,9 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it increments _spaceIdNonce
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
-│   └── it emits Action with SPACE_ID_REGISTERED
+│   ├── it emits Action with SPACE_ID_REGISTERED
+│   └── when _type exists
+│       └── it emits Action with SPACE_TYPE_DECLARED
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
@@ -60,7 +62,9 @@ UnitSpaceRegistry::acceptSpaceMigration
 │   │   ├── it updates spaceIdToProposedAddress
 │   │   ├── it updates spaceIdToAddress
 │   │   ├── it updates addressToSpaceId
-│   │   └── it emits Action
+│   │   ├── it emits Action with SPACE_ID_MIGRATED
+│   │   └── when _type exists
+│   │       └── it emits Action with SPACE_TYPE_DECLARED
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space
@@ -80,6 +84,14 @@ UnitSpaceRegistry::setPermissionlessAction
 UnitSpaceRegistry::generateSpaceId
 └── when called
     └── it returns spaceId
+
+UnitSpaceRegistry::typeId
+└── when called
+    └── it returns the type
+
+UnitSpaceRegistry::name
+└── when called
+    └── it returns the name
 
 UnitSpaceRegistry::version
 └── when called
