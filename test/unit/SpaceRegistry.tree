@@ -11,6 +11,7 @@ UnitSpaceRegistry::initialize
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
 │   │   ├── it adds the permissionless actions
+│   │   ├── it registers the space registry
 │   │   └── when delegate called again
 │   │       └── it reverts with InvalidInitialization
 │   └── when owner is zero address

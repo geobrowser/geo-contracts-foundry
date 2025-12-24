@@ -73,12 +73,29 @@ contract UnitSpaceRegistry is TestHelper {
     whenDelegateCalled
     whenOwnerIsNotZeroAddress(__owner)
   {
+    address _predictedSpaceRegistryProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _spaceId =
+      bytes16(keccak256(abi.encodePacked('grc20.space', _predictedSpaceRegistryProxy, uint256(0), block.chainid)));
+
+    // it emits Action with SPACE_ID_REGISTERED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_predictedSpaceRegistryProxy)), ''
+    );
+
+    // it emits Action with SPACE_TYPE_DECLARED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _spaceId, _spaceId, ActionsConstants.SPACE_TYPE_DECLARED, keccak256('SPACE_REGISTRY'), abi.encode('1.0.0')
+    );
+
     // when delegate called
     spaceRegistryProxy = MockSpaceRegistry(
       UnsafeUpgrades.deployUUPSProxy(
         address(spaceRegistryImplementation), abi.encodeCall(ISpaceRegistry.initialize, (abi.encode(__owner)))
       )
     );
+    assertEq(address(spaceRegistryProxy), _predictedSpaceRegistryProxy);
 
     // it sets owner
     assertEq(spaceRegistryProxy.owner(), __owner);
@@ -88,6 +105,9 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
     assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.COMMENTED), true);
+
+    // it registers the space registry
+    assertEq(spaceRegistryProxy.addressToSpaceId(address(spaceRegistryProxy)), _spaceId);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __owner)
@@ -215,6 +235,8 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external whenSpaceIsNotRegistered {
+    vm.assume(_account != address(spaceRegistryProxy));
+
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
@@ -240,6 +262,8 @@ contract UnitSpaceRegistry is TestHelper {
     bytes32 _type,
     bytes calldata _version
   ) external whenSpaceIsNotRegistered {
+    vm.assume(_account != address(spaceRegistryProxy));
+
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = bytes16(keccak256(abi.encodePacked('grc20.space', _account, _spaceIdNonce, block.chainid)));
 
