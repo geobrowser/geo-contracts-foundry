@@ -167,6 +167,11 @@ contract UnitVerifierSpaceFactory is TestHelper {
 
     // it returns new verifier space proxy
     assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), address(_verifierSpaceProxy));
+
+    assertEq(
+      address(uint160(uint256(vm.load(address(_verifierSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
+      verifierSpaceFactoryProxy.verifierSpaceBeacon()
+    );
   }
 
   function test_TypeId_WhenCalled() external view {

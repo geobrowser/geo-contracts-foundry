@@ -191,6 +191,11 @@ contract UnitDAOSpaceFactory is TestHelper {
       ),
       address(_daoSpaceProxy)
     );
+
+    assertEq(
+      address(uint160(uint256(vm.load(address(_daoSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
+      daoSpaceFactoryProxy.daoSpaceBeacon()
+    );
   }
 
   function test_TypeId_WhenCalled() external view {
