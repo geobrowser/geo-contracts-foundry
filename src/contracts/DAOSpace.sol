@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {ISemver} from 'interfaces/ISemver.sol';
@@ -17,7 +17,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
  *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
  */
-contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
+contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
   uint256 public constant MINIMUM_VOTING_DURATION = 1 minutes;
 
@@ -60,9 +60,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[], bytes));
 
     // Set Space Registry and register new DAO Space
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.spaceRegistry = _spaceRegistry;
-    _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    __spaceAccessControlControl_init(_spaceRegistry);
+    spaceRegistry().registerSpaceId(typeId(), abi.encode(version()));
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
@@ -87,6 +86,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     _grantRole(DAO, address(this));
 
     // Set the initial fast path actions
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     $.actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
     $.actionIsFastPathValid[IDAOSpace.publish.selector] = true;
@@ -235,12 +235,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       // Threshold flat calculation
       if (proposal_.tally.yes > supportThreshold) return true;
     }
-  }
-
-  /// @inheritdoc IDAOSpace
-  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _spaceRegistry = $.spaceRegistry;
   }
 
   /// @inheritdoc IDAOSpace
@@ -654,8 +648,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev _from and _to are always the DAO's address
    */
   function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.spaceRegistry.enter(address(this), address(this), _action, _topic, _data, '');
+    spaceRegistry().enter(address(this), address(this), _action, _topic, _data, '');
   }
 
   /**

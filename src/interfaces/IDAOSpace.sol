@@ -108,7 +108,6 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice The storage struct of the DAO space contract
-   * @param spaceRegistry The address of the space registry contract
    * @param votingSettings Voting settings for proposals
    * @param totalEditors Total editors
    * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
@@ -118,7 +117,6 @@ interface IDAOSpace is ISpace, ISemver {
    * @custom:storage-location erc7201:geo.storage.DAOSpace
    */
   struct DAOSpaceStorage {
-    ISpaceRegistry spaceRegistry;
     VotingSettings votingSettings;
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
@@ -275,12 +273,6 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _votingSettings The new voting settings
    */
   function updateVotingSettings(VotingSettings calldata _votingSettings) external;
-
-  /**
-   * @notice Space Registry contract
-   * @return _spaceRegistry The address of the space registry singleton
-   */
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Total editors
