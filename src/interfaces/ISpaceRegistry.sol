@@ -131,7 +131,7 @@ interface ISpaceRegistry is ISemver {
    * @notice Allows the owner to add or remove permissionless actions
    * @param _action The action identifier
    * @param _set The boolean of whether or not the action is permissionless (true if it is, no otherwise)
-   * @dev Permissionless actions are those where, even if the the caller is not the toSpace, fetch and write do not occur
+   * @dev Permissionless actions are those where, even if the caller is not the toSpace, fetch and write do not occur
    */
   function setPermissionlessAction(bytes32 _action, bool _set) external;
 

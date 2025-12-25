@@ -37,32 +37,32 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    * @notice Attempts to grant `role` to `space` and returns a boolean indicating if `role` was granted
    * @param _role The role to grant to the space id
    * @param _account The account associated with the space id to receive the new role
-   * @return _spaceId The space id associated with the account receiveing the new role
+   * @return _spaceId The space id associated with the account receiving the new role
    */
   function _grantRole(bytes32 _role, address _account) internal virtual returns (bytes16 _spaceId) {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
     _spaceId = $.spaceRegistry.addressToSpaceId(_account);
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if (!hasRole(_role, _account)) $.hasRole[_role][_spaceId] = true;
+    if (!$.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = true;
   }
 
   /**
    * @notice Attempts to revoke `role` from `space` and returns a boolean indicating if `role` was revoked
    * @param _role The role to revoke from the space id
    * @param _account The account associated with the space id to have their role revoked
-   * @return _spaceId The space id associated with the account receiveing the new role
+   * @return _spaceId The space id associated with the account receiving the new role
    */
   function _revokeRole(bytes32 _role, address _account) internal virtual returns (bytes16 _spaceId) {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
     _spaceId = $.spaceRegistry.addressToSpaceId(_account);
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if (hasRole(_role, _account)) $.hasRole[_role][_spaceId] = false;
+    if ($.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = false;
   }
 
   /**
    * @notice Records the space registry address into storage
    * @param _spaceRegistry The space registry address
-   * @dev Should be called in the initiailizer
+   * @dev Should be called in the initializer
    */
   function __spaceAccessControlControl_init(ISpaceRegistry _spaceRegistry) internal virtual onlyInitializing {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();

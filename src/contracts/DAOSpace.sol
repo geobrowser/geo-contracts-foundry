@@ -491,7 +491,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Allows a proposal creator to update and reset a proposal if it has not been executed
    * @param _fromSpace The address of the space updating the proposal
-   * @param _data The encoded role data used to determine which role a user wants to leave
+   * @param _data The encoded role data used to update the proposal with a new version
+   * @dev Only the creator of the proposal can update it.
    */
   function _updateProposal(address _fromSpace, bytes calldata _data) internal virtual {
     // Decode data to construct new proposal
@@ -558,7 +559,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Restricts a space from creating fast path proposals
    * @param _fromSpace The address of the editor performing the restriction
    * @param _data The encoded data containing the address of the space to flag
-   * @dev Only editors can flag others.
+   * @dev Only editors can restrict others.
    */
   function _restrictSpace(address _fromSpace, bytes calldata _data) internal virtual {
     if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();

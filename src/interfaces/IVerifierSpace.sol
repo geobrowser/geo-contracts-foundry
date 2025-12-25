@@ -15,7 +15,7 @@ interface IVerifierSpace is ISpace, ISemver {
    * @dev Uses EIP 712 for hashing and signing of typed structured data
    * @param toSpace The space that will be written to
    * @param action The action identifier
-   * @param topic The topid identifier
+   * @param topic The topic identifier
    * @param nonce The incremental counter to prevent signature reuse
    * @param data The data used for further execution
    */

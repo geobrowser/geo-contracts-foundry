@@ -1750,7 +1750,6 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_caller != address(daoSpaceProxy));
     vm.prank(_caller);
 
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _getSpaceId(address(daoSpaceProxy)));
     _mockAddressToSpaceId(_spaceRegistry, _caller, _getSpaceId(_caller));
 
     // it reverts with InvalidCaller
