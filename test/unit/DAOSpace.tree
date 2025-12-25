@@ -253,7 +253,7 @@ UnitDAOSpace::fetch
 ├── when _action equals SPACE_LEFT
 │   └── it returns role
 ├── when _action equals SPACE_FAST_PATH_RESTRICTED
-│   └── it returns bytes32(bytes20(_space))
+│   └── it returns bytes32(_spaceId)
 └── when _action equals anything else
     └── it returns _topicInput
 

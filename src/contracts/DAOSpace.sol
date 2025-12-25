@@ -208,7 +208,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       return role;
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       address _space = abi.decode(_data, (address));
-      return bytes32(bytes20(_space));
+      bytes16 _spaceId = spaceRegistry().addressToSpaceId(_space);
+      return bytes32(_spaceId);
     } else {
       return _topicInput;
     }
@@ -572,8 +573,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _space The address of the space to be unrestricted
    */
   function _unrestrictSpace(address _space) internal virtual {
-    _revokeRole(FAST_PATH_RESTRICTED, _space);
-    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(bytes20(_space)), '');
+    bytes16 _spaceId = _revokeRole(FAST_PATH_RESTRICTED, _space);
+    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_spaceId), abi.encode(_space));
   }
 
   /**
@@ -582,13 +583,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _addEditor(address _newEditor) internal virtual {
     if (hasRole(EDITOR, _newEditor)) revert InvalidAddressForRole();
-    // Grant the role for access control
-    _grantRole(EDITOR, _newEditor);
-    // Update counter
+    bytes16 _spaceId = _grantRole(EDITOR, _newEditor);
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.totalEditors++;
-    // Ping the registry
-    _ping(ActionsConstants.EDITOR_ADDED, bytes32(bytes20(_newEditor)), '');
+    _ping(ActionsConstants.EDITOR_ADDED, bytes32(_spaceId), abi.encode(_newEditor));
   }
 
   /**
@@ -604,12 +602,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     if ($.votingSettings.quorum == $.totalEditors) revert InvalidSetting();
     if ($.votingSettings.fastPathFlatThreshold == $.totalEditors) revert InvalidSetting();
-    // Revoke the role for access control
-    _revokeRole(EDITOR, _oldEditor);
-    // Update counter
+    bytes16 _spaceId = _revokeRole(EDITOR, _oldEditor);
     $.totalEditors--;
-    // Ping the registry
-    _ping(ActionsConstants.EDITOR_REMOVED, bytes32(bytes20(_oldEditor)), '');
+    _ping(ActionsConstants.EDITOR_REMOVED, bytes32(_spaceId), abi.encode(_oldEditor));
   }
 
   /**
@@ -618,8 +613,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _addMember(address _newMember) internal virtual {
     if (hasRole(MEMBER, _newMember)) revert InvalidAddressForRole();
-    _grantRole(MEMBER, _newMember);
-    _ping(ActionsConstants.MEMBER_ADDED, bytes32(bytes20(_newMember)), '');
+    bytes16 _spaceId = _grantRole(MEMBER, _newMember);
+    _ping(ActionsConstants.MEMBER_ADDED, bytes32(_spaceId), abi.encode(_newMember));
   }
 
   /**
@@ -628,8 +623,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _removeMember(address _oldMember) internal virtual {
     if (!hasRole(MEMBER, _oldMember)) revert InvalidAddressForRole();
-    _revokeRole(MEMBER, _oldMember);
-    _ping(ActionsConstants.MEMBER_REMOVED, bytes32(bytes20(_oldMember)), '');
+    bytes16 _spaceId = _revokeRole(MEMBER, _oldMember);
+    _ping(ActionsConstants.MEMBER_REMOVED, bytes32(_spaceId), abi.encode(_oldMember));
   }
 
   /**

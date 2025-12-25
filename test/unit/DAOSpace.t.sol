@@ -79,8 +79,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor)),
-      ''
+      bytes32(_getSpaceId(_initialEditor)),
+      abi.encode(_initialEditor)
     );
 
     // mock hasRole call
@@ -92,8 +92,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember)),
-      ''
+      bytes32(_getSpaceId(_initialMember)),
+      abi.encode(_initialMember)
     );
 
     // mock _grantRole call
@@ -191,8 +191,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor)),
-      ''
+      bytes32(_getSpaceId(_initialEditor)),
+      abi.encode(_initialEditor)
     );
 
     // mock hasRole call
@@ -204,8 +204,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember)),
-      ''
+      bytes32(_getSpaceId(_initialMember)),
+      abi.encode(_initialMember)
     );
 
     // mock _grantRole call
@@ -287,8 +287,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_initialEditor)),
-      ''
+      bytes32(_getSpaceId(_initialEditor)),
+      abi.encode(_initialEditor)
     );
 
     // mock hasRole call
@@ -300,8 +300,8 @@ contract UnitDAOSpace is TestHelper {
       predictedDAOSpaceProxy,
       predictedDAOSpaceProxy,
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_initialMember)),
-      ''
+      bytes32(_getSpaceId(_initialMember)),
+      abi.encode(_initialMember)
     );
 
     // mock _grantRole call
@@ -1043,8 +1043,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_randomCaller)),
-      ''
+      bytes32(_getSpaceId(_randomCaller)),
+      abi.encode(_randomCaller)
     );
 
     // vote yes
@@ -1295,8 +1295,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_randomCaller)),
-      ''
+      bytes32(_getSpaceId(_randomCaller)),
+      abi.encode(_randomCaller)
     );
 
     bytes memory executeData = abi.encode(_proposalId);
@@ -1364,8 +1364,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_REMOVED,
-      bytes32(bytes20(_initialMember)),
-      ''
+      bytes32(_getSpaceId(_initialMember)),
+      abi.encode(_initialMember)
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.MEMBER());
@@ -1400,8 +1400,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_REMOVED,
-      bytes32(bytes20(_initialEditor)),
-      ''
+      bytes32(_getSpaceId(_initialEditor)),
+      abi.encode(_initialEditor)
     );
 
     bytes memory leaveData = abi.encode(daoSpaceProxy.EDITOR());
@@ -1558,8 +1558,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_ADDED,
-      bytes32(bytes20(_newEditor)),
-      ''
+      bytes32(_getSpaceId(_newEditor)),
+      abi.encode(_newEditor)
     );
     daoSpaceProxy.addEditor(_newEditor);
 
@@ -1650,8 +1650,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.EDITOR_REMOVED,
-      bytes32(bytes20(_initialEditor)),
-      ''
+      bytes32(_getSpaceId(_initialEditor)),
+      abi.encode(_initialEditor)
     );
     daoSpaceProxy.removeEditor(_initialEditor);
 
@@ -1693,8 +1693,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_ADDED,
-      bytes32(bytes20(_newMember)),
-      ''
+      bytes32(_getSpaceId(_newMember)),
+      abi.encode(_newMember)
     );
     daoSpaceProxy.addMember(_newMember);
 
@@ -1736,8 +1736,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.MEMBER_REMOVED,
-      bytes32(bytes20(_initialMember)),
-      ''
+      bytes32(_getSpaceId(_initialMember)),
+      abi.encode(_initialMember)
     );
     daoSpaceProxy.removeMember(_initialMember);
 
@@ -1769,8 +1769,8 @@ contract UnitDAOSpace is TestHelper {
       address(daoSpaceProxy),
       address(daoSpaceProxy),
       ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED,
-      bytes32(bytes20(_randomCaller)),
-      ''
+      bytes32(_getSpaceId(_randomCaller)),
+      abi.encode(_randomCaller)
     );
     daoSpaceProxy.unrestrictSpace(_randomCaller);
 
@@ -2010,12 +2010,14 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsSPACE_FAST_PATH_RESTRICTED(bytes32 _topicInput, address _space) external view {
+  function test_Fetch_When_actionEqualsSPACE_FAST_PATH_RESTRICTED(bytes32 _topicInput, address _space) external {
     bytes memory _data = abi.encode(_space);
 
-    // it returns bytes32(bytes20(_space))
+    _mockAddressToSpaceId(_spaceRegistry, _space, _getSpaceId(_space));
+
+    // it returns bytes32(_spaceId)
     assertEq(
-      daoSpaceProxy.fetch(ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topicInput, _data), bytes32(bytes20(_space))
+      daoSpaceProxy.fetch(ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topicInput, _data), bytes32(_getSpaceId(_space))
     );
   }
 
