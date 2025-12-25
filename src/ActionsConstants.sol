@@ -49,11 +49,11 @@ bytes32 constant MEMBER_ADDED = keccak256('GOVERNANCE.MEMBER_ADDED');
 /// @dev The ID of the action to remove a member
 bytes32 constant MEMBER_REMOVED = keccak256('GOVERNANCE.MEMBER_REMOVED');
 
-/// @dev The ID of the action to flag an editor (restricts fast path access)
-bytes32 constant EDITOR_FLAGGED = keccak256('GOVERNANCE.EDITOR_FLAGGED');
+/// @dev The ID of the action to restrict a space (fast path access)
+bytes32 constant SPACE_FAST_PATH_RESTRICTED = keccak256('GOVERNANCE.SPACE_FAST_PATH_RESTRICTED');
 
-/// @dev The ID of the action to unflag an editor (restores fast path access)
-bytes32 constant EDITOR_UNFLAGGED = keccak256('GOVERNANCE.EDITOR_UNFLAGGED');
+/// @dev The ID of the action to unrestrict a space (fast path access)
+bytes32 constant SPACE_FAST_PATH_UNRESTRICTED = keccak256('GOVERNANCE.SPACE_FAST_PATH_UNRESTRICTED');
 
 /// @dev The ID of the action to flag something (e.g. content, topic, proposal)
 bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');

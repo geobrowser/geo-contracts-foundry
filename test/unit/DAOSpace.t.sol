@@ -123,6 +123,9 @@ contract UnitDAOSpace is TestHelper {
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
 
+    // it sets FAST_PATH_RESTRICTED to keccak256('FAST_PATH_RESTRICTED')
+    assertEq(daoSpaceProxy.FAST_PATH_RESTRICTED(), keccak256('FAST_PATH_RESTRICTED'));
+
     // it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
     assertEq(daoSpaceProxy.SPACE_REGISTRY(), keccak256('SPACE_REGISTRY'));
 
@@ -480,16 +483,19 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_randomCaller, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
   }
 
-  function test_Write_When_fromSpaceIsAFlaggedEditor(bytes32 _topic)
+  function test_Write_When_fromSpaceIsRestricted(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
     when_actionEqualsPROPOSAL_CREATED
     whenTheVotingModeIsFast
   {
-    daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
+    _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
+    daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialEditor);
 
-    // it reverts with EditorFlagged
-    vm.expectRevert(IDAOSpace.EditorFlagged.selector);
+    // it reverts with InvalidFromSpace
+    vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
+
+    _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
 
     bytes memory proposalData = _createFastPathProposalToAddMember();
     daoSpaceProxy.write(_initialEditor, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
@@ -1388,9 +1394,6 @@ contract UnitDAOSpace is TestHelper {
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
 
-    daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), true);
-
     // it calls enter on the spaceRegistry with the EDITOR_REMOVED action
     _mockEnter(
       _spaceRegistry,
@@ -1407,9 +1410,6 @@ contract UnitDAOSpace is TestHelper {
     // it revokes the role of EDITOR from the _fromSpace
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), false);
-
-    // it unflags the editor from using the fast path
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), false);
   }
 
   function test_Write_WhenTheRoleIsNotHeldByThe_fromSpaceOrTheRoleIsNeitherMEMBERNorEDITOR(
@@ -1436,49 +1436,42 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialMember, ActionsConstants.SPACE_LEFT, _topic, leaveData);
   }
 
-  /// WRITE - FLAG EDITOR ///
+  /// WRITE - SPACE FAST PATH RESTRICTED ///
 
-  modifier when_actionEqualsEDITOR_FLAGGED() {
+  modifier when_actionEqualsSPACE_FAST_PATH_RESTRICTED() {
     _;
   }
 
-  function test_Write_WhenThe_fromSpaceIsNotAnEditor_When_actionEqualsEDITOR_FLAGGED(bytes32 _topic)
+  function test_Write_WhenThe_fromSpaceIsNotAnEditor_When_actionEqualsSPACE_FAST_PATH_RESTRICTED(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
-    when_actionEqualsEDITOR_FLAGGED
+    when_actionEqualsSPACE_FAST_PATH_RESTRICTED
   {
-    bytes memory flagData = abi.encode(_initialEditor);
+    bytes memory flagData = abi.encode(_randomCaller);
+    _mockAddressToSpaceId(_spaceRegistry, _initialMember, _getSpaceId(_initialMember));
 
     // it reverts with InvalidFromSpace
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialMember, ActionsConstants.EDITOR_FLAGGED, _topic, flagData);
+    daoSpaceProxy.write(_initialMember, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topic, flagData);
   }
 
-  function test_Write_WhenTheToBeFlaggedEditorIsNotAnEditor(bytes32 _topic)
+  function test_Write_When_restrictSpaceParamsAreValid(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
-    when_actionEqualsEDITOR_FLAGGED
+    when_actionEqualsSPACE_FAST_PATH_RESTRICTED
   {
-    bytes memory flagData = abi.encode(_initialMember);
-
-    // it reverts with NotEditor
-    vm.expectRevert(IDAOSpace.NotEditor.selector);
-    daoSpaceProxy.write(_initialEditor, ActionsConstants.EDITOR_FLAGGED, _topic, flagData);
-  }
-
-  function test_Write_When_leaveParamsAreValid(bytes32 _topic)
-    external
-    whenCalledBySpaceRegistry
-    when_actionEqualsEDITOR_FLAGGED
-  {
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), false);
+    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, _getSpaceId(_randomCaller));
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _randomCaller), false);
 
     // initial editor flags themselves
-    bytes memory flagData = abi.encode(_initialEditor);
-    daoSpaceProxy.write(_initialEditor, ActionsConstants.EDITOR_FLAGGED, _topic, flagData);
+    bytes memory flagData = abi.encode(_randomCaller);
+    _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
+    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, _getSpaceId(_randomCaller));
+    daoSpaceProxy.write(_initialEditor, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topic, flagData);
 
     // it flags the editor from using the fast path
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), true);
+    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, _getSpaceId(_randomCaller));
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _randomCaller), true);
   }
 
   /// WRITE - REVERT ///
@@ -1493,7 +1486,7 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
     vm.assume(_action != ActionsConstants.PROPOSAL_UPDATED);
     vm.assume(_action != ActionsConstants.SPACE_LEFT);
-    vm.assume(_action != ActionsConstants.EDITOR_FLAGGED);
+    vm.assume(_action != ActionsConstants.SPACE_FAST_PATH_RESTRICTED);
 
     // it reverts with InvalidAction
     vm.expectRevert(IDAOSpace.InvalidAction.selector);
@@ -1648,10 +1641,6 @@ contract UnitDAOSpace is TestHelper {
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditor), true);
 
-    // Set editor to flagged
-    daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), true);
-
     uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
     assertEq(totalEditorsBefore, 1);
 
@@ -1668,9 +1657,6 @@ contract UnitDAOSpace is TestHelper {
 
     // it decrements totalEditors
     assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore - 1);
-
-    // it unflags the editor from using the fast path
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), false);
 
     // it removes the EDITOR role from _oldEditor
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
@@ -1772,39 +1758,28 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeMember(_oldMember);
   }
 
-  /// UNFLAG EDITOR ///
+  /// UNRESTRICT SPACE ///
 
-  function test_UnflagEditor_When_unflaggedEditorIsNotAnEditor(address _unflaggedEditor) external whenCalledByDAO {
-    vm.assume(_unflaggedEditor != _initialEditor);
+  function test_UnrestrictSpace_WhenCalledByDAO() external whenCalledByDAO {
+    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, _getSpaceId(_randomCaller));
+    daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _randomCaller);
 
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _getSpaceId(address(daoSpaceProxy)));
-    _mockAddressToSpaceId(_spaceRegistry, _unflaggedEditor, _getSpaceId(_unflaggedEditor));
-
-    // it reverts with NotEditor
-    vm.expectRevert(IDAOSpace.NotEditor.selector);
-    daoSpaceProxy.unflagEditor(_unflaggedEditor);
-  }
-
-  function test_UnflagEditor_When_unflaggedEditorIsAnEditor() external whenCalledByDAO {
-    daoSpaceProxy.workaround_setEditorToFlagged(_initialEditor, true);
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), true);
-
-    // it calls enter on the spaceRegistry with the EDITOR_UNFLAGGED action
+    // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
     _mockEnter(
       _spaceRegistry,
       address(daoSpaceProxy),
       address(daoSpaceProxy),
-      ActionsConstants.EDITOR_UNFLAGGED,
-      bytes32(bytes20(_initialEditor)),
+      ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED,
+      bytes32(bytes20(_randomCaller)),
       ''
     );
-    daoSpaceProxy.unflagEditor(_initialEditor);
+    daoSpaceProxy.unrestrictSpace(_randomCaller);
 
-    // it unflags the editor from using the fast path
-    assertEq(daoSpaceProxy.isEditorFlagged(_initialEditor), false);
+    // it revokes the FAST_PATH_RESTRICTED role from _space
+    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _randomCaller), false);
   }
 
-  function test_UnflagEditor_WhenCalledByNon_DAO(address _caller, address _unflaggedEditor) external {
+  function test_UnrestrictSpace_WhenCalledByNon_DAO(address _caller) external {
     vm.assume(_caller != address(daoSpaceProxy));
     vm.prank(_caller);
 
@@ -1812,7 +1787,7 @@ contract UnitDAOSpace is TestHelper {
 
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.unflagEditor(_unflaggedEditor);
+    daoSpaceProxy.unrestrictSpace(_randomCaller);
   }
 
   /// PING ///
@@ -2036,11 +2011,13 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsEDITOR_FLAGGED(bytes32 _topicInput, address _flaggedEditor) external view {
-    bytes memory _data = abi.encode(_flaggedEditor);
+  function test_Fetch_When_actionEqualsSPACE_FAST_PATH_RESTRICTED(bytes32 _topicInput, address _space) external view {
+    bytes memory _data = abi.encode(_space);
 
-    // it returns bytes32(bytes20(_flaggedEditor))
-    assertEq(daoSpaceProxy.fetch(ActionsConstants.EDITOR_FLAGGED, _topicInput, _data), bytes32(bytes20(_flaggedEditor)));
+    // it returns bytes32(bytes20(_space))
+    assertEq(
+      daoSpaceProxy.fetch(ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topicInput, _data), bytes32(bytes20(_space))
+    );
   }
 
   function test_Fetch_When_actionEqualsAnythingElse(
@@ -2052,7 +2029,7 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_action != ActionsConstants.PROPOSAL_VOTED);
     vm.assume(_action != ActionsConstants.PROPOSAL_UPDATED);
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
-    vm.assume(_action != ActionsConstants.EDITOR_FLAGGED);
+    vm.assume(_action != ActionsConstants.SPACE_FAST_PATH_RESTRICTED);
     vm.assume(_action != ActionsConstants.SPACE_LEFT);
 
     // it returns _topicInput
