@@ -2,7 +2,7 @@
 pragma solidity 0.8.30;
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
-import {ISemver} from 'interfaces/ISemver.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 

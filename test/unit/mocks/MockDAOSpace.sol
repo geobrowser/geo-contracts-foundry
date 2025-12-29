@@ -8,11 +8,6 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
  * @notice Mock contract for testing DAOSpace with additional test helper functions
  */
 contract MockDAOSpace is DAOSpace {
-  function workaround_setEditorToFlagged(address _account, bool _flagged) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.isEditorFlagged[_account] = _flagged;
-  }
-
   function workaround_createProposal(
     bytes16 _proposalId,
     bool _executed,
@@ -62,6 +57,14 @@ contract MockDAOSpace is DAOSpace {
   function workaround_setVotingSettings(VotingSettings calldata _votingSettings) external {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.votingSettings = _votingSettings;
+  }
+
+  function workaround_grantRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
+    return _grantRole(_role, _account);
+  }
+
+  function workaround_revokeRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
+    return _revokeRole(_role, _account);
   }
 
   function exposed__DAO_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _daoSpaceStorageLocation) {

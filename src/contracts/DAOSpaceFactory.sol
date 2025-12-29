@@ -8,8 +8,8 @@ import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title DAOSpaceFactory

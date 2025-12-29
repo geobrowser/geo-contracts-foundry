@@ -9,7 +9,6 @@ import {ERC1967Utils} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.s
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
-import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {IDAOSpaceFactory} from 'interfaces/IDAOSpaceFactory.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';

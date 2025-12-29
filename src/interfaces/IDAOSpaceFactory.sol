@@ -2,8 +2,8 @@
 pragma solidity 0.8.30;
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title IDAOSpaceFactory

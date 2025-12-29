@@ -2,6 +2,7 @@ UnitDAOSpace::constants
 └── when deployed
     ├── it sets MINIMUM_VOTING_DURATION to 1 minutes
     ├── it sets RATIO_BASE to 10e6
+    ├── it sets FAST_PATH_RESTRICTED to keccak256('FAST_PATH_RESTRICTED')
     ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
     ├── it sets EDITOR to keccak256('EDITOR')
     ├── it sets MEMBER to keccak256('MEMBER')
@@ -55,8 +56,8 @@ UnitDAOSpace::write
 │   │       │   └── it reverts with InvalidFromSpace
 │   │       ├── when _proposalId has already been used
 │   │       │   └── it reverts with InvalidProposalId
-│   │       ├── when _fromSpace is a flagged editor
-│   │       │   └── it reverts with EditorFlagged
+│   │       ├── when _fromSpace is restricted
+│   │       │   └── it reverts with FastPathRestricted
 │   │       ├── when the decoded proposal action is not limited to one call
 │   │       │   └── it reverts with OneActionForFastPath
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
@@ -134,13 +135,11 @@ UnitDAOSpace::write
 │   │   │   └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
 │   │   └── when the role is not held by the _fromSpace or the role is neither MEMBER nor EDITOR
 │   │       └── it reverts with InvalidFromSpace
-│   ├── when _action equals EDITOR_FLAGGED
+│   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   │   ├── when the _fromSpace is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
-│   │   ├── when the to be flagged editor is not an editor
-│   │   │   └── it reverts with NotEditor
-│   │   └── when _leave params are valid
-│   │       └── it flags the editor from using the fast path
+│   │   └── when _restrictSpace params are valid
+│   │       └── it grants the FAST_PATH_RESTRICTED role to _space
 │   └── when _action does not equal any expected constant
 │       └── it reverts with InvalidAction
 └── when called by non-spaceRegistry
@@ -172,7 +171,6 @@ UnitDAOSpace::removeEditor
 │   └── when input params are valid
 │       ├── it removes the EDITOR role from _oldEditor
 │       ├── it decrements totalEditors
-│       ├── it unflags the editor from using the fast path
 │       └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
@@ -197,13 +195,10 @@ UnitDAOSpace::removeMember
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
-UnitDAOSpace::unflagEditor
+UnitDAOSpace::unrestrictSpace
 ├── when called by DAO
-│   ├── when _unflaggedEditor is not an editor
-│   │   └── it reverts with NotEditor
-│   └── when _unflaggedEditor is an editor
-│       ├── it unflags the editor from using the fast path
-│       └── it calls enter on the spaceRegistry with the EDITOR_UNFLAGGED action
+│    ├── it revokes the FAST_PATH_RESTRICTED role from _space
+│    └── it calls enter on the spaceRegistry with the EDITOR_UNFLAGGED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -257,8 +252,8 @@ UnitDAOSpace::fetch
 │   └── it returns bytes32(_proposalId)
 ├── when _action equals SPACE_LEFT
 │   └── it returns role
-├── when _action equals EDITOR_FLAGGED
-│   └── it returns bytes32(bytes20(_flaggedEditor))
+├── when _action equals SPACE_FAST_PATH_RESTRICTED
+│   └── it returns bytes32(_spaceId)
 └── when _action equals anything else
     └── it returns _topicInput
 

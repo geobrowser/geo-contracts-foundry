@@ -35,6 +35,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceImplementationA = DAOSpace(daoSpaceBeacon.implementation());
     verifierSpaceImplementationA = VerifierSpace(verifierSpaceBeacon.implementation());
 
+    spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), abi.encode('1.0.0'));
     _votingSettings.duration = daoSpaceImplementationA.MINIMUM_VOTING_DURATION();
     _initialSpaceMembers = new address[](1);
     _initialSpaceMembers[0] = address(this);

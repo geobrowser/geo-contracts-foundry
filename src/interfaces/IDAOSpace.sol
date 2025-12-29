@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title IDAOSpace
@@ -108,21 +107,17 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice The storage struct of the DAO space contract
-   * @param spaceRegistry The address of the space registry contract
    * @param votingSettings Voting settings for proposals
    * @param totalEditors Total editors
    * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
-   * @param isEditorFlagged Maps editor addresses to whether they are flagged (restricted from fast path)
    * @param latestProposalVersion The latest version for a proposal
    * @param proposals Stores information about a proposal by its ID and version
    * @custom:storage-location erc7201:geo.storage.DAOSpace
    */
   struct DAOSpaceStorage {
-    ISpaceRegistry spaceRegistry;
     VotingSettings votingSettings;
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
-    mapping(address _editor => bool _isFlagged) isEditorFlagged;
     mapping(bytes16 _proposalId => uint8 _version) latestProposalVersion;
     mapping(bytes16 _proposalId => mapping(uint8 _version => Proposal _proposal)) proposals;
   }
@@ -187,14 +182,10 @@ interface IDAOSpace is ISpace, ISemver {
   error OneActionForFastPath();
 
   /**
-   * @notice Thrown when an editor has been flagged and thus is prevented from using the fast path
+   * @notice Thrown when attempting to create a proposal using the fast path when the creator
+   * is restricted from doing so.
    */
-  error EditorFlagged();
-
-  /**
-   * @notice Thrown when the from space is not an editor
-   */
-  error NotEditor();
+  error FastPathRestricted();
 
   /**
    * @notice Initializes the contract
@@ -231,10 +222,10 @@ interface IDAOSpace is ISpace, ISemver {
   function removeMember(address _oldMember) external;
 
   /**
-   * @notice Unflags an editor, restoring their ability to create fast path proposals
-   * @param _unflaggedEditor The address of the editor to unflag
+   * @notice Unrestricts a space, restoring their ability to create fast path proposals
+   * @param _space The address of the space to unrestrict
    */
-  function unflagEditor(address _unflaggedEditor) external;
+  function unrestrictSpace(address _space) external;
 
   /**
    * @notice Re-enters the Space Registry to emit an Action event
@@ -277,12 +268,6 @@ interface IDAOSpace is ISpace, ISemver {
   function updateVotingSettings(VotingSettings calldata _votingSettings) external;
 
   /**
-   * @notice Space Registry contract
-   * @return _spaceRegistry The address of the space registry singleton
-   */
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
-
-  /**
    * @notice Total editors
    * @return _totalEditors The total number of editors
    */
@@ -300,13 +285,6 @@ interface IDAOSpace is ISpace, ISemver {
    * @return _isValid True if action selector is valid for fast path
    */
   function actionIsFastPathValid(bytes4 _selector) external view returns (bool _isValid);
-
-  /**
-   * @notice Maps editor addresses to whether they are flagged (restricted from fast path)
-   * @param _editor Editor address to check
-   * @return _isFlagged True if editor is flagged
-   */
-  function isEditorFlagged(address _editor) external view returns (bool _isFlagged);
 
   /**
    * @notice Maps a proposal id to a version number
@@ -398,6 +376,12 @@ interface IDAOSpace is ISpace, ISemver {
    * @return _ratioBase The ratio base (10^6)
    */
   function RATIO_BASE() external view returns (uint256 _ratioBase);
+
+  /**
+   * @notice Returns the fast path restricted identifier
+   * @return _fastPathRestricted The fast path restricted role identifier
+   */
+  function FAST_PATH_RESTRICTED() external view returns (bytes32 _fastPathRestricted);
 
   /**
    * @notice Returns the SPACE_REGISTRY role identifier

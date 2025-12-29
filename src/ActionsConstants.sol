@@ -49,11 +49,11 @@ bytes32 constant MEMBER_ADDED = keccak256('GOVERNANCE.MEMBER_ADDED');
 /// @dev The ID of the action to remove a member
 bytes32 constant MEMBER_REMOVED = keccak256('GOVERNANCE.MEMBER_REMOVED');
 
-/// @dev The ID of the action to flag an editor (restricts fast path access)
-bytes32 constant EDITOR_FLAGGED = keccak256('GOVERNANCE.EDITOR_FLAGGED');
+/// @dev The ID of the action to restrict a space (fast path access)
+bytes32 constant SPACE_FAST_PATH_RESTRICTED = keccak256('GOVERNANCE.SPACE_FAST_PATH_RESTRICTED');
 
-/// @dev The ID of the action to unflag an editor (restores fast path access)
-bytes32 constant EDITOR_UNFLAGGED = keccak256('GOVERNANCE.EDITOR_UNFLAGGED');
+/// @dev The ID of the action to unrestrict a space (fast path access)
+bytes32 constant SPACE_FAST_PATH_UNRESTRICTED = keccak256('GOVERNANCE.SPACE_FAST_PATH_UNRESTRICTED');
 
 /// @dev The ID of the action to flag something (e.g. content, topic, proposal)
 bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');
@@ -70,7 +70,7 @@ bytes32 constant TOPIC_REMOVED = keccak256('GOVERNANCE.TOPIC_REMOVED');
 /// @dev The ID of the action to publish content edits
 bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
 
-/// @dev The ID of the action to link entites together (e.g. a proposal to a bounty or another proposal)
+/// @dev The ID of the action to link entities together (e.g. a proposal to a bounty or another proposal)
 bytes32 constant ENTITIES_LINKED = keccak256('GOVERNANCE.ENTITIES_LINKED');
 
 /// @dev The ID of the action to break the link between entities
@@ -94,7 +94,7 @@ bytes32 constant SUBSPACE_RELATED = keccak256('GOVERNANCE.SUBSPACE_RELATED');
 /// @dev The ID of the action to break a subspace relation (e.g. linked subspaces)
 bytes32 constant SUBSPACE_UNRELATED = keccak256('GOVERNANCE.SUBSPACE_UNRELATED');
 
-/// @dev The ID of the action to declare a new topic for in a subspace
+/// @dev The ID of the action to declare a new topic for a subspace
 bytes32 constant SUBSPACE_TOPIC_DECLARED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_DECLARED');
 
 /// @dev The ID of the action to remove a topic for in a subspace

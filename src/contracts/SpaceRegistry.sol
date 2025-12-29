@@ -4,9 +4,9 @@ pragma solidity 0.8.30;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
@@ -38,6 +38,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     _permissionlessActionAdded(ActionsConstants.DOWNVOTED);
     _permissionlessActionAdded(ActionsConstants.UNVOTED);
     _permissionlessActionAdded(ActionsConstants.COMMENTED);
+    _registerSpaceId(address(this), typeId(), abi.encode(version()));
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -74,19 +75,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function registerSpaceId(bytes32 _type, bytes calldata _version) external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
-    // Account must not be registered
-    if ($.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
-
-    bytes16 spaceId = generateSpaceId(msg.sender, $._spaceIdNonce++);
-
-    $.addressToSpaceId[msg.sender] = spaceId;
-    $.spaceIdToAddress[spaceId] = msg.sender;
-
-    emit Action(bytes16(0), spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(msg.sender)), '');
-    if (_type != bytes32(0)) emit Action(spaceId, spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
+  function registerSpaceId(bytes32 _type, bytes memory _version) external virtual {
+    _registerSpaceId(msg.sender, _type, _version);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -185,6 +175,27 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+  /**
+   * @notice Registers an account as a space in the registry
+   * @param _account The account address to register
+   * @param _type The type of space being registered (optional)
+   * @param _version The version of the space implementation (optional)
+   */
+  function _registerSpaceId(address _account, bytes32 _type, bytes memory _version) internal virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    // Account must not be registered
+    if ($.addressToSpaceId[_account] != bytes16(0)) revert SpaceAlreadyRegistered();
+
+    bytes16 spaceId = generateSpaceId(_account, $._spaceIdNonce++);
+
+    $.addressToSpaceId[_account] = spaceId;
+    $.spaceIdToAddress[spaceId] = _account;
+
+    emit Action(bytes16(0), spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), '');
+    if (_type != bytes32(0)) emit Action(spaceId, spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
+  }
 
   /**
    * @notice Adds a permissionless action to the registry

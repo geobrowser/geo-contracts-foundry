@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
@@ -17,12 +17,15 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
  *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
  */
-contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
+contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
   uint256 public constant MINIMUM_VOTING_DURATION = 1 minutes;
 
   /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
+
+  /// @inheritdoc IDAOSpace
+  bytes32 public constant FAST_PATH_RESTRICTED = keccak256('FAST_PATH_RESTRICTED');
 
   /// @inheritdoc IDAOSpace
   bytes32 public constant SPACE_REGISTRY = keccak256('SPACE_REGISTRY');
@@ -60,9 +63,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, address[], address[], bytes));
 
     // Set Space Registry and register new DAO Space
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.spaceRegistry = _spaceRegistry;
-    _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    __spaceAccessControlControl_init(_spaceRegistry);
+    spaceRegistry().registerSpaceId(typeId(), abi.encode(version()));
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
@@ -87,6 +89,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     _grantRole(DAO, address(this));
 
     // Set the initial fast path actions
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     $.actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
     $.actionIsFastPathValid[IDAOSpace.publish.selector] = true;
@@ -109,8 +112,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
       _leave(_fromSpace, _data);
-    } else if (_action == ActionsConstants.EDITOR_FLAGGED) {
-      _flagEditor(_fromSpace, _data);
+    } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
+      _restrictSpace(_fromSpace, _data);
     } else {
       // Must attempt to write in some way
       revert InvalidAction();
@@ -147,9 +150,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function unflagEditor(address _unflaggedEditor) public virtual {
+  function unrestrictSpace(address _space) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
-    _unflagEditor(_unflaggedEditor);
+    _unrestrictSpace(_space);
   }
 
   /// @inheritdoc IDAOSpace
@@ -203,9 +206,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     } else if (_action == ActionsConstants.SPACE_LEFT) {
       bytes32 role = abi.decode(_data, (bytes32));
       return role;
-    } else if (_action == ActionsConstants.EDITOR_FLAGGED) {
-      address _flaggedEditor = abi.decode(_data, (address));
-      return bytes32(bytes20(_flaggedEditor));
+    } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
+      address _space = abi.decode(_data, (address));
+      bytes16 _spaceId = spaceRegistry().addressToSpaceId(_space);
+      return bytes32(_spaceId);
     } else {
       return _topicInput;
     }
@@ -238,12 +242,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _spaceRegistry = $.spaceRegistry;
-  }
-
-  /// @inheritdoc IDAOSpace
   function votingSettings() public view returns (VotingSettings memory _votingSettings) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _votingSettings = $.votingSettings;
@@ -259,12 +257,6 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   function actionIsFastPathValid(bytes4 _selector) public view returns (bool _isValid) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _isValid = $.actionIsFastPathValid[_selector];
-  }
-
-  /// @inheritdoc IDAOSpace
-  function isEditorFlagged(address _editor) public view returns (bool _isFlagged) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _isFlagged = $.isEditorFlagged[_editor];
   }
 
   /// @inheritdoc IDAOSpace
@@ -383,7 +375,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @param _proposalId The proposal identifier
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
-   * @dev Fast path: only editors can create, creator must not be flagged, single action required,
+   * @dev Fast path: only editors can create, creator must not be restricted, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _createProposal(
@@ -411,7 +403,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
       // Only editors can create fast path proposals
       if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
       // Checks from space is allowed to use fast path
-      if ($.isEditorFlagged[_fromSpace]) revert EditorFlagged();
+      if (hasRole(FAST_PATH_RESTRICTED, _fromSpace)) revert FastPathRestricted();
       // limit the actions to one call
       if (_actions.length != 1) revert OneActionForFastPath();
       bytes4 actionSelector = bytes4(_actions[0].data);
@@ -500,7 +492,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   /**
    * @notice Allows a proposal creator to update and reset a proposal if it has not been executed
    * @param _fromSpace The address of the space updating the proposal
-   * @param _data The encoded role data used to determine which role a user wants to leave
+   * @param _data The encoded proposal data used to update the proposal with a new version
+   * @dev Only the creator of the proposal can update it.
    */
   function _updateProposal(address _fromSpace, bytes calldata _data) internal virtual {
     // Decode data to construct new proposal
@@ -564,28 +557,24 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
   }
 
   /**
-   * @notice Flags an editor, restricting them from creating fast path proposals
-   * @param _fromSpace The address of the editor performing the flagging
-   * @param _data The encoded data containing the address of the editor to flag
-   * @dev Only editors can flag other editors.
+   * @notice Restricts a space from creating fast path proposals
+   * @param _fromSpace The address of the editor performing the restriction
+   * @param _data The encoded data containing the address of the space to flag
+   * @dev Only editors can restrict others.
    */
-  function _flagEditor(address _fromSpace, bytes calldata _data) internal virtual {
+  function _restrictSpace(address _fromSpace, bytes calldata _data) internal virtual {
     if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
-    address _flaggedEditor = abi.decode(_data, (address));
-    if (!hasRole(EDITOR, _flaggedEditor)) revert NotEditor();
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.isEditorFlagged[_flaggedEditor] = true;
+    address _space = abi.decode(_data, (address));
+    _grantRole(FAST_PATH_RESTRICTED, _space);
   }
 
   /**
-   * @notice Unflags an editor, allowing them to create fast path proposals
-   * @param _unflaggedEditor The address of the editor to be unflaged
+   * @notice Unrestricts a space allowing them to create fast path proposals
+   * @param _space The address of the space to be unrestricted
    */
-  function _unflagEditor(address _unflaggedEditor) internal virtual {
-    if (!hasRole(EDITOR, _unflaggedEditor)) revert NotEditor();
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.isEditorFlagged[_unflaggedEditor] = false;
-    _ping(ActionsConstants.EDITOR_UNFLAGGED, bytes32(bytes20(_unflaggedEditor)), '');
+  function _unrestrictSpace(address _space) internal virtual {
+    bytes16 _spaceId = _revokeRole(FAST_PATH_RESTRICTED, _space);
+    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_spaceId), abi.encode(_space));
   }
 
   /**
@@ -594,13 +583,10 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    */
   function _addEditor(address _newEditor) internal virtual {
     if (hasRole(EDITOR, _newEditor)) revert InvalidAddressForRole();
-    // Grant the role for access control
-    _grantRole(EDITOR, _newEditor);
-    // Update counter
+    bytes16 _spaceId = _grantRole(EDITOR, _newEditor);
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.totalEditors++;
-    // Ping the registry
-    _ping(ActionsConstants.EDITOR_ADDED, bytes32(bytes20(_newEditor)), '');
+    _ping(ActionsConstants.EDITOR_ADDED, bytes32(_spaceId), abi.encode(_newEditor));
   }
 
   /**
@@ -616,14 +602,9 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     if ($.votingSettings.quorum == $.totalEditors) revert InvalidSetting();
     if ($.votingSettings.fastPathFlatThreshold == $.totalEditors) revert InvalidSetting();
-    // Revoke the role for access control
-    _revokeRole(EDITOR, _oldEditor);
-    // Update counter
+    bytes16 _spaceId = _revokeRole(EDITOR, _oldEditor);
     $.totalEditors--;
-    // Reset flagged status
-    $.isEditorFlagged[_oldEditor] = false;
-    // Ping the registry
-    _ping(ActionsConstants.EDITOR_REMOVED, bytes32(bytes20(_oldEditor)), '');
+    _ping(ActionsConstants.EDITOR_REMOVED, bytes32(_spaceId), abi.encode(_oldEditor));
   }
 
   /**
@@ -632,8 +613,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    */
   function _addMember(address _newMember) internal virtual {
     if (hasRole(MEMBER, _newMember)) revert InvalidAddressForRole();
-    _grantRole(MEMBER, _newMember);
-    _ping(ActionsConstants.MEMBER_ADDED, bytes32(bytes20(_newMember)), '');
+    bytes16 _spaceId = _grantRole(MEMBER, _newMember);
+    _ping(ActionsConstants.MEMBER_ADDED, bytes32(_spaceId), abi.encode(_newMember));
   }
 
   /**
@@ -642,8 +623,8 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    */
   function _removeMember(address _oldMember) internal virtual {
     if (!hasRole(MEMBER, _oldMember)) revert InvalidAddressForRole();
-    _revokeRole(MEMBER, _oldMember);
-    _ping(ActionsConstants.MEMBER_REMOVED, bytes32(bytes20(_oldMember)), '');
+    bytes16 _spaceId = _revokeRole(MEMBER, _oldMember);
+    _ping(ActionsConstants.MEMBER_REMOVED, bytes32(_spaceId), abi.encode(_oldMember));
   }
 
   /**
@@ -654,8 +635,7 @@ contract DAOSpace is AccessControlUpgradeable, IDAOSpace {
    * @dev _from and _to are always the DAO's address
    */
   function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.spaceRegistry.enter(address(this), address(this), _action, _topic, _data, '');
+    spaceRegistry().enter(address(this), address(this), _action, _topic, _data, '');
   }
 
   /**
