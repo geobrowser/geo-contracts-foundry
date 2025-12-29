@@ -6,8 +6,8 @@ import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 import {MockSpaceAccessControl} from 'test/unit/mocks/MockSpaceAccessControl.sol';
 
-import {ISpaceAccessControl} from 'interfaces/ISpaceAccessControl.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISpaceAccessControl} from 'interfaces/utils/ISpaceAccessControl.sol';
 
 contract UnitSpaceAccessControl is TestHelper {
   MockSpaceAccessControl public spaceAccessControlImplementation;

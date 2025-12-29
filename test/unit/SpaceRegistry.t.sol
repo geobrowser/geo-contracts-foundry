@@ -107,6 +107,7 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it registers the space registry
     assertEq(spaceRegistryProxy.addressToSpaceId(address(spaceRegistryProxy)), _spaceId);
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_spaceId), address(spaceRegistryProxy));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(address __owner)

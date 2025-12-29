@@ -6,10 +6,10 @@ import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {BeaconProxy} from '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 import {IVerifierSpaceFactory} from 'interfaces/IVerifierSpaceFactory.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title VerifierSpaceFactory

@@ -57,7 +57,7 @@ UnitDAOSpace::write
 │   │       ├── when _proposalId has already been used
 │   │       │   └── it reverts with InvalidProposalId
 │   │       ├── when _fromSpace is restricted
-│   │       │   └── it reverts with InvalidFromSpace
+│   │       │   └── it reverts with FastPathRestricted
 │   │       ├── when the decoded proposal action is not limited to one call
 │   │       │   └── it reverts with OneActionForFastPath
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid

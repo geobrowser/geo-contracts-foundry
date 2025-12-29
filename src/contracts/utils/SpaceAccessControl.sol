@@ -3,8 +3,8 @@ pragma solidity 0.8.30;
 
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-import {ISpaceAccessControl} from 'interfaces/ISpaceAccessControl.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISpaceAccessControl} from 'interfaces/utils/ISpaceAccessControl.sol';
 
 /**
  * @title SpaceAccessControl
@@ -34,7 +34,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
   }
 
   /**
-   * @notice Attempts to grant `role` to `space` and returns a boolean indicating if `role` was granted
+   * @notice Attempts to grant `role` to `space`, and returns the associated space id of the space
    * @param _role The role to grant to the space id
    * @param _account The account associated with the space id to receive the new role
    * @return _spaceId The space id associated with the account receiving the new role
@@ -47,7 +47,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
   }
 
   /**
-   * @notice Attempts to revoke `role` from `space` and returns a boolean indicating if `role` was revoked
+   * @notice Attempts to revoke `role` from `space`, and returns the associated space id of the space
    * @param _role The role to revoke from the space id
    * @param _account The account associated with the space id to have their role revoked
    * @return _spaceId The space id associated with the account receiving the new role
@@ -74,7 +74,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    * @return $ The storage of the Space Access Control contract
    * @custom:storage-location erc7201:geo.storage.SpaceAccessControl
    */
-  function _getSpaceAccessControlStorage() private pure returns (SpaceAccessControlStorage storage $) {
+  function _getSpaceAccessControlStorage() internal pure returns (SpaceAccessControlStorage storage $) {
     assembly {
       $.slot := _SPACE_ACCESS_CONTROL_STORAGE_LOCATION
     }

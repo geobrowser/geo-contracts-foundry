@@ -492,8 +492,8 @@ contract UnitDAOSpace is TestHelper {
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
     daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialEditor);
 
-    // it reverts with InvalidFromSpace
-    vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
+    // it reverts with FastPathRestricted
+    vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
 
     _mockAddressToSpaceId(_spaceRegistry, _initialEditor, _getSpaceId(_initialEditor));
 

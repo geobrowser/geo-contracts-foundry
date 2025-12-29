@@ -4,9 +4,9 @@ pragma solidity 0.8.30;
 import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
@@ -403,7 +403,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       // Only editors can create fast path proposals
       if (!hasRole(EDITOR, _fromSpace)) revert InvalidFromSpace();
       // Checks from space is allowed to use fast path
-      if (hasRole(FAST_PATH_RESTRICTED, _fromSpace)) revert InvalidFromSpace();
+      if (hasRole(FAST_PATH_RESTRICTED, _fromSpace)) revert FastPathRestricted();
       // limit the actions to one call
       if (_actions.length != 1) revert OneActionForFastPath();
       bytes4 actionSelector = bytes4(_actions[0].data);
@@ -492,7 +492,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Allows a proposal creator to update and reset a proposal if it has not been executed
    * @param _fromSpace The address of the space updating the proposal
-   * @param _data The encoded role data used to update the proposal with a new version
+   * @param _data The encoded proposal data used to update the proposal with a new version
    * @dev Only the creator of the proposal can update it.
    */
   function _updateProposal(address _fromSpace, bytes calldata _data) internal virtual {

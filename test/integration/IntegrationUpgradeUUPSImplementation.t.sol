@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {IntegrationBase} from 'test/integration/IntegrationBase.t.sol';
-
 import {ERC1967Utils} from '@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol';
+
+import {IntegrationBase} from 'test/integration/IntegrationBase.t.sol';
+import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementation.sol';
 
 import {DAOSpaceFactory} from 'contracts/DAOSpaceFactory.sol';
 import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
 import {VerifierSpaceFactory} from 'contracts/VerifierSpaceFactory.sol';
-import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementation.sol';
 
 import 'script/Constants.s.sol' as Constants;
 

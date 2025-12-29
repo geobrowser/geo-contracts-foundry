@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {ISemver} from 'interfaces/ISemver.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
-import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title IDAOSpace
@@ -181,6 +180,12 @@ interface IDAOSpace is ISpace, ISemver {
    * @dev Fast path limited to single action
    */
   error OneActionForFastPath();
+
+  /**
+   * @notice Thrown when attempting to create a proposal using the fast path when the creator
+   * is restricted from doing so.
+   */
+  error FastPathRestricted();
 
   /**
    * @notice Initializes the contract
