@@ -125,6 +125,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
       _leave(_fromSpaceId, _data);
+    } else if (_action == ActionsConstants.MEMBERSHIP_REQUESTED) {
+      _requestMembership(_fromSpaceId, _data);
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       _restrictSpace(_fromSpaceId, _data);
     } else {
@@ -213,6 +215,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     } else if (_action == ActionsConstants.SPACE_LEFT) {
       bytes32 role = abi.decode(_data, (bytes32));
       return role;
+    } else if (_action == ActionsConstants.MEMBERSHIP_REQUESTED) {
+      (bytes16 _proposalId,) = abi.decode(_data, (bytes16, bytes16));
+      return bytes32(_proposalId);
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       bytes16 _spaceId = abi.decode(_data, (bytes16));
       return bytes32(_spaceId);
@@ -569,6 +574,51 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     } else {
       revert InvalidFromSpace();
     }
+  }
+
+  /**
+   * @notice Decodes input data and then creates a new fast path proposal for a space to become a member
+   * @param _fromSpaceId The space ID creating the proposal
+   * @param _data The encoded proposal data containing the space ID requesting to become a member
+   */
+  function _requestMembership(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
+    // Decode data to construct proposal
+    (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    // Ensure proposal id is valid
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
+    // Checks from space is allowed to use fast path
+    if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
+    // Update storage
+    $.latestProposalVersion[_proposalId]++;
+    /// @dev must fetch the new proposal given update to version
+    proposal_ = _getLatestProposalStorage(_proposalId);
+    proposal_.creator = _fromSpaceId;
+    proposal_.parameters.startDate = block.timestamp;
+    proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
+    proposal_.parameters.votingMode = IDAOSpace.VotingMode.Fast;
+    proposal_.parameters.quorum = $.votingSettings.quorum;
+    proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
+    proposal_.actions
+      .push(IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))}));
+    // Ping the registry to emit the proposal creation and settings
+    _ping(
+      ActionsConstants.PROPOSAL_CREATED,
+      bytes32(_proposalId),
+      abi.encode(_proposalId, proposal_.parameters.votingMode, proposal_.actions)
+    );
+    _ping(
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(
+        proposal_.parameters.startDate,
+        proposal_.parameters.lastDate,
+        proposal_.parameters.votingMode,
+        proposal_.parameters.quorum,
+        proposal_.parameters.supportThreshold
+      )
+    );
   }
 
   /**
