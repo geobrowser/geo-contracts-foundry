@@ -37,7 +37,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "5.4.0",
     "@openzeppelin/contracts-upgradeable": "5.4.0",
-    "@openzeppelin/foundry-upgrades": "0.4.0"
+    "@openzeppelin/foundry-upgrades": "0.4.0",
+    "@safe-global/safe-smart-account": "https://github.com/safe-fndn/safe-smart-account#v1.5.0"
   },
   "devDependencies": {
     "@commitlint/cli": "19.3.0",
