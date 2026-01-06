@@ -30,24 +30,14 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
     verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
-    spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
-    _votingSettings.duration = daoSpaceImplementation.MINIMUM_VOTING_DURATION();
-    _initialSpaceMembers = new address[](1);
-    _initialSpaceMembers[0] = address(this);
-    _initialSpaceOwner = address(this);
-
-    daoSpaceProxyA = MockDAOSpaceV2(
-      daoSpaceFactoryProxy.createDAOSpaceProxy(
-        _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
-      )
-    );
+    daoSpaceProxyA = MockDAOSpaceV2(address(daoSpaceProxy));
     daoSpaceProxyB = MockDAOSpaceV2(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
         _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
       )
     );
-    verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
-    verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
+    verifierSpaceProxyA = verifierSpaceProxy;
+    verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
 
     daoSpaceImplementationBis = new MockDAOSpaceV2();
     verifierSpaceImplementationBis = VerifierSpace(address(new MockNewImplementation()));
@@ -59,8 +49,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
     // _initialMembers
-    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), address(this)));
-    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), address(this)));
+    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), eoaSpace));
+    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), eoaSpace));
     // actionIsFastPathValid
     assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
