@@ -29,6 +29,36 @@ UnitVerifierSpace::setValidWriters
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 
+UnitVerifierSpace::ping
+├── when called by owner
+│   └── it calls enter on the spaceRegistry to emit Action
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitVerifierSpace::register
+├── when called by owner
+│   └── it calls spaceRegistry to register space ID
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitVerifierSpace::clear
+├── when called by owner
+│   └── it calls spaceRegistry to clear space ID
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitVerifierSpace::proposeMigration
+├── when called by owner
+│   └── it calls spaceRegistry to propose space migration
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitVerifierSpace::acceptMigration
+├── when called by owner
+│   └── it calls spaceRegistry to accept space migration
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
 UnitVerifierSpace::verify
 ├── when caller is spaceRegistry
 │   ├── when signature is valid

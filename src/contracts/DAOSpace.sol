@@ -98,34 +98,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function register() external virtual {
-    // if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
-    // if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
-    spaceRegistry().registerSpaceId(typeId(), abi.encode(version()));
-  }
-
-  /// @inheritdoc ISpace
-  function clear() external virtual {
-    // if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
-    // if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
-    spaceRegistry().clearSpaceId();
-  }
-
-  /// @inheritdoc ISpace
-  function proposeMigration(address _newAccount) external virtual {
-    // if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
-    // if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
-    spaceRegistry().proposeSpaceMigration(_newAccount);
-  }
-
-  /// @inheritdoc ISpace
-  function acceptMigration(bytes16 _spaceId) external virtual {
-    // if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
-    // if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
-    spaceRegistry().acceptSpaceMigration(_spaceId, typeId(), abi.encode(version()));
-  }
-
-  /// @inheritdoc ISpace
   function write(address _fromSpace, bytes32 _action, bytes32, bytes calldata _data) external virtual {
     // Only Space Registry can call
     if (!hasRole(SPACE_REGISTRY, msg.sender)) revert InvalidCaller();
@@ -182,6 +154,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();
     _unrestrictSpace(_space);
   }
+
+  // REVIEW: Are `publish()`, `flag()`, `unflag()`, or even `ping()` worth it herein, considering that their
+  //         sole purpose is to relay the call to `SpaceRegistry.enter()` and that only its `Action` emission is relevant?
 
   /// @inheritdoc IDAOSpace
   function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual {
