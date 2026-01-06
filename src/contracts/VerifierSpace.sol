@@ -112,7 +112,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256(bytes('VERIFIER_SPACE'));
+    _type = keccak256('VERIFIER_SPACE');
   }
 
   /// @inheritdoc ISemver

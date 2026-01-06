@@ -178,7 +178,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
     // when called
 
     // it returns the type
-    assertEq(verifierSpaceFactoryProxy.typeId(), keccak256(bytes('VERIFIER_SPACE_FACTORY')));
+    assertEq(verifierSpaceFactoryProxy.typeId(), keccak256('VERIFIER_SPACE_FACTORY'));
   }
 
   function test_Name_WhenCalled() external view {

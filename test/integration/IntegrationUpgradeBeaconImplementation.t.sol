@@ -14,14 +14,12 @@ import 'script/Constants.s.sol' as Constants;
 
 contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   UpgradeableBeacon public daoSpaceBeacon;
-  DAOSpace public daoSpaceImplementationA;
-  MockDAOSpaceV2 public daoSpaceImplementationB;
+  MockDAOSpaceV2 public daoSpaceImplementationBis;
   MockDAOSpaceV2 public daoSpaceProxyA;
   MockDAOSpaceV2 public daoSpaceProxyB;
 
   UpgradeableBeacon public verifierSpaceBeacon;
-  VerifierSpace public verifierSpaceImplementationA;
-  VerifierSpace public verifierSpaceImplementationB;
+  VerifierSpace public verifierSpaceImplementationBis;
   VerifierSpace public verifierSpaceProxyA;
   VerifierSpace public verifierSpaceProxyB;
 
@@ -32,11 +30,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
     verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
-    daoSpaceImplementationA = DAOSpace(daoSpaceBeacon.implementation());
-    verifierSpaceImplementationA = VerifierSpace(verifierSpaceBeacon.implementation());
-
-    spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), abi.encode('1.0.0'));
-    _votingSettings.duration = daoSpaceImplementationA.MINIMUM_VOTING_DURATION();
+    spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
+    _votingSettings.duration = daoSpaceImplementation.MINIMUM_VOTING_DURATION();
     _initialSpaceMembers = new address[](1);
     _initialSpaceMembers[0] = address(this);
     _initialSpaceOwner = address(this);
@@ -54,13 +49,13 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
     verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));
 
-    daoSpaceImplementationB = new MockDAOSpaceV2();
-    verifierSpaceImplementationB = VerifierSpace(address(new MockNewImplementation()));
+    daoSpaceImplementationBis = new MockDAOSpaceV2();
+    verifierSpaceImplementationBis = VerifierSpace(address(new MockNewImplementation()));
   }
 
   function test_UpgradeBeaconImplementation_DAOSpace() external {
-    assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationA));
-    assertEq(daoSpaceImplementationA.version(), '1.0.0');
+    assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementation));
+    assertEq(daoSpaceImplementation.version(), '1.0.0');
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
     // _initialMembers
@@ -77,7 +72,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector), false);
 
     vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
-    daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationB));
+    daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationBis));
 
     uint256 _initialTotalMembers = _initialSpaceMembers.length;
     daoSpaceProxyA.initialize(abi.encode(_initialTotalMembers));
@@ -88,8 +83,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     vm.prank(address(daoSpaceProxyB));
     daoSpaceProxyB.addMember(address(daoSpaceProxyB));
 
-    assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationB));
-    assertEq(daoSpaceImplementationB.version(), '2.0.0');
+    assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationBis));
+    assertEq(daoSpaceImplementationBis.version(), '2.0.0');
     assertEq(daoSpaceProxyA.version(), '2.0.0');
     assertEq(daoSpaceProxyB.version(), '2.0.0');
     // totalMembers
@@ -107,16 +102,16 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   }
 
   function test_UpgradeBeaconImplementation_VerifierSpace() external {
-    assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementationA));
-    assertEq(verifierSpaceImplementationA.version(), '1.0.0');
+    assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementation));
+    assertEq(verifierSpaceImplementation.version(), '1.0.0');
     assertEq(verifierSpaceProxyA.version(), '1.0.0');
     assertEq(verifierSpaceProxyB.version(), '1.0.0');
 
     vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
-    verifierSpaceBeacon.upgradeTo(address(verifierSpaceImplementationB));
+    verifierSpaceBeacon.upgradeTo(address(verifierSpaceImplementationBis));
 
-    assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementationB));
-    assertEq(verifierSpaceImplementationB.version(), '2.0.0');
+    assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementationBis));
+    assertEq(verifierSpaceImplementationBis.version(), '2.0.0');
     assertEq(verifierSpaceProxyA.version(), '2.0.0');
     assertEq(verifierSpaceProxyB.version(), '2.0.0');
   }
