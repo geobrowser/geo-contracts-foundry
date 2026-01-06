@@ -57,6 +57,33 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     _setValidWriters(_account, _valid);
   }
 
+  // REVIEW
+  // function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external virtual onlyOwner {}
+
+  /// @inheritdoc ISpace
+  function register() external virtual onlyOwner {
+    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
+    $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+  }
+
+  /// @inheritdoc ISpace
+  function clear() external virtual onlyOwner {
+    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
+    $.spaceRegistry.clearSpaceId();
+  }
+
+  /// @inheritdoc ISpace
+  function proposeMigration(address _newAccount) external virtual onlyOwner {
+    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
+    $.spaceRegistry.proposeSpaceMigration(_newAccount);
+  }
+
+  /// @inheritdoc ISpace
+  function acceptMigration(bytes16 _spaceId) external virtual onlyOwner {
+    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
+    $.spaceRegistry.acceptSpaceMigration(_spaceId, typeId(), abi.encode(version()));
+  }
+
   /// @inheritdoc ISpace
   function verify(
     address _toSpace,
@@ -87,6 +114,11 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     if (!$.validWriters[_fromSpace]) revert InvalidWriter();
   }
 
+  /// @inheritdoc ISpace
+  function fetch(bytes32, bytes32 _topicInput, bytes calldata) public pure virtual returns (bytes32 _topicOutput) {
+    _topicOutput = _topicInput;
+  }
+
   /// @inheritdoc IVerifierSpace
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
@@ -103,11 +135,6 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   function replayNonce() public view returns (uint256 _replayNonce) {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
     _replayNonce = $.replayNonce;
-  }
-
-  /// @inheritdoc ISpace
-  function fetch(bytes32, bytes32 _topicInput, bytes calldata) public pure virtual returns (bytes32 _topicOutput) {
-    _topicOutput = _topicInput;
   }
 
   /// @inheritdoc ISemver

@@ -3,13 +3,12 @@ pragma solidity 0.8.30;
 
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title IVerifierSpace
  * @notice Manages writing verification for a verifier space
  */
-interface IVerifierSpace is ISpace, ISemver {
+interface IVerifierSpace is ISpace {
   /**
    * @notice Message struct used to create offchain signatures for onchain verification
    * @dev Uses EIP 712 for hashing and signing of typed structured data

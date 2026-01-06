@@ -107,7 +107,7 @@ interface ISpaceRegistry is ISemver {
   function registerSpaceId(bytes32 _type, bytes calldata _version) external;
 
   /**
-   * @notice Clears a space id from the registry and disconnects it from any address
+   * @notice Clears a space ID from the registry and disconnects it from any address
    */
   function clearSpaceId() external;
 

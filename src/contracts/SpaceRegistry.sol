@@ -83,7 +83,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function clearSpaceId() external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
+    // Must be called by the space itself
     bytes16 spaceId = $.addressToSpaceId[msg.sender];
+    if (spaceId == bytes16(0)) revert InvalidCaller();
+
     $.addressToSpaceId[msg.sender] = bytes16(0);
     $.spaceIdToAddress[spaceId] = address(0);
     $.spaceIdToProposedAddress[spaceId] = address(0);

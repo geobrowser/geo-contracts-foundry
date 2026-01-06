@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+import {ISemver} from 'interfaces/utils/ISemver.sol';
+
 /**
  * @title ISpace
  * @notice Interface for spaces
  */
-interface ISpace {
+interface ISpace is ISemver {
   /**
    * @notice Writes to this space from another space
    * @param _fromSpace The space contract that writes
@@ -43,4 +45,30 @@ interface ISpace {
     bytes32 _topicInput,
     bytes calldata _data
   ) external view returns (bytes32 _topicOutput);
+
+  // REVIEW
+  // function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
+
+  /**
+   * @notice Creates a new space by registering a space ID for this address
+   */
+  function register() external;
+
+  /**
+   * @notice Clears its space ID from the registry and disconnects it from any address
+   */
+  function clear() external;
+
+  /**
+   * @notice Proposes to migrate its space ID to a new address
+   * @param _newAccount The proposed address of the space
+   */
+  function proposeMigration(address _newAccount) external;
+
+  /**
+   * @notice Accepts to migrate a space ID to itself
+   * @dev Can only accept proposed migrations in the registry
+   * @param _spaceId The ID of the space
+   */
+  function acceptMigration(bytes16 _spaceId) external;
 }
