@@ -63,6 +63,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
 
     // Deploy and register DAO space
     _votingSettings.duration = daoSpaceImplementation.MINIMUM_VOTING_DURATION();
+    _initialSpaceEditors = new address[](1);
+    _initialSpaceEditors[0] = eoaSpace;
     _initialSpaceMembers = new address[](1);
     _initialSpaceMembers[0] = eoaSpace;
 
