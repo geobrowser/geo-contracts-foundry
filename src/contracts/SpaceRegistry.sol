@@ -163,7 +163,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256('SPACE_REGISTRY');
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver

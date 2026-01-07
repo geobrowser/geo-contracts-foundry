@@ -330,7 +330,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256('DAO_SPACE');
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver
