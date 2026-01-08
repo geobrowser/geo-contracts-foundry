@@ -14,8 +14,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   uint256 internal _geoTestnetForkId;
 
   IDAOSpace.VotingSettings internal _votingSettings;
-  address[] internal _initialSpaceEditors;
-  address[] internal _initialSpaceMembers;
+  bytes16[] internal _initialSpaceEditors;
+  bytes16[] internal _initialSpaceMembers;
   address internal _initialSpaceOwner;
   bytes internal _initialEditsContentUri;
   bytes internal _initialEditsMetadata;

@@ -43,34 +43,34 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function enter(
-    address _fromSpace,
-    address _toSpace,
+    bytes16 _fromSpaceId,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    bytes16 fromSpaceId = $.addressToSpaceId[_fromSpace];
-    bytes16 toSpaceId = $.addressToSpaceId[_toSpace];
-    if (fromSpaceId == bytes16(0) || toSpaceId == bytes16(0)) revert SpaceNotRegistered();
+    address fromSpace = $.spaceIdToAddress[_fromSpaceId];
+    address toSpace = $.spaceIdToAddress[_toSpaceId];
+    if (fromSpace == address(0) || toSpace == address(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
-    // Then pass the to space, action, topic, data, and signature to the from space
-    if (msg.sender != _fromSpace) ISpace(_fromSpace).verify(_toSpace, _action, _topic, _data, _signature);
+    // Then pass the to space ID, action, topic, data, and signature to the from space
+    if (msg.sender != fromSpace) ISpace(fromSpace).verify(_toSpaceId, _action, _topic, _data, _signature);
 
     // No fetch or write with permissionless actions
     if ($.permissionlessActions[_action]) {
-      emit Action(fromSpaceId, toSpaceId, _action, _topic, _data);
+      emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
     } else {
       // Fetch future output variable and update `_topic` for emission if relevant
-      if (msg.sender != _toSpace) _topic = ISpace(_toSpace).fetch(_action, _topic, _data);
+      if (msg.sender != toSpace) _topic = ISpace(toSpace).fetch(_action, _topic, _data);
 
-      emit Action(fromSpaceId, toSpaceId, _action, _topic, _data);
+      emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
 
       // If msg.sender is not the to space
-      // Then pass the from space, action, topic, and data to the to space
-      if (msg.sender != _toSpace) ISpace(_toSpace).write(_fromSpace, _action, _topic, _data);
+      // Then pass the from space ID, action, topic, and data to the to space
+      if (msg.sender != toSpace) ISpace(toSpace).write(_fromSpaceId, _action, _topic, _data);
     }
   }
 

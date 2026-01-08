@@ -25,9 +25,9 @@ contract UnitDAOSpaceFactory is TestHelper {
   address internal _daoSpaceImplementation = makeAddr('_daoSpaceImplementation');
   address internal _owner = makeAddr('_owner');
   address internal _randomCaller = makeAddr('_randomCaller');
-  address[] internal _initialEditors = new address[](1);
+  bytes16[] internal _initialEditors = new bytes16[](1);
   address internal _initialEditor = makeAddr('_initialEditor');
-  address[] internal _initialMembers = new address[](1);
+  bytes16[] internal _initialMembers = new bytes16[](1);
   address internal _initialMember = makeAddr('_initialMember');
   bytes internal _initialEditsContentUri = 'Down the Rabbit-Hole';
   bytes internal _initialEditsMetadata =
@@ -39,8 +39,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // Etch some code so that the beacon deploys
     vm.etch(_daoSpaceImplementation, hex'fe');
 
-    _initialEditors[0] = _initialEditor;
-    _initialMembers[0] = _initialMember;
+    _initialEditors[0] = bytes16(keccak256(abi.encodePacked('grc20.space', _initialEditor, uint256(0), block.chainid)));
+    _initialMembers[0] = bytes16(keccak256(abi.encodePacked('grc20.space', _initialMember, uint256(0), block.chainid)));
 
     _votingSettings = IDAOSpace.VotingSettings({
       slowPathPercentageThreshold: 5e5, fastPathFlatThreshold: 1, quorum: 1, duration: 2 days
@@ -238,8 +238,8 @@ contract UnitDAOSpaceFactory is TestHelper {
 
   function _mockEnter(
     ISpaceRegistry __spaceRegistry,
-    address _from,
-    address _to,
+    bytes16 _fromSpaceId,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes memory _data,
@@ -247,7 +247,7 @@ contract UnitDAOSpaceFactory is TestHelper {
   ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, _data, _signature)),
+      abi.encodeCall(ISpaceRegistry.enter, (_fromSpaceId, _toSpaceId, _action, _topic, _data, _signature)),
       abi.encode()
     );
   }

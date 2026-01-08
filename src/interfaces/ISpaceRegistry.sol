@@ -83,16 +83,16 @@ interface ISpaceRegistry is ISemver {
 
   /**
    * @notice Generalized entry point for all users across all spaces
-   * @param _fromSpace The space contract on which to call the verify function
-   * @param _toSpace The space contract on which to call the write function
+   * @param _fromSpaceId The space ID on which to call the verify function
+   * @param _toSpaceId The space ID on which to call the write function
    * @param _action The action that is passed to the space contract
    * @param _topic The topic that is passed to the space contract
    * @param _data The arbitrary data for space contract execution
    * @param _signature The signature for account verification
    */
   function enter(
-    address _fromSpace,
-    address _toSpace,
+    bytes16 _fromSpaceId,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,

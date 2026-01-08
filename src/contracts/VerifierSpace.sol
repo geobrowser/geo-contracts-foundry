@@ -19,7 +19,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace {
   /// @notice The message typehash for the struct used in the signature verification
   bytes32 internal constant _MESSAGE_TYPEHASH =
-    keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
+    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
 
   /**
    * @notice The storage location of the verifier space contract
@@ -42,24 +42,24 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     __Ownable_init(_owner);
     __EIP712_init(name(), version());
 
-    // Set Space Registry and register new DAO Space
+    // Set Space Registry and register new Verifier Space
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
     _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
     // Set valid writers
-    _setValidWriters(_owner, true);
-    _setValidWriters(address(this), true);
+    _setValidWriters(_spaceRegistry.addressToSpaceId(_owner), true);
+    _setValidWriters(_spaceRegistry.addressToSpaceId(address(this)), true);
   }
 
   /// @inheritdoc IVerifierSpace
-  function setValidWriters(address _account, bool _valid) external virtual onlyOwner {
-    _setValidWriters(_account, _valid);
+  function setValidWriters(bytes16 _spaceId, bool _valid) external virtual onlyOwner {
+    _setValidWriters(_spaceId, _valid);
   }
 
   /// @inheritdoc ISpace
   function verify(
-    address _toSpace,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,
@@ -71,20 +71,20 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(_MESSAGE_TYPEHASH, _toSpace, _action, _topic, $.replayNonce++, keccak256(_data)))
+      keccak256(abi.encode(_MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
     if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
   }
 
   /// @inheritdoc ISpace
-  function write(address _fromSpace, bytes32, bytes32, bytes calldata) external view virtual {
+  function write(bytes16 _fromSpaceId, bytes32, bytes32, bytes calldata) external view virtual {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
 
     // Only space registry can call
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // From space must be valid writer
-    if (!$.validWriters[_fromSpace]) revert InvalidWriter();
+    if (!$.validWriters[_fromSpaceId]) revert InvalidWriter();
   }
 
   /// @inheritdoc IVerifierSpace
@@ -94,9 +94,9 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   }
 
   /// @inheritdoc IVerifierSpace
-  function validWriters(address _account) public view returns (bool _valid) {
+  function validWriters(bytes16 _spaceId) public view returns (bool _valid) {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    _valid = $.validWriters[_account];
+    _valid = $.validWriters[_spaceId];
   }
 
   /// @inheritdoc IVerifierSpace
@@ -126,14 +126,14 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   }
 
   /**
-   * @notice Sets the writer validity status of an address
-   * @param _account The address of the writer
+   * @notice Sets the writer validity status of a space ID
+   * @param _spaceId The space ID of the writer
    * @param _valid Whether the writer will be valid
    */
-  function _setValidWriters(address _account, bool _valid) internal virtual {
+  function _setValidWriters(bytes16 _spaceId, bool _valid) internal virtual {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.validWriters[_account] = _valid;
-    emit ValidWriterSet(_account, _valid);
+    $.validWriters[_spaceId] = _valid;
+    emit ValidWriterSet(_spaceId, _valid);
   }
 
   /**

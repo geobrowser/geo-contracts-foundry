@@ -7,7 +7,6 @@ import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 import {MockSpaceAccessControl} from 'test/unit/mocks/MockSpaceAccessControl.sol';
 
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {ISpaceAccessControl} from 'interfaces/utils/ISpaceAccessControl.sol';
 
 contract UnitSpaceAccessControl is TestHelper {
   MockSpaceAccessControl public spaceAccessControlImplementation;
@@ -26,8 +25,6 @@ contract UnitSpaceAccessControl is TestHelper {
         abi.encodeCall(MockSpaceAccessControl.initialize, (abi.encode(_spaceRegistry)))
       )
     );
-
-    assertEq(address(spaceAccessControlProxy.spaceRegistry()), address(_spaceRegistry));
   }
 
   function test_Constants_WhenDeployed() external view {
@@ -38,82 +35,28 @@ contract UnitSpaceAccessControl is TestHelper {
     );
   }
 
-  function test_GrantRole_When_accountIsNotRegistered(bytes32 _role, address _account) external {
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, bytes16(0));
-
-    // it reverts with SpaceNotRegistered
-    vm.expectRevert(ISpaceAccessControl.SpaceNotRegistered.selector);
-    spaceAccessControlProxy.workaround_grantRole(_role, _account);
-  }
-
-  function test_GrantRole_When_spaceIdAlreadyHasThe_role(bytes32 _role, address _account, bytes16 _spaceId) external {
+  function test_GrantRole_WhenCalled(bytes32 _role, bytes16 _spaceId) external {
     vm.assume(_spaceId != bytes16(0));
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
 
-    // when _spaceId already has the _role
-    assertEq(spaceAccessControlProxy.workaround_grantRole(_role, _account), _spaceId);
-
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // it returns the _spaceId
-    assertEq(spaceAccessControlProxy.workaround_grantRole(_role, _account), _spaceId);
-  }
-
-  function test_GrantRole_When_spaceIdDoesNotHaveThe_role(bytes32 _role, address _account, bytes16 _spaceId) external {
-    vm.assume(_spaceId != bytes16(0));
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // when _spaceId does not have the _role
-    assertEq(spaceAccessControlProxy.hasRole(_role, _account), false);
-
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // it returns the _spaceId
-    assertEq(spaceAccessControlProxy.workaround_grantRole(_role, _account), _spaceId);
-
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
+    // when called
+    spaceAccessControlProxy.workaround_grantRole(_role, _spaceId);
 
     // it grants _role to _spaceId
-    assertEq(spaceAccessControlProxy.hasRole(_role, _account), true);
+    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), true);
   }
 
-  function test_RevokeRole_When_accountIsNotRegistered(bytes32 _role, address _account) external {
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, bytes16(0));
-
-    // it reverts with SpaceNotRegistered
-    vm.expectRevert(ISpaceAccessControl.SpaceNotRegistered.selector);
-    spaceAccessControlProxy.workaround_revokeRole(_role, _account);
-  }
-
-  function test_RevokeRole_When_spaceIdDoesNotHaveThe_role(bytes32 _role, address _account, bytes16 _spaceId) external {
+  function test_RevokeRole_WhenCalled(bytes32 _role, bytes16 _spaceId) external {
     vm.assume(_spaceId != bytes16(0));
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // when _spaceId does not have the _role
-    assertEq(spaceAccessControlProxy.hasRole(_role, _account), false);
-
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // it returns the _spaceId
-    assertEq(spaceAccessControlProxy.workaround_revokeRole(_role, _account), _spaceId);
-  }
-
-  function test_RevokeRole_When_spaceIdHasThe_role(bytes32 _role, address _account, bytes16 _spaceId) external {
-    vm.assume(_spaceId != bytes16(0));
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
 
     // when _spaceId has the _role
-    assertEq(spaceAccessControlProxy.workaround_grantRole(_role, _account), _spaceId);
+    spaceAccessControlProxy.workaround_grantRole(_role, _spaceId);
+    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), true);
 
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
-
-    // it returns the _spaceId
-    assertEq(spaceAccessControlProxy.workaround_revokeRole(_role, _account), _spaceId);
-
-    _mockAddressToSpaceId(address(_spaceRegistry), _account, _spaceId);
+    // when called
+    spaceAccessControlProxy.workaround_revokeRole(_role, _spaceId);
 
     // it revokes _role from _spaceId
-    assertEq(spaceAccessControlProxy.hasRole(_role, _account), false);
+    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), false);
   }
 
   function _mockAddressToSpaceId(address __spaceRegistry, address __account, bytes16 __spaceId) internal {
