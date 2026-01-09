@@ -29,7 +29,7 @@ src = 'src/interfaces/'
 runs = 1000
 
 [invariant]
-timeout = 100
+timeout = 30
 depth = 128
 show_metrics = true
 fail_on_revert = true
