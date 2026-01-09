@@ -39,6 +39,7 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
 │   ├── it emits Action with SPACE_ID_REGISTERED
+│   ├── it returns the newly generated spaceId
 │   └── when _type exists
 │       └── it emits Action with SPACE_TYPE_DECLARED
 └── when space is registered
