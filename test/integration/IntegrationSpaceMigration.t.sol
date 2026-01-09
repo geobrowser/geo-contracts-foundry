@@ -7,7 +7,9 @@ import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {MockMigratableVerifierSpace} from 'test/integration/mocks/MockMigratableVerifierSpace.sol';
 
+import 'script/Constants.s.sol' as Constants;
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
 contract IntegrationSpaceMigration is IntegrationBase {
@@ -16,6 +18,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
   address public eoaSpaceTer = makeAddr('eoaSpaceTer');
   DAOSpace public daoSpaceProxyBis;
   VerifierSpace public verifierSpaceProxyBis;
+  MockMigratableVerifierSpace public migratableVerifierSpaceImplementation;
 
   // Space IDs
   bytes16 internal _eoaSpaceBisId;
@@ -52,6 +55,10 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
     verifierSpaceProxyBis = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpaceBis));
     _verifierSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyBis));
+
+    migratableVerifierSpaceImplementation = new MockMigratableVerifierSpace();
+    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
+    verifierSpaceBeacon.upgradeTo(address(migratableVerifierSpaceImplementation));
   }
 
   function test_SpaceMigration_EOASpace() external {
@@ -166,17 +173,17 @@ contract IntegrationSpaceMigration is IntegrationBase {
     assertEq(spaceRegistryProxy.spaceIdToAddress(_verifierSpaceProxyBisId), address(verifierSpaceProxyBis));
 
     vm.prank(eoaSpace);
-    verifierSpaceProxy.proposeMigration(address(verifierSpaceProxyBis));
+    MockMigratableVerifierSpace(address(verifierSpaceProxy)).proposeMigration(address(verifierSpaceProxyBis));
 
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_verifierSpaceProxyId), address(verifierSpaceProxyBis));
 
     vm.expectRevert(ISpaceRegistry.SpaceAlreadyRegistered.selector);
     vm.prank(eoaSpaceBis);
-    verifierSpaceProxyBis.acceptMigration(_verifierSpaceProxyId);
+    MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).acceptMigration(_verifierSpaceProxyId);
 
     vm.startPrank(eoaSpaceBis);
-    verifierSpaceProxyBis.clear();
-    verifierSpaceProxyBis.acceptMigration(_verifierSpaceProxyId);
+    MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).clear();
+    MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).acceptMigration(_verifierSpaceProxyId);
     vm.stopPrank();
 
     assertEq(spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxy)), bytes16(0));

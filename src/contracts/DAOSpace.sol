@@ -155,10 +155,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     _unrestrictSpace(_space);
   }
 
-  // REVIEW: Are `publish()`, `flag()`, `unflag()`, or even `ping()` worth it herein, considering that their
-  //         sole purpose is to relay the call to `SpaceRegistry.enter()` and that only its `Action` emission is relevant?
-  //         The first three might have value due to being fast path actions, and the last one because of its fewer params
-
   /// @inheritdoc IDAOSpace
   function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual {
     if (!hasRole(DAO, msg.sender)) revert InvalidCaller();

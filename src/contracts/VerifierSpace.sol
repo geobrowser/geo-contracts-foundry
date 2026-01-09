@@ -57,36 +57,6 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     _setValidWriters(_account, _valid);
   }
 
-  /// @inheritdoc IVerifierSpace
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.enter(address(this), address(this), _action, _topic, _data, '');
-  }
-
-  /// @inheritdoc IVerifierSpace
-  function register() external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
-  }
-
-  /// @inheritdoc IVerifierSpace
-  function clear() external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.clearSpaceId();
-  }
-
-  /// @inheritdoc IVerifierSpace
-  function proposeMigration(address _newAccount) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.proposeSpaceMigration(_newAccount);
-  }
-
-  /// @inheritdoc IVerifierSpace
-  function acceptMigration(bytes16 _spaceId) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.acceptSpaceMigration(_spaceId, typeId(), abi.encode(version()));
-  }
-
   /// @inheritdoc ISpace
   function verify(
     address _toSpace,

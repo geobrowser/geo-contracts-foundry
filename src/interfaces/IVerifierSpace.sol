@@ -89,41 +89,4 @@ interface IVerifierSpace is ISpace {
    * @param _valid Whether the writer will be valid
    */
   function setValidWriters(address _account, bool _valid) external;
-
-  /**
-   * @notice Enters the Space Registry to emit an Action event
-   * @dev Must be called by the owner
-   * @param _action An action identifier
-   * @param _topic A topic identifier
-   * @param _data Some extra arbitrary data that may hold additional information
-   * @dev _from and _to are always the DAO's address
-   */
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
-
-  /**
-   * @notice Creates a new space by registering a space ID for this address
-   * @dev Must be called by the owner
-   */
-  function register() external;
-
-  /**
-   * @notice Clears its space ID from the registry and disconnects it from any address
-   * @dev Must be called by the owner
-   */
-  function clear() external;
-
-  /**
-   * @notice Proposes to migrate its space ID to a new address
-   * @dev Must be called by the owner
-   * @param _newAccount The proposed address of the space
-   */
-  function proposeMigration(address _newAccount) external;
-
-  /**
-   * @notice Accepts to migrate a space ID to itself
-   * @dev Must be called by the owner
-   * @dev Can only accept proposed migrations in the registry
-   * @param _spaceId The ID of the space
-   */
-  function acceptMigration(bytes16 _spaceId) external;
 }

@@ -183,106 +183,6 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.setValidWriters(_account, _valid);
   }
 
-  function test_Ping_WhenCalledByOwner(bytes32 _action, bytes32 _topic, bytes calldata _data) external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it calls enter on the spaceRegistry to emit Action
-    _mockEnter(_spaceRegistry, address(verifierSpaceProxy), address(verifierSpaceProxy), _action, _topic, _data, '');
-
-    verifierSpaceProxy.ping(_action, _topic, _data);
-  }
-
-  function test_Ping_WhenCalledByNon_owner(bytes32 _action, bytes32 _topic, bytes calldata _data) external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.ping(_action, _topic, _data);
-  }
-
-  function test_Register_WhenCalledByOwner() external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
-
-    verifierSpaceProxy.register();
-  }
-
-  function test_Register_WhenCalledByNon_owner() external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.register();
-  }
-
-  function test_Clear_WhenCalledByOwner() external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it calls spaceRegistry to clear space ID
-    _mockClearSpaceId(_spaceRegistry);
-
-    verifierSpaceProxy.clear();
-  }
-
-  function test_Clear_WhenCalledByNon_owner() external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.clear();
-  }
-
-  function test_ProposeMigration_WhenCalledByOwner(address _newAccount) external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it calls spaceRegistry to propose space migration
-    _mockProposeSpaceMigration(_spaceRegistry, _newAccount);
-
-    verifierSpaceProxy.proposeMigration(_newAccount);
-  }
-
-  function test_ProposeMigration_WhenCalledByNon_owner(address _newAccount) external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.proposeMigration(_newAccount);
-  }
-
-  function test_AcceptMigration_WhenCalledByOwner(bytes16 _spaceId) external {
-    // when called by owner
-    vm.startPrank(_owner);
-
-    // it calls spaceRegistry to accept space migration
-    _mockAcceptSpaceMigration(_spaceRegistry, _spaceId, _spaceType, _spaceVersion);
-
-    verifierSpaceProxy.acceptMigration(_spaceId);
-  }
-
-  function test_AcceptMigration_WhenCalledByNon_owner(bytes16 _spaceId) external {
-    // when called by non-owner
-    vm.startPrank(_randomCaller);
-
-    // it reverts with OwnableUnauthorizedAccount
-    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
-
-    verifierSpaceProxy.acceptMigration(_spaceId);
-  }
-
   modifier whenCallerIsSpaceRegistry() {
     vm.startPrank(address(_spaceRegistry));
     _;
@@ -420,22 +320,6 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
   }
 
-  function _mockEnter(
-    ISpaceRegistry __spaceRegistry,
-    address _from,
-    address _to,
-    bytes32 _action,
-    bytes32 _topic,
-    bytes memory _data,
-    bytes memory _signature
-  ) internal {
-    _mockAndExpect(
-      address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.enter, (_from, _to, _action, _topic, _data, _signature)),
-      abi.encode()
-    );
-  }
-
   function _mockRegisterSpaceId(
     ISpaceRegistry __spaceRegistry,
     bytes32 __spaceType,
@@ -444,29 +328,6 @@ contract UnitVerifierSpace is TestHelper {
     _mockAndExpect(
       address(__spaceRegistry),
       abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
-      abi.encode()
-    );
-  }
-
-  function _mockClearSpaceId(ISpaceRegistry __spaceRegistry) internal {
-    _mockAndExpect(address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.clearSpaceId, ()), abi.encode());
-  }
-
-  function _mockProposeSpaceMigration(ISpaceRegistry __spaceRegistry, address _newAccount) internal {
-    _mockAndExpect(
-      address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.proposeSpaceMigration, (_newAccount)), abi.encode()
-    );
-  }
-
-  function _mockAcceptSpaceMigration(
-    ISpaceRegistry __spaceRegistry,
-    bytes16 _spaceId,
-    bytes32 __spaceType,
-    bytes memory __spaceVersion
-  ) internal {
-    _mockAndExpect(
-      address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.acceptSpaceMigration, (_spaceId, __spaceType, __spaceVersion)),
       abi.encode()
     );
   }

@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import {Script} from 'forge-std/Script.sol';
 
+import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
@@ -21,11 +22,13 @@ contract DeployGEOBrowser is Script {
   DAOSpaceFactory public daoSpaceFactoryProxy;
 
   DAOSpace public daoSpaceImplementation;
+  UpgradeableBeacon public daoSpaceBeacon;
 
   VerifierSpaceFactory public verifierSpaceFactoryImplementation;
   VerifierSpaceFactory public verifierSpaceFactoryProxy;
 
   VerifierSpace public verifierSpaceImplementation;
+  UpgradeableBeacon public verifierSpaceBeacon;
 
   function setUp() public virtual {}
 
@@ -55,6 +58,7 @@ contract DeployGEOBrowser is Script {
         )
       )
     );
+    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
     verifierSpaceFactoryProxy = VerifierSpaceFactory(
       UnsafeUpgrades.deployUUPSProxy(
         address(verifierSpaceFactoryImplementation),
@@ -66,6 +70,7 @@ contract DeployGEOBrowser is Script {
         )
       )
     );
+    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
     vm.stopBroadcast();
   }

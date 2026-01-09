@@ -3,8 +3,6 @@ pragma solidity 0.8.30;
 
 import {IntegrationBase} from 'test/integration/IntegrationBase.t.sol';
 
-import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {MockDAOSpaceV2} from 'test/integration/mocks/MockDAOSpaceV2.sol';
@@ -13,12 +11,10 @@ import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementatio
 import 'script/Constants.s.sol' as Constants;
 
 contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
-  UpgradeableBeacon public daoSpaceBeacon;
   MockDAOSpaceV2 public daoSpaceImplementationBis;
   MockDAOSpaceV2 public daoSpaceProxyA;
   MockDAOSpaceV2 public daoSpaceProxyB;
 
-  UpgradeableBeacon public verifierSpaceBeacon;
   VerifierSpace public verifierSpaceImplementationBis;
   VerifierSpace public verifierSpaceProxyA;
   VerifierSpace public verifierSpaceProxyB;
@@ -26,9 +22,6 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   function setUp() public override {
     IntegrationBase.setUp();
     vm.selectFork(_geoTestnetForkId);
-
-    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
-    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
     daoSpaceProxyA = MockDAOSpaceV2(address(daoSpaceProxy));
     daoSpaceProxyB = MockDAOSpaceV2(
