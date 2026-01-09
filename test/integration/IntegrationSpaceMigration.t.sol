@@ -86,6 +86,48 @@ contract IntegrationSpaceMigration is IntegrationBase {
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_eoaSpaceId), address(0));
   }
 
+  function test_SpaceMigration_EOASpace_DAOSpaceMultiVote() external {
+    // daoSpaceProxy
+    // Proposal 0 (slow path): clearSpaceId();
+    bytes16 _proposalId = 0;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
+    });
+    bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
+    bytes memory _voteProposalData = abi.encode(_proposalId, IDAOSpace.VoteOption.Yes);
+    bytes memory _executeProposalData = abi.encode(_proposalId);
+
+    vm.startPrank(eoaSpace);
+    // PROPOSAL_CREATED
+    spaceRegistryProxy.enter(
+      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
+    );
+    // PROPOSAL_VOTED
+    spaceRegistryProxy.enter(
+      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
+    );
+    // MIGRATION_PROPOSED
+    spaceRegistryProxy.proposeSpaceMigration(eoaSpaceTer);
+    vm.stopPrank();
+
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.yes, 1);
+
+    vm.startPrank(eoaSpaceTer);
+    // MIGRATION_ACCEPTED
+    spaceRegistryProxy.acceptSpaceMigration(_eoaSpaceId, keccak256('EOA_SPACE'), '1.0.0');
+    // PROPOSAL_VOTED
+    spaceRegistryProxy.enter(
+      eoaSpaceTer, address(daoSpaceProxy), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
+    );
+    vm.stopPrank();
+
+    vm.skip(true);
+    (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.yes, 1);
+  }
+
   function test_SpaceMigration_DAOSpace() external {
     // daoSpaceProxy
     assertEq(spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxy)), _daoSpaceProxyId);
