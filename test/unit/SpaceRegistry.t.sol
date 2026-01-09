@@ -171,7 +171,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
-    _mockVerify(_fromSpace, _fromSpaceId, _toSpaceId, _action, _topic, _data, _signature);
+    _mockVerify(_fromSpace, _toSpaceId, _action, _topic, _data, _signature);
 
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _topic, _data, _signature);
   }
@@ -230,8 +230,6 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external whenSpaceIsNotRegistered {
     // when space is not registered
-    vm.assume(__fromSpaceId != bytes16(0));
-    vm.assume(__toSpaceId != bytes16(0));
 
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
@@ -257,8 +255,10 @@ contract UnitSpaceRegistry is TestHelper {
     );
 
     vm.startPrank(_account);
-    spaceRegistryProxy.registerSpaceId(bytes32(0), '');
+    bytes16 _returnedSpaceId = spaceRegistryProxy.registerSpaceId(bytes32(0), '');
 
+    // it returns the newly generated spaceId
+    assertEq(_returnedSpaceId, _spaceId);
     // it increments _spaceIdNonce
     assertEq(spaceRegistryProxy.exposed__spaceIdNonce(), _spaceIdNonce + 1);
     // it sets addressToSpaceId
@@ -549,7 +549,6 @@ contract UnitSpaceRegistry is TestHelper {
 
   function _mockVerify(
     address __fromSpace,
-    bytes16 __fromSpaceId,
     bytes16 __toSpaceId,
     bytes32 _action,
     bytes32 _topic,

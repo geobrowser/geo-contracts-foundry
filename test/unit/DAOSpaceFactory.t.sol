@@ -39,8 +39,8 @@ contract UnitDAOSpaceFactory is TestHelper {
     // Etch some code so that the beacon deploys
     vm.etch(_daoSpaceImplementation, hex'fe');
 
-    _initialEditors[0] = bytes16(keccak256(abi.encodePacked('grc20.space', _initialEditor, uint256(0), block.chainid)));
-    _initialMembers[0] = bytes16(keccak256(abi.encodePacked('grc20.space', _initialMember, uint256(0), block.chainid)));
+    _initialEditors[0] = _getSpaceId(_initialEditor);
+    _initialMembers[0] = _getSpaceId(_initialMember);
 
     _votingSettings = IDAOSpace.VotingSettings({
       slowPathPercentageThreshold: 5e5, fastPathFlatThreshold: 1, quorum: 1, duration: 2 days
@@ -262,5 +262,9 @@ contract UnitDAOSpaceFactory is TestHelper {
       abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
       abi.encode()
     );
+  }
+
+  function _getSpaceId(address _account) internal view returns (bytes16 _spaceId) {
+    return bytes16(keccak256(abi.encodePacked('grc20.space', _account, uint256(0), block.chainid)));
   }
 }

@@ -37,15 +37,15 @@ contract UnitVerifierSpace is TestHelper {
     _spaceType = keccak256(bytes(verifierSpaceImplementation.name()));
     _spaceVersion = abi.encode(verifierSpaceImplementation.version());
 
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
-
     // Get predicted Verifier Space proxy address
     address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
     bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
 
+    // mock the space registration
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
     // mock mapping fetch with ping
     _mockAddressToSpaceId(_spaceRegistry, _owner, _getSpaceId(_owner));
-    _mockAddressToSpaceId(_spaceRegistry, predictedVerifierSpaceProxy, predictedVerifierSpaceProxySpaceId);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -95,16 +95,15 @@ contract UnitVerifierSpace is TestHelper {
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
 
-    // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
-
     // Get predicted Verifier Space proxy address
     address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
     bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
 
+    // it calls spaceRegistry to register space ID
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
-    _mockAddressToSpaceId(__spaceRegistry, predictedVerifierSpaceProxy, predictedVerifierSpaceProxySpaceId);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -136,15 +135,16 @@ contract UnitVerifierSpace is TestHelper {
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
 
     // Get predicted Verifier Space proxy address
     address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
     bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
 
+    // mock the space registration
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
-    _mockAddressToSpaceId(__spaceRegistry, predictedVerifierSpaceProxy, predictedVerifierSpaceProxySpaceId);
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -359,12 +359,13 @@ contract UnitVerifierSpace is TestHelper {
   function _mockRegisterSpaceId(
     ISpaceRegistry __spaceRegistry,
     bytes32 __spaceType,
-    bytes memory __spaceVersion
+    bytes memory __spaceVersion,
+    bytes16 __spaceId
   ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
       abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
-      abi.encode()
+      abi.encode(__spaceId)
     );
   }
 }

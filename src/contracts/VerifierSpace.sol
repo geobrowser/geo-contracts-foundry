@@ -45,11 +45,11 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     // Set Space Registry and register new Verifier Space
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
-    _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    bytes16 _verifierSpaceId = _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
     // Set valid writers
     _setValidWriters(_spaceRegistry.addressToSpaceId(_owner), true);
-    _setValidWriters(_spaceRegistry.addressToSpaceId(address(this)), true);
+    _setValidWriters(_verifierSpaceId, true);
   }
 
   /// @inheritdoc IVerifierSpace

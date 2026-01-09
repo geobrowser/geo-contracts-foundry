@@ -103,8 +103,9 @@ interface ISpaceRegistry is ISemver {
    * @notice Creates a new space by registering a space ID for the caller address
    * @param _type The type of space being registered (optional)
    * @param _version The version of the space implementation (optional)
+   * @return _spaceId The newly generated space id
    */
-  function registerSpaceId(bytes32 _type, bytes calldata _version) external;
+  function registerSpaceId(bytes32 _type, bytes calldata _version) external returns (bytes16 _spaceId);
 
   /**
    * @notice Clears a space id from the registry and disconnects it from any address

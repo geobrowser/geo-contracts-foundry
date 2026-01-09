@@ -46,6 +46,16 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   bytes32 internal constant _DAO_SPACE_STORAGE_LOCATION =
     0xca9a28eed6337bb89b7996aa1033645556bf4017a5207860882394677302bc00;
 
+  /**
+   * @notice Restricts the caller to only those with the given role
+   * @param _role The role governing access control
+   */
+  modifier onlyRole(bytes32 _role) {
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    if (!hasRole(_role, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+    _;
+  }
+
   /// @notice Constructor
   constructor() {
     _disableInitializers();
@@ -65,7 +75,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Set Space Registry and register new DAO Space
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     $.spaceRegistry = _spaceRegistry;
-    $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    bytes16 _daoSpaceId = $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
@@ -87,7 +97,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, _spaceRegistry.addressToSpaceId(address(_spaceRegistry)));
-    _grantRole(DAO, _spaceRegistry.addressToSpaceId(address(this)));
+    _grantRole(DAO, _daoSpaceId);
 
     // Set the initial fast path actions
     $.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
@@ -98,10 +108,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function write(bytes16 _fromSpaceId, bytes32 _action, bytes32, bytes calldata _data) external virtual {
-    // Only Space Registry can call
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(SPACE_REGISTRY, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function write(
+    bytes16 _fromSpaceId,
+    bytes32 _action,
+    bytes32,
+    bytes calldata _data
+  ) external virtual onlyRole(SPACE_REGISTRY) {
     // Governance Actions
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
       _createProposal(_fromSpaceId, _data);
@@ -127,72 +139,56 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function addEditor(bytes16 _newEditorSpaceId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function addEditor(bytes16 _newEditorSpaceId) public virtual onlyRole(DAO) {
     _addEditor(_newEditorSpaceId);
   }
 
   /// @inheritdoc IDAOSpace
-  function removeEditor(bytes16 _oldEditorSpaceId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function removeEditor(bytes16 _oldEditorSpaceId) public virtual onlyRole(DAO) {
     _removeEditor(_oldEditorSpaceId);
   }
 
   /// @inheritdoc IDAOSpace
-  function addMember(bytes16 _newMemberSpaceId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function addMember(bytes16 _newMemberSpaceId) public virtual onlyRole(DAO) {
     _addMember(_newMemberSpaceId);
   }
 
   /// @inheritdoc IDAOSpace
-  function removeMember(bytes16 _oldMemberSpaceId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function removeMember(bytes16 _oldMemberSpaceId) public virtual onlyRole(DAO) {
     _removeMember(_oldMemberSpaceId);
   }
 
   /// @inheritdoc IDAOSpace
-  function unrestrictSpace(bytes16 _spaceId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function unrestrictSpace(bytes16 _spaceId) public virtual onlyRole(DAO) {
     _unrestrictSpace(_spaceId);
   }
 
   /// @inheritdoc IDAOSpace
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual onlyRole(DAO) {
     _ping(_action, _topic, _data);
   }
 
   /// @inheritdoc IDAOSpace
-  function publish(bytes32 _topic, bytes memory _editsContentUri, bytes memory _editsMetadata) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function publish(
+    bytes32 _topic,
+    bytes memory _editsContentUri,
+    bytes memory _editsMetadata
+  ) public virtual onlyRole(DAO) {
     _ping(ActionsConstants.EDITS_PUBLISHED, _topic, abi.encode(_editsContentUri, _editsMetadata));
   }
 
   /// @inheritdoc IDAOSpace
-  function flag(bytes32 _topic, bytes calldata _flaggedId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function flag(bytes32 _topic, bytes calldata _flaggedId) public virtual onlyRole(DAO) {
     _ping(ActionsConstants.FLAGGED, _topic, _flaggedId);
   }
 
   /// @inheritdoc IDAOSpace
-  function unflag(bytes32 _topic, bytes calldata _unflaggedId) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function unflag(bytes32 _topic, bytes calldata _unflaggedId) public virtual onlyRole(DAO) {
     _ping(ActionsConstants.UNFLAGGED, _topic, _unflaggedId);
   }
 
   /// @inheritdoc IDAOSpace
-  function updateVotingSettings(VotingSettings calldata _votingSettings) public virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(DAO, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+  function updateVotingSettings(VotingSettings calldata _votingSettings) public virtual onlyRole(DAO) {
     _updateVotingSettings(_votingSettings);
   }
 

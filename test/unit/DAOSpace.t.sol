@@ -59,7 +59,7 @@ contract UnitDAOSpace is TestHelper {
     _spaceVersion = abi.encode(daoSpaceImplementation.version());
 
     // when delegate called
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(_spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
@@ -165,9 +165,8 @@ contract UnitDAOSpace is TestHelper {
     address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
-
     bytes16 predictedDAOSpaceProxySpaceId = _getSpaceId(predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
@@ -254,9 +253,8 @@ contract UnitDAOSpace is TestHelper {
     address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
-
     bytes16 predictedDAOSpaceProxySpaceId = _getSpaceId(predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
@@ -2239,9 +2237,16 @@ contract UnitDAOSpace is TestHelper {
     _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.addressToSpaceId, (__account)), abi.encode(__spaceId));
   }
 
-  function _mockRegisterSpaceId(address __spaceRegistry, bytes32 __spaceType, bytes memory __spaceVersion) internal {
+  function _mockRegisterSpaceId(
+    address __spaceRegistry,
+    bytes32 __spaceType,
+    bytes memory __spaceVersion,
+    bytes16 __spaceId
+  ) internal {
     _mockAndExpect(
-      __spaceRegistry, abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)), abi.encode()
+      __spaceRegistry,
+      abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
+      abi.encode(__spaceId)
     );
   }
 
