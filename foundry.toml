@@ -28,6 +28,14 @@ src = 'src/interfaces/'
 [fuzz]
 runs = 1000
 
+[invariant]
+timeout = 100
+depth = 128
+show_metrics = true
+fail_on_revert = true
+corpus_dir = 'test/invariants/fuzz/corpus'
+show_solidity = true
+
 [rpc_endpoints]
 arbitrum_one = "${ARBITRUM_ONE_RPC}"
 arbitrum_testnet = "${ARBITRUM_TESTNET_RPC}"
