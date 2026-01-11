@@ -240,7 +240,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       // Slow path
       if (block.timestamp <= proposal_.parameters.lastDate) return false;
       // Quorum check
-      if (proposal_.tally.abstain + proposal_.tally.yes + proposal_.tally.no < proposal_.parameters.quorum) {
+      if (proposal_.tally.yes + proposal_.tally.no + proposal_.tally.abstain < proposal_.parameters.quorum) {
         return false;
       }
       // Threshold percentage calculation
