@@ -47,12 +47,24 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
 
     daoSpaceProxyA = MockDAOSpaceV2(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
+        _votingSettings,
+        _initialSpaceEditors,
+        _initialSpaceMembers,
+        _initialEditsContentUri,
+        _initialEditsMetadata,
+        _initialTopicId,
+        _initialTopicData
       )
     );
     daoSpaceProxyB = MockDAOSpaceV2(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
+        _votingSettings,
+        _initialSpaceEditors,
+        _initialSpaceMembers,
+        _initialEditsContentUri,
+        _initialEditsMetadata,
+        _initialTopicId,
+        _initialTopicData
       )
     );
     verifierSpaceProxyA = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(_initialSpaceOwner));

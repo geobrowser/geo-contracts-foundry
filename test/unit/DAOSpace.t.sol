@@ -34,6 +34,8 @@ contract UnitDAOSpace is TestHelper {
   bytes16 internal _initialMemberSpaceId = bytes16(keccak256('_initialMemberSpaceId'));
   bytes internal _publishEditsData = 'Curiouser and curiouser!';
   bytes16 internal _proposalId = bytes16(keccak256('_proposalId'));
+  bytes16 internal _initialTopicId = bytes16(keccak256('_initialTopicId'));
+  bytes internal _initialTopicData = 'Science Fiction';
 
   function setUp() external {
     // set up
@@ -103,7 +105,15 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(
+              _spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _initialTopicData
+            ))
         )
       )
     );
@@ -181,6 +191,16 @@ contract UnitDAOSpace is TestHelper {
       _publishEditsData
     );
 
+    // it calls enter on the spaceRegistry with the TOPIC_DECLARED action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxySpaceId,
+      predictedDAOSpaceProxySpaceId,
+      ActionsConstants.TOPIC_DECLARED,
+      bytes32(_initialTopicId),
+      _initialTopicData
+    );
+
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
@@ -210,7 +230,15 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _initialTopicData
+            ))
         )
       )
     );
@@ -269,6 +297,16 @@ contract UnitDAOSpace is TestHelper {
       _publishEditsData
     );
 
+    // it calls enter on the spaceRegistry with the TOPIC_DECLARED action
+    _mockEnter(
+      __spaceRegistry,
+      predictedDAOSpaceProxySpaceId,
+      predictedDAOSpaceProxySpaceId,
+      ActionsConstants.TOPIC_DECLARED,
+      bytes32(_initialTopicId),
+      _initialTopicData
+    );
+
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
@@ -298,7 +336,15 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _initialTopicData
+            ))
         )
       )
     );
@@ -308,7 +354,15 @@ contract UnitDAOSpace is TestHelper {
 
     // when delegate called again
     daoSpaceProxy.initialize(
-      abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+      abi.encode(
+        __spaceRegistry,
+        _votingSettings,
+        _initialEditors,
+        _initialMembers,
+        _publishEditsData,
+        _initialTopicId,
+        _initialTopicData
+      )
     );
   }
 
@@ -318,7 +372,15 @@ contract UnitDAOSpace is TestHelper {
 
     // when called again
     daoSpaceProxy.initialize(
-      abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+      abi.encode(
+        _spaceRegistry,
+        _votingSettings,
+        _initialEditors,
+        _initialMembers,
+        _publishEditsData,
+        _initialTopicId,
+        _initialTopicData
+      )
     );
   }
 

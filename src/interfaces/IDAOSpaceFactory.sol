@@ -50,6 +50,8 @@ interface IDAOSpaceFactory is ISemver {
    * @param _initialMembers The initial list of member space IDs
    * @param _initialEditsContentUri The initial edit publish content uri
    * @param _initialEditsMetadata The initial edit publish metadata
+   * @param _initialTopicId Optional topic ID to declare during initialization (bytes16(0) to skip)
+   * @param _initialTopicData Optional topic data to include with topic declaration
    * @return _newDAOSpaceProxy The address of the new DAO space proxy contract
    */
   function createDAOSpaceProxy(
@@ -57,6 +59,8 @@ interface IDAOSpaceFactory is ISemver {
     bytes16[] calldata _initialEditors,
     bytes16[] calldata _initialMembers,
     bytes calldata _initialEditsContentUri,
-    bytes calldata _initialEditsMetadata
+    bytes calldata _initialEditsMetadata,
+    bytes16 _initialTopicId,
+    bytes calldata _initialTopicData
   ) external returns (address _newDAOSpaceProxy);
 }
