@@ -138,7 +138,7 @@ UnitDAOSpace::write
 │   ├── when _action equals MEMBERSHIP_REQUESTED
 │   │   ├── when _proposalId has already been used
 │   │   │   └── it reverts with InvalidProposalId
-│   │   ├── when _fromSpace is restricted
+│   │   ├── when _fromSpaceId is restricted
 │   │   │   └── it reverts with FastPathRestricted
 │   │   └── when the request can be made
 │   │       ├── it creates a fast path proposal to add the new member

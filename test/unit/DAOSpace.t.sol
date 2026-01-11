@@ -1448,26 +1448,29 @@ contract UnitDAOSpace is TestHelper {
     vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
 
     daoSpaceProxy.write(
-      randomCallerSpaceId, ActionsConstants.MEMBERSHIP_REQUESTED, bytes32(0), abi.encode(_proposalId, randomCallerSpaceId)
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
     );
   }
 
-  function test_Write_When_fromSpaceIsRestricted_When_actionEqualsMEMBERSHIP_REQUESTED()
+  function test_Write_When_fromSpaceIdIsRestricted_When_actionEqualsMEMBERSHIP_REQUESTED()
     external
     whenCalledBySpaceRegistry
     when_actionEqualsMEMBERSHIP_REQUESTED
   {
     bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
-    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, randomCallerSpaceId);
     daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), randomCallerSpaceId);
-
-    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, randomCallerSpaceId);
 
     // it reverts with FastPathRestricted
     vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
 
     daoSpaceProxy.write(
-      randomCallerSpaceId, ActionsConstants.MEMBERSHIP_REQUESTED, bytes32(0), abi.encode(_proposalId, randomCallerSpaceId)
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
     );
   }
 
@@ -1487,13 +1490,13 @@ contract UnitDAOSpace is TestHelper {
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
     });
 
-    _mockAddressToSpaceId(_spaceRegistry, _randomCaller, randomCallerSpaceId);
+    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
 
     // it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
     _mockEnter(
       _spaceRegistry,
-      address(daoSpaceProxy),
-      address(daoSpaceProxy),
+      daoSpaceProxySpaceId,
+      daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_CREATED,
       bytes32(_proposalId),
       abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, actions)
@@ -1502,8 +1505,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
-      address(daoSpaceProxy),
-      address(daoSpaceProxy),
+      daoSpaceProxySpaceId,
+      daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
@@ -1516,7 +1519,10 @@ contract UnitDAOSpace is TestHelper {
     );
 
     daoSpaceProxy.write(
-      randomCallerSpaceId, ActionsConstants.MEMBERSHIP_REQUESTED, bytes32(0), abi.encode(_proposalId, randomCallerSpaceId)
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
     );
 
     // it creates a fast path proposal to add the new member
@@ -2128,7 +2134,10 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
-  function test_Fetch_When_actionEqualsMEMBERSHIP_REQUESTED(bytes32 _topicInput, bytes16 _newMemberSpaceId) external view {
+  function test_Fetch_When_actionEqualsMEMBERSHIP_REQUESTED(
+    bytes32 _topicInput,
+    bytes16 _newMemberSpaceId
+  ) external view {
     bytes memory _data = abi.encode(_proposalId, _newMemberSpaceId);
 
     // it returns bytes32(_proposalId)

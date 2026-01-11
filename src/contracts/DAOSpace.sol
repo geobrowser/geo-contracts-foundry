@@ -601,7 +601,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     proposal_.parameters.quorum = $.votingSettings.quorum;
     proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
     proposal_.actions
-      .push(IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))}));
+      .push(
+        IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))})
+      );
     // Ping the registry to emit the proposal creation and settings
     _ping(
       ActionsConstants.PROPOSAL_CREATED,
