@@ -43,8 +43,8 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   /// @inheritdoc IDAOSpaceFactory
   function createDAOSpaceProxy(
     IDAOSpace.VotingSettings calldata _votingSettings,
-    address[] calldata _initialEditors,
-    address[] calldata _initialMembers,
+    bytes16[] calldata _initialEditors,
+    bytes16[] calldata _initialMembers,
     bytes calldata _initialEditsContentUri,
     bytes calldata _initialEditsMetadata
   ) external virtual returns (address _newDAOSpaceProxy) {

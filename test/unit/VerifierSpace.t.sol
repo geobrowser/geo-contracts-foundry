@@ -23,8 +23,8 @@ contract UnitVerifierSpace is TestHelper {
   bytes internal _spaceVersion;
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
-  address internal _fromSpace = makeAddr('_fromSpace');
-  address internal _toSpace = makeAddr('_toSpace');
+  bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
+  bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
   function setUp() external {
     (_owner, _ownerPrivateKey) = makeAddrAndKey('_owner');
@@ -37,7 +37,15 @@ contract UnitVerifierSpace is TestHelper {
     _spaceType = verifierSpaceImplementation.typeId();
     _spaceVersion = abi.encode(verifierSpaceImplementation.version());
 
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion);
+    // Get predicted Verifier Space proxy address
+    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+
+    // mock the space registration
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
+    // mock mapping fetch with ping
+    _mockAddressToSpaceId(_spaceRegistry, _owner, _getSpaceId(_owner));
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -48,10 +56,10 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
-    // it sets the _MESSAGE_TYPEHASH to keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+    // it sets the _MESSAGE_TYPEHASH to keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     assertEq(
       verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(),
-      keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+      keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     );
 
     // it sets _VERIFIER_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
@@ -87,8 +95,15 @@ contract UnitVerifierSpace is TestHelper {
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
 
+    // Get predicted Verifier Space proxy address
+    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
+    // mock mapping fetch with ping
+    _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -109,8 +124,10 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
 
     // it sets validWriters
-    assertEq(verifierSpaceProxy.validWriters(__owner), true);
-    assertEq(verifierSpaceProxy.validWriters(address(verifierSpaceProxy)), true);
+    bytes16 ownerSpaceId = _getSpaceId(__owner);
+    bytes16 verifierSpaceProxySpaceId = _getSpaceId(address(verifierSpaceProxy));
+    assertEq(verifierSpaceProxy.validWriters(ownerSpaceId), true);
+    assertEq(verifierSpaceProxy.validWriters(verifierSpaceProxySpaceId), true);
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
@@ -118,7 +135,16 @@ contract UnitVerifierSpace is TestHelper {
     address __owner
   ) external whenDelegateCalled whenOwnerIsNotZeroAddress(__owner) {
     _assumeFuzzable(address(__spaceRegistry));
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion);
+
+    // Get predicted Verifier Space proxy address
+    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+
+    // mock the space registration
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+
+    // mock mapping fetch with ping
+    _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
 
     // when delegate called
     verifierSpaceProxy = MockVerifierSpace(
@@ -159,28 +185,28 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceImplementation.initialize(abi.encode(__spaceRegistry, __owner));
   }
 
-  function test_SetValidWriters_WhenCalledByOwner(address _account, bool _valid) external {
+  function test_SetValidWriters_WhenCalledByOwner(bytes16 _accountSpaceId, bool _valid) external {
     // when called by owner
     vm.startPrank(_owner);
 
     // it emits ValidWriterSet
     vm.expectEmit();
-    emit IVerifierSpace.ValidWriterSet(_account, _valid);
+    emit IVerifierSpace.ValidWriterSet(_accountSpaceId, _valid);
 
-    verifierSpaceProxy.setValidWriters(_account, _valid);
+    verifierSpaceProxy.setValidWriters(_accountSpaceId, _valid);
 
     // it updates validWriters
-    assertEq(verifierSpaceProxy.validWriters(_account), _valid);
+    assertEq(verifierSpaceProxy.validWriters(_accountSpaceId), _valid);
   }
 
-  function test_SetValidWriters_WhenCalledByNon_owner(address _account, bool _valid) external {
+  function test_SetValidWriters_WhenCalledByNon_owner(bytes16 _accountSpaceId, bool _valid) external {
     // when called by non-owner
     vm.startPrank(_randomCaller);
 
     // it reverts with OwnableUnauthorizedAccount
     vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
 
-    verifierSpaceProxy.setValidWriters(_account, _valid);
+    verifierSpaceProxy.setValidWriters(_accountSpaceId, _valid);
   }
 
   modifier whenCallerIsSpaceRegistry() {
@@ -199,7 +225,7 @@ contract UnitVerifierSpace is TestHelper {
     // struct hash
     bytes32 structHash = keccak256(
       abi.encode(
-        verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(), _toSpace, _action, _topic, _replayNonce, keccak256(_data)
+        verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, _replayNonce, keccak256(_data)
       )
     );
     // domain separator
@@ -218,7 +244,7 @@ contract UnitVerifierSpace is TestHelper {
     // signature
     (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, digest);
     bytes memory _signature = abi.encodePacked(_r, _s, _v);
-    verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
 
     // it increments replayNonce
     assertEq(verifierSpaceProxy.replayNonce(), _replayNonce + 1);
@@ -235,7 +261,7 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidSignature
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
 
-    verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
   }
 
   function test_Verify_WhenCallerIsNotSpaceRegistry(
@@ -250,7 +276,7 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
 
-    verifierSpaceProxy.verify(_toSpace, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
   }
 
   function test_Write_WhenWriterIsValid(
@@ -259,10 +285,10 @@ contract UnitVerifierSpace is TestHelper {
     bytes calldata _data
   ) external whenCallerIsSpaceRegistry {
     // when writer is valid
-    _mockValidWriters(_fromSpace, true);
+    _mockValidWriters(_fromSpaceId, true);
 
     // it does not revert
-    verifierSpaceProxy.write(_fromSpace, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
   }
 
   function test_Write_WhenWriterIsNotValid(
@@ -275,7 +301,7 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidWriter
     vm.expectRevert(IVerifierSpace.InvalidWriter.selector);
 
-    verifierSpaceProxy.write(_fromSpace, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
   }
 
   function test_Write_WhenCallerIsNotSpaceRegistry(bytes32 _action, bytes32 _topic, bytes calldata _data) external {
@@ -285,7 +311,7 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
 
-    verifierSpaceProxy.write(_fromSpace, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
   }
 
   function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput, bytes calldata _data) external view {
@@ -316,19 +342,30 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.version(), '1.0.0');
   }
 
-  function _mockValidWriters(address _account, bool _valid) internal {
-    verifierSpaceProxy.workaround_setValidWriters(_account, _valid);
+  function _mockValidWriters(bytes16 _spaceId, bool _valid) internal {
+    verifierSpaceProxy.workaround_setValidWriters(_spaceId, _valid);
+  }
+
+  function _mockAddressToSpaceId(ISpaceRegistry __spaceRegistry, address __account, bytes16 __spaceId) internal {
+    _mockAndExpect(
+      address(__spaceRegistry), abi.encodeCall(ISpaceRegistry.addressToSpaceId, (__account)), abi.encode(__spaceId)
+    );
+  }
+
+  function _getSpaceId(address _account) internal view returns (bytes16 _spaceId) {
+    return bytes16(keccak256(abi.encodePacked('grc20.space', _account, uint256(0), block.chainid)));
   }
 
   function _mockRegisterSpaceId(
     ISpaceRegistry __spaceRegistry,
     bytes32 __spaceType,
-    bytes memory __spaceVersion
+    bytes memory __spaceVersion,
+    bytes16 __spaceId
   ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
       abi.encodeCall(ISpaceRegistry.registerSpaceId, (__spaceType, __spaceVersion)),
-      abi.encode()
+      abi.encode(__spaceId)
     );
   }
 }

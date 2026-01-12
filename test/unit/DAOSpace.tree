@@ -38,13 +38,13 @@ UnitDAOSpace::write
 ├── when called by spaceRegistry
 │   ├── when _action equals PROPOSAL_CREATED
 │   │   ├── when the voting mode is slow
-│   │   │   ├── when _fromSpace is not a member or editor
+│   │   │   ├── when _fromSpaceId is not a member or editor
 │   │   │   │   └── it reverts with InvalidFromSpace
 │   │   │   ├── when _proposalId has already been used
 │   │   │   │   └── it reverts with InvalidProposalId
 │   │   │   └── when _createProposal params are valid
 │   │   │       ├── it increments the proposal version
-│   │   │       ├── it sets the proposal creator to _fromSpace
+│   │   │       ├── it sets the proposal creator to _fromSpaceId
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │   │       ├── it sets the proposal voting mode
@@ -52,11 +52,11 @@ UnitDAOSpace::write
 │   │   │       ├── it stores the decoded proposal actions
 │   │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │   └── when the voting mode is fast
-│   │       ├── when _fromSpace is not an editor
+│   │       ├── when _fromSpaceId is not an editor
 │   │       │   └── it reverts with InvalidFromSpace
 │   │       ├── when _proposalId has already been used
 │   │       │   └── it reverts with InvalidProposalId
-│   │       ├── when _fromSpace is restricted
+│   │       ├── when _fromSpaceId is restricted
 │   │       │   └── it reverts with FastPathRestricted
 │   │       ├── when the decoded proposal action is not limited to one call
 │   │       │   └── it reverts with OneActionForFastPath
@@ -64,7 +64,7 @@ UnitDAOSpace::write
 │   │       │   └── it reverts with InvalidAction
 │   │       └── when _createProposal params are valid
 │   │           ├── it increments the proposal version
-│   │           ├── it sets the proposal creator to _fromSpace
+│   │           ├── it sets the proposal creator to _fromSpaceId
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
 │   │           ├── it sets the proposal voting mode
@@ -80,34 +80,34 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the vote option equals none
 │   │   │   └── it reverts with CanNotVote
-│   │   ├── when the _fromSpace is not an editor
+│   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with CanNotVote
 │   │   └── when _vote params are valid
-│   │       ├── when the former _fromSpace vote equals yes
+│   │       ├── when the former _fromSpaceId vote equals yes
 │   │       │   └── it decreases the yes vote tally by one
-│   │       ├── when the former _fromSpace vote equals no
+│   │       ├── when the former _fromSpaceId vote equals no
 │   │       │   └── it decreases the no vote tally by one
-│   │       ├── when the former _fromSpace vote equals abstain
+│   │       ├── when the former _fromSpaceId vote equals abstain
 │   │       │   └── it decreases the abstain vote tally by one
-│   │       ├── when the current _fromSpace vote equals yes
+│   │       ├── when the current _fromSpaceId vote equals yes
 │   │       │   └── it increases the yes vote tally by one
-│   │       ├── when the current _fromSpace vote equals no
+│   │       ├── when the current _fromSpaceId vote equals no
 │   │       │   └── it increases the no vote tally by one
-│   │       ├── when the current _fromSpace vote equals abstain
+│   │       ├── when the current _fromSpaceId vote equals abstain
 │   │       │   └── it increases the abstain vote tally by one
-│   │       ├── it stores the current _fromSpace vote
+│   │       ├── it stores the current _fromSpaceId vote
 │   │       └── when the proposal voting mode is using the fast path
-│   │           ├── when the current _fromSpace vote equals no
+│   │           ├── when the current _fromSpaceId vote equals no
 │   │           │   ├── it updates the proposal voting mode to the slow path
 │   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
 │   │           │   ├── it updates the proposal start date to block.timestamp
 │   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
 │   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-│   │           └── when the current _fromSpace vote equals yes
+│   │           └── when the current _fromSpaceId vote equals yes
 │   │               └── when the proposal can be executed
 │   │                   └── it loops over the stored proposal actions and performs the external calls
 │   ├── when _action equals PROPOSAL_UPDATED
-│   │   ├── when the proposal creator is not the _fromSpace
+│   │   ├── when the proposal creator is not the _fromSpaceId
 │   │   │   └── it reverts with InvalidCaller
 │   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with InvalidProposalId
@@ -126,17 +126,17 @@ UnitDAOSpace::write
 │   │       └── when an external call fails
 │   │           └── it reverts with ActionReverted
 │   ├── when _action equals SPACE_LEFT
-│   │   ├── when the role specified is MEMBER and the _fromSpace is a member
-│   │   │   ├── it revokes the role of MEMBER from the _fromSpace
+│   │   ├── when the role specified is MEMBER and the _fromSpaceId is a member
+│   │   │   ├── it revokes the role of MEMBER from the _fromSpaceId
 │   │   │   └── it calls enter on the spaceRegistry with the MEMBER_REMOVED action
-│   │   ├── when the role specified is EDITOR and the _fromSpace is an editor
-│   │   │   ├── it revokes the role of EDITOR from the _fromSpace
+│   │   ├── when the role specified is EDITOR and the _fromSpaceId is an editor
+│   │   │   ├── it revokes the role of EDITOR from the _fromSpaceId
 │   │   │   ├── it unflags the editor from using the fast path
 │   │   │   └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
-│   │   └── when the role is not held by the _fromSpace or the role is neither MEMBER nor EDITOR
+│   │   └── when the role is not held by the _fromSpaceId or the role is neither MEMBER nor EDITOR
 │   │       └── it reverts with InvalidFromSpace
 │   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
-│   │   ├── when the _fromSpace is not an editor
+│   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
 │   │   └── when _restrictSpace params are valid
 │   │       └── it grants the FAST_PATH_RESTRICTED role to _space
@@ -152,7 +152,7 @@ UnitDAOSpace::verify
 UnitDAOSpace::addEditor
 ├── when called by DAO
 │   ├── when _newEditor is an editor
-│   │   └── it reverts with InvalidAddressForRole
+│   │   └── it reverts with InvalidSpaceIdForRole
 │   └── when _newEditor is not an editor
 │       ├── it grants _newEditor the EDITOR role
 │       ├── it increments totalEditors
@@ -163,7 +163,7 @@ UnitDAOSpace::addEditor
 UnitDAOSpace::removeEditor
 ├── when called by DAO
 │   ├── when _oldEditor is not an editor
-│   │   └── it reverts with InvalidAddressForRole
+│   │   └── it reverts with InvalidSpaceIdForRole
 │   ├── when the voting settings quorum equals total editors
 │   │   └── it reverts with InvalidSetting
 │   ├── when the voting settings fast path flat threshold equals total editors
@@ -178,7 +178,7 @@ UnitDAOSpace::removeEditor
 UnitDAOSpace::addMember
 ├── when called by DAO
 │   ├── when _newMember is a member
-│   │   └── it reverts with InvalidAddressForRole
+│   │   └── it reverts with InvalidSpaceIdForRole
 │   └── when _newMember is not a member
 │       ├── it grants _newMember the MEMBER role
 │       └── it calls enter on the spaceRegistry with the MEMBER_ADDED action
@@ -188,7 +188,7 @@ UnitDAOSpace::addMember
 UnitDAOSpace::removeMember
 ├── when called by DAO
 │   ├── when _oldMember is not a member
-│   │   └── it reverts with InvalidAddressForRole
+│   │   └── it reverts with InvalidSpaceIdForRole
 │   └── when _oldMember is a member
 │       ├── it removes the MEMBER role from _oldMember
 │       └── it calls enter on the spaceRegistry with the MEMBER_REMOVED action
@@ -198,30 +198,35 @@ UnitDAOSpace::removeMember
 UnitDAOSpace::unrestrictSpace
 ├── when called by DAO
 │    ├── it revokes the FAST_PATH_RESTRICTED role from _space
-│    └── it calls enter on the spaceRegistry with the EDITOR_UNFLAGGED action
+│    ├── it fetches the daoSpaceId from the spaceRegistry
+│    └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
 UnitDAOSpace::ping
 ├── when called by DAO
+│   ├── it fetches the daoSpaceId from the spaceRegistry
 │   └── it calls enter on the spaceRegistry with the input variables passed
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
 UnitDAOSpace::publish
 ├── when called by DAO
+│   ├── it fetches the daoSpaceId from the spaceRegistry
 │   └── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
 UnitDAOSpace::flag
 ├── when called by DAO
+│   ├── it fetches the daoSpaceId from the spaceRegistry
 │   └── it calls enter on the spaceRegistry with the FLAGGED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
 UnitDAOSpace::unflag
 ├── when called by DAO
+│   ├── it fetches the daoSpaceId from the spaceRegistry
 │   └── it calls enter on the spaceRegistry with the UNFLAGGED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller

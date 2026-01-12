@@ -10,23 +10,23 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 interface ISpace is ISemver {
   /**
    * @notice Writes to this space from another space
-   * @param _fromSpace The space contract that writes
+   * @param _fromSpaceId The space ID that writes
    * @param _action The action to write
    * @param _topic The topic to write
    * @param _data The data to write
    */
-  function write(address _fromSpace, bytes32 _action, bytes32 _topic, bytes calldata _data) external;
+  function write(bytes16 _fromSpaceId, bytes32 _action, bytes32 _topic, bytes calldata _data) external;
 
   /**
    * @notice Verifies a writing to another space from this space
-   * @param _toSpace The space contract to verify
+   * @param _toSpaceId The space ID to verify
    * @param _action The action to verify
    * @param _topic The topic to verify
    * @param _data The data to verify
    * @param _signature The signature for verification
    */
   function verify(
-    address _toSpace,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,

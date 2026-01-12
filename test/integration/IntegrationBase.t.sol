@@ -27,8 +27,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
 
   // Space settings
   IDAOSpace.VotingSettings internal _votingSettings;
-  address[] internal _initialSpaceEditors;
-  address[] internal _initialSpaceMembers;
+  bytes16[] internal _initialSpaceEditors;
+  bytes16[] internal _initialSpaceMembers;
   bytes internal _initialEditsContentUri;
   bytes internal _initialEditsMetadata;
 
@@ -63,10 +63,10 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
 
     // Deploy and register DAO space
     _votingSettings.duration = daoSpaceImplementation.MINIMUM_VOTING_DURATION();
-    _initialSpaceEditors = new address[](1);
-    _initialSpaceEditors[0] = eoaSpace;
-    _initialSpaceMembers = new address[](1);
-    _initialSpaceMembers[0] = eoaSpace;
+    _initialSpaceEditors = new bytes16[](1);
+    _initialSpaceEditors[0] = _eoaSpaceId;
+    _initialSpaceMembers = new bytes16[](1);
+    _initialSpaceMembers[0] = _eoaSpaceId;
 
     daoSpaceProxy = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(

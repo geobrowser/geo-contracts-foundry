@@ -12,7 +12,7 @@ contract MockDAOSpace is DAOSpace {
     bytes16 _proposalId,
     bool _executed,
     uint8 _version,
-    address _creator,
+    bytes16 _creatorSpaceId,
     uint256 _startDate,
     uint256 _lastDate,
     VotingMode _votingMode,
@@ -24,7 +24,7 @@ contract MockDAOSpace is DAOSpace {
     $.latestProposalVersion[_proposalId] = _version;
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.executed = _executed;
-    proposal_.creator = _creator;
+    proposal_.creator = _creatorSpaceId;
     proposal_.parameters.startDate = _startDate;
     proposal_.parameters.lastDate = _lastDate;
     proposal_.parameters.votingMode = _votingMode;
@@ -35,7 +35,7 @@ contract MockDAOSpace is DAOSpace {
     }
   }
 
-  function workaround_setFormerVote(bytes16 _proposalId, address _account, VoteOption _voteOption) external {
+  function workaround_setFormerVote(bytes16 _proposalId, bytes16 _voterSpaceId, VoteOption _voteOption) external {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
@@ -44,7 +44,7 @@ contract MockDAOSpace is DAOSpace {
     } else if (_voteOption == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
-    proposal_.voters[_account] = _voteOption;
+    proposal_.voters[_voterSpaceId] = _voteOption;
   }
 
   function workaround_setTally(bytes16 _proposalId, uint256 _yes, uint256 _no, uint256 _abstain) external {
@@ -59,12 +59,12 @@ contract MockDAOSpace is DAOSpace {
     $.votingSettings = _votingSettings;
   }
 
-  function workaround_grantRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
-    return _grantRole(_role, _account);
+  function workaround_grantRole(bytes32 _role, bytes16 _spaceId) external {
+    _grantRole(_role, _spaceId);
   }
 
-  function workaround_revokeRole(bytes32 _role, address _account) external returns (bytes16 _spaceId) {
-    return _revokeRole(_role, _account);
+  function workaround_revokeRole(bytes32 _role, bytes16 _spaceId) external {
+    _revokeRole(_role, _spaceId);
   }
 
   function exposed__DAO_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _daoSpaceStorageLocation) {

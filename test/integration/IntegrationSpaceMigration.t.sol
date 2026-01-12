@@ -26,8 +26,8 @@ contract IntegrationSpaceMigration is IntegrationBase {
   bytes16 internal _verifierSpaceProxyBisId;
 
   // Space settings
-  address[] internal _initialSpaceEditorsBis;
-  address[] internal _initialSpaceMembersBis;
+  bytes16[] internal _initialSpaceEditorsBis;
+  bytes16[] internal _initialSpaceMembersBis;
 
   function setUp() public override {
     IntegrationBase.setUp();
@@ -37,10 +37,10 @@ contract IntegrationSpaceMigration is IntegrationBase {
     spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
     _eoaSpaceBisId = spaceRegistryProxy.addressToSpaceId(eoaSpaceBis);
 
-    _initialSpaceEditorsBis = new address[](1);
-    _initialSpaceEditorsBis[0] = eoaSpaceBis;
-    _initialSpaceMembersBis = new address[](1);
-    _initialSpaceMembersBis[0] = eoaSpaceBis;
+    _initialSpaceEditorsBis = new bytes16[](1);
+    _initialSpaceEditorsBis[0] = _eoaSpaceBisId;
+    _initialSpaceMembersBis = new bytes16[](1);
+    _initialSpaceMembersBis[0] = _eoaSpaceBisId;
 
     daoSpaceProxyBis = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
@@ -101,12 +101,10 @@ contract IntegrationSpaceMigration is IntegrationBase {
     vm.startPrank(eoaSpace);
     // PROPOSAL_CREATED
     spaceRegistryProxy.enter(
-      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
+      _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
     );
     // PROPOSAL_VOTED
-    spaceRegistryProxy.enter(
-      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
-    );
+    spaceRegistryProxy.enter(_eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, '');
     // MIGRATION_PROPOSED
     spaceRegistryProxy.proposeSpaceMigration(eoaSpaceTer);
     vm.stopPrank();
@@ -118,12 +116,9 @@ contract IntegrationSpaceMigration is IntegrationBase {
     // MIGRATION_ACCEPTED
     spaceRegistryProxy.acceptSpaceMigration(_eoaSpaceId, keccak256('EOA_SPACE'), '1.0.0');
     // PROPOSAL_VOTED
-    spaceRegistryProxy.enter(
-      eoaSpaceTer, address(daoSpaceProxy), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
-    );
+    spaceRegistryProxy.enter(_eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, '');
     vm.stopPrank();
 
-    vm.skip(true);
     (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(_tally.yes, 1);
   }
@@ -152,16 +147,14 @@ contract IntegrationSpaceMigration is IntegrationBase {
     vm.startPrank(eoaSpace);
     // PROPOSAL_CREATED
     spaceRegistryProxy.enter(
-      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
+      _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
     );
     // PROPOSAL_VOTED
-    spaceRegistryProxy.enter(
-      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
-    );
+    spaceRegistryProxy.enter(_eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, '');
     // PROPOSAL_EXECUTED
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
     spaceRegistryProxy.enter(
-      eoaSpace, address(daoSpaceProxy), ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
+      _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
     );
     vm.stopPrank();
 
@@ -186,16 +179,16 @@ contract IntegrationSpaceMigration is IntegrationBase {
     vm.startPrank(eoaSpaceBis);
     // PROPOSAL_CREATED
     spaceRegistryProxy.enter(
-      eoaSpaceBis, address(daoSpaceProxyBis), ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
+      _eoaSpaceBisId, _daoSpaceProxyBisId, ActionsConstants.PROPOSAL_CREATED, '', _createProposalData, ''
     );
     // PROPOSAL_VOTED
     spaceRegistryProxy.enter(
-      eoaSpaceBis, address(daoSpaceProxyBis), ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
+      _eoaSpaceBisId, _daoSpaceProxyBisId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
     );
     // PROPOSAL_EXECUTED
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
     spaceRegistryProxy.enter(
-      eoaSpaceBis, address(daoSpaceProxyBis), ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
+      _eoaSpaceBisId, _daoSpaceProxyBisId, ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
     );
     vm.stopPrank();
 

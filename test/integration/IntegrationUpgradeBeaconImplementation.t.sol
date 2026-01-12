@@ -11,6 +11,7 @@ import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementatio
 import 'script/Constants.s.sol' as Constants;
 
 contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
+  // Spaces
   MockDAOSpaceV2 public daoSpaceImplementationBis;
   MockDAOSpaceV2 public daoSpaceProxyA;
   MockDAOSpaceV2 public daoSpaceProxyB;
@@ -18,6 +19,12 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
   VerifierSpace public verifierSpaceImplementationBis;
   VerifierSpace public verifierSpaceProxyA;
   VerifierSpace public verifierSpaceProxyB;
+
+  // Space IDs
+  bytes16 internal _daoSpaceProxyAId;
+  bytes16 internal _daoSpaceProxyBId;
+  bytes16 internal _verifierSpaceProxyAId;
+  bytes16 internal _verifierSpaceProxyBId;
 
   function setUp() public override {
     IntegrationBase.setUp();
@@ -29,8 +36,13 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
         _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
       )
     );
+    _daoSpaceProxyAId = _daoSpaceProxyId;
+    _daoSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyB));
+
     verifierSpaceProxyA = verifierSpaceProxy;
     verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
+    _verifierSpaceProxyAId = _verifierSpaceProxyId;
+    _verifierSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyB));
 
     daoSpaceImplementationBis = new MockDAOSpaceV2();
     verifierSpaceImplementationBis = VerifierSpace(address(new MockNewImplementation()));
@@ -42,8 +54,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
     // _initialMembers
-    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), eoaSpace));
-    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), eoaSpace));
+    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), _eoaSpaceId));
+    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), _eoaSpaceId));
     // actionIsFastPathValid
     assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
@@ -62,9 +74,9 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceProxyB.initialize(abi.encode(_initialTotalMembers));
 
     vm.prank(address(daoSpaceProxyA));
-    daoSpaceProxyA.addMember(address(daoSpaceProxyA));
+    daoSpaceProxyA.addMember(_daoSpaceProxyAId);
     vm.prank(address(daoSpaceProxyB));
-    daoSpaceProxyB.addMember(address(daoSpaceProxyB));
+    daoSpaceProxyB.addMember(_daoSpaceProxyBId);
 
     assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementationBis));
     assertEq(daoSpaceImplementationBis.version(), '2.0.0');
