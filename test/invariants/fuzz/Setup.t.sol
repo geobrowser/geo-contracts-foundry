@@ -24,7 +24,7 @@ contract Setup is Test, DeployGEOBrowser {
   address[] public verifierSpaceActors;
   uint256[] public verifierSpaceOwnerKeys;
 
-  IDAOSpace.VotingSettings internal defaultVotingSettings;
+  IDAOSpace.VotingSettings internal _defaultVotingSettings;
 
   function setUp() public virtual override {
     DeployGEOBrowser.run();
@@ -39,7 +39,7 @@ contract Setup is Test, DeployGEOBrowser {
   function _initializeVotingSettings() internal {
     // quorum and fastPathFlatThreshold must be <= totalEditors
     // Since we create DAOSpaces with 0 initial editors, these must be 0
-    defaultVotingSettings = IDAOSpace.VotingSettings({
+    _defaultVotingSettings = IDAOSpace.VotingSettings({
       slowPathPercentageThreshold: 5e5, // 50%
       fastPathFlatThreshold: 0,
       quorum: 0,
@@ -59,7 +59,7 @@ contract Setup is Test, DeployGEOBrowser {
     daoSpaceActors = new address[](NUM_DAO_SPACE_ACTORS);
     for (uint256 i = 0; i < NUM_DAO_SPACE_ACTORS; i++) {
       daoSpaceActors[i] =
-        daoSpaceFactoryProxy.createDAOSpaceProxy(defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '');
+        daoSpaceFactoryProxy.createDAOSpaceProxy(_defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '');
     }
   }
 
