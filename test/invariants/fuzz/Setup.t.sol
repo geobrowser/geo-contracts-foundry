@@ -11,30 +11,33 @@ import {HandlerSpaceRegistry} from './handlers/HandlerSpaceRegistry.t.sol';
 import {HandlerVerifierSpace} from './handlers/HandlerVerifierSpace.t.sol';
 
 contract Setup is Test, DeployGEOBrowser {
-  // Handlers
+  uint256 internal constant NUM_EOA_ACTORS = 3;
+  uint256 internal constant NUM_DAO_SPACE_ACTORS = 2;
+  uint256 internal constant NUM_VERIFIER_SPACE_ACTORS = 2;
+
   HandlerSpaceRegistry public handlerSpaceRegistry;
   HandlerDAOSpace public handlerDAOSpace;
   HandlerVerifierSpace public handlerVerifierSpace;
 
-  // EOA actors (can call registerSpaceId directly)
   address[] public eoaActors;
-
-  // Space contract actors (DAOSpace and VerifierSpace instances)
   address[] public daoSpaceActors;
   address[] public verifierSpaceActors;
-
-  // VerifierSpace owner private keys (for signing)
   uint256[] public verifierSpaceOwnerKeys;
 
-  // Voting settings for DAOSpace creation
   IDAOSpace.VotingSettings internal defaultVotingSettings;
 
   function setUp() public virtual override {
-    // Deploy protocol using the deploy script (no broadcast needed in tests)
     DeployGEOBrowser.run();
 
-    // Default voting settings for DAOSpace
-    // Note: quorum and fastPathFlatThreshold must be <= totalEditors
+    _initializeVotingSettings();
+    _createEOAActors();
+    _createDAOSpaceActors();
+    _createVerifierSpaceActors();
+    _configureTargets();
+  }
+
+  function _initializeVotingSettings() internal {
+    // quorum and fastPathFlatThreshold must be <= totalEditors
     // Since we create DAOSpaces with 0 initial editors, these must be 0
     defaultVotingSettings = IDAOSpace.VotingSettings({
       slowPathPercentageThreshold: 5e5, // 50%
@@ -42,47 +45,41 @@ contract Setup is Test, DeployGEOBrowser {
       quorum: 0,
       duration: 2 days
     });
+  }
 
-    // Create EOA actors
-    eoaActors = new address[](3);
-    for (uint256 i = 0; i < eoaActors.length; i++) {
+  function _createEOAActors() internal {
+    eoaActors = new address[](NUM_EOA_ACTORS);
+    for (uint256 i = 0; i < NUM_EOA_ACTORS; i++) {
       eoaActors[i] = makeAddr(string.concat('eoa', vm.toString(i)));
     }
+  }
 
-    // Create DAOSpace actors
-    // Note: Initial editors must already be registered spaces, so we pass empty arrays
-    daoSpaceActors = new address[](2);
-    for (uint256 i = 0; i < daoSpaceActors.length; i++) {
-      address daoSpace = daoSpaceFactoryProxy.createDAOSpaceProxy(
-        defaultVotingSettings,
-        new address[](0), // no initial editors (they must be registered spaces)
-        new address[](0), // no initial members
-        '', // editsContentUri
-        '' // editsMetadata
-      );
-      daoSpaceActors[i] = daoSpace;
+  function _createDAOSpaceActors() internal {
+    // Initial editors must already be registered spaces, so we pass empty arrays
+    daoSpaceActors = new address[](NUM_DAO_SPACE_ACTORS);
+    for (uint256 i = 0; i < NUM_DAO_SPACE_ACTORS; i++) {
+      daoSpaceActors[i] =
+        daoSpaceFactoryProxy.createDAOSpaceProxy(defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '');
     }
+  }
 
-    // Create VerifierSpace actors
-    verifierSpaceActors = new address[](2);
-    verifierSpaceOwnerKeys = new uint256[](2);
-    for (uint256 i = 0; i < verifierSpaceActors.length; i++) {
-      // Use makeAddrAndKey to get both address and private key
+  function _createVerifierSpaceActors() internal {
+    verifierSpaceActors = new address[](NUM_VERIFIER_SPACE_ACTORS);
+    verifierSpaceOwnerKeys = new uint256[](NUM_VERIFIER_SPACE_ACTORS);
+    for (uint256 i = 0; i < NUM_VERIFIER_SPACE_ACTORS; i++) {
       (address spaceOwner, uint256 ownerKey) = makeAddrAndKey(string.concat('verifierSpaceOwner', vm.toString(i)));
       verifierSpaceOwnerKeys[i] = ownerKey;
-      address verifierSpace = verifierSpaceFactoryProxy.createVerifierSpaceProxy(spaceOwner);
-      verifierSpaceActors[i] = verifierSpace;
+      verifierSpaceActors[i] = verifierSpaceFactoryProxy.createVerifierSpaceProxy(spaceOwner);
     }
+  }
 
-    // Configure Fuzzer:
+  function _configureTargets() internal {
     for (uint256 i = 0; i < eoaActors.length; i++) {
       targetSender(eoaActors[i]);
     }
 
     handlerSpaceRegistry = new HandlerSpaceRegistry(spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors);
-
     handlerDAOSpace = new HandlerDAOSpace(spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors);
-
     handlerVerifierSpace = new HandlerVerifierSpace(
       spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors, verifierSpaceOwnerKeys
     );

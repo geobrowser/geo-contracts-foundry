@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import {GhostState} from './GhostState.sol';
-import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
 import {Test} from 'forge-std/Test.sol';
+
+import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
+
+import {GhostState} from './GhostState.sol';
 
 /// @notice Base contract for all handlers
 abstract contract BaseHandler is Test, GhostState {
-  SpaceRegistry public spaceRegistry;
+  uint256 internal constant MAX_WARP_DELTA = 365 days;
+  uint256 internal constant MAX_ROLL_DELTA = 1_000_000;
 
-  // Different actor types
+  SpaceRegistry public spaceRegistry;
   address[] public eoaActors;
   address[] public daoSpaceActors;
   address[] public verifierSpaceActors;
@@ -21,7 +24,14 @@ abstract contract BaseHandler is Test, GhostState {
     address[] memory _verifierSpaceActors
   ) {
     spaceRegistry = _spaceRegistry;
+    _initializeActors(_eoaActors, _daoSpaceActors, _verifierSpaceActors);
+  }
 
+  function _initializeActors(
+    address[] memory _eoaActors,
+    address[] memory _daoSpaceActors,
+    address[] memory _verifierSpaceActors
+  ) internal {
     for (uint256 i = 0; i < _eoaActors.length; i++) {
       eoaActors.push(_eoaActors[i]);
       ghost_actorType[_eoaActors[i]] = ActorType.EOA;
@@ -47,10 +57,8 @@ abstract contract BaseHandler is Test, GhostState {
     ghost_registeredAddresses.push(_space);
     ghost_addressEverRegistered[_space] = true;
     ghost_isAddressRegistered[_space] = true;
-
     ghost_registeredSpaceIds.push(spaceId);
     ghost_isSpaceIdRegistered[spaceId] = true;
-
     ghost_factoryCreatedSpaces++;
     ghost_factoryCreatedSpaceAddresses.push(_space);
   }
@@ -72,12 +80,10 @@ abstract contract BaseHandler is Test, GhostState {
   }
 
   function handler_warp(uint256 _delta) public {
-    _delta = bound(_delta, 0, 365 days);
-    vm.warp(block.timestamp + _delta);
+    vm.warp(block.timestamp + bound(_delta, 0, MAX_WARP_DELTA));
   }
 
   function handler_roll(uint256 _delta) public {
-    _delta = bound(_delta, 0, 1_000_000);
-    vm.roll(block.number + _delta);
+    vm.roll(block.number + bound(_delta, 0, MAX_ROLL_DELTA));
   }
 }
