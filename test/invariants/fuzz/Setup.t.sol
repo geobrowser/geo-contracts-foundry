@@ -6,6 +6,7 @@ import {Test} from 'forge-std/Test.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {DeployGEOBrowser} from 'script/DeployGEOBrowser.s.sol';
 
+import {HandlerBlockchain} from 'test/invariants/fuzz/handlers/HandlerBlockchain.t.sol';
 import {HandlerDAOSpace} from 'test/invariants/fuzz/handlers/HandlerDAOSpace.t.sol';
 import {HandlerSpaceRegistry} from 'test/invariants/fuzz/handlers/HandlerSpaceRegistry.t.sol';
 import {HandlerVerifierSpace} from 'test/invariants/fuzz/handlers/HandlerVerifierSpace.t.sol';
@@ -15,6 +16,7 @@ contract Setup is Test, DeployGEOBrowser {
   uint256 internal constant NUM_DAO_SPACE_ACTORS = 2;
   uint256 internal constant NUM_VERIFIER_SPACE_ACTORS = 2;
 
+  HandlerBlockchain public handlerBlockchain;
   HandlerSpaceRegistry public handlerSpaceRegistry;
   HandlerDAOSpace public handlerDAOSpace;
   HandlerVerifierSpace public handlerVerifierSpace;
@@ -78,12 +80,14 @@ contract Setup is Test, DeployGEOBrowser {
       targetSender(eoaActors[i]);
     }
 
+    handlerBlockchain = new HandlerBlockchain();
     handlerSpaceRegistry = new HandlerSpaceRegistry(spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors);
     handlerDAOSpace = new HandlerDAOSpace(spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors);
     handlerVerifierSpace = new HandlerVerifierSpace(
       spaceRegistryProxy, eoaActors, daoSpaceActors, verifierSpaceActors, verifierSpaceOwnerKeys
     );
 
+    targetContract(address(handlerBlockchain));
     targetContract(address(handlerSpaceRegistry));
     targetContract(address(handlerDAOSpace));
     targetContract(address(handlerVerifierSpace));

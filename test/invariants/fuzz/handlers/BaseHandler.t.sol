@@ -9,9 +9,6 @@ import {GhostState} from 'test/invariants/fuzz/handlers/GhostState.sol';
 
 /// @notice Base contract for all handlers
 abstract contract BaseHandler is Test, GhostState {
-  uint256 internal constant MAX_WARP_DELTA = 365 days;
-  uint256 internal constant MAX_ROLL_DELTA = 1_000_000;
-
   SpaceRegistry public spaceRegistry;
   address[] public eoaActors;
   address[] public daoSpaceActors;
@@ -77,13 +74,5 @@ abstract contract BaseHandler is Test, GhostState {
 
   function isSpaceContract(address _addr) public view returns (bool _isSpaceContract) {
     return isDAOSpace(_addr) || isVerifierSpace(_addr);
-  }
-
-  function handler_warp(uint256 _delta) public {
-    vm.warp(block.timestamp + bound(_delta, 0, MAX_WARP_DELTA));
-  }
-
-  function handler_roll(uint256 _delta) public {
-    vm.roll(block.number + bound(_delta, 0, MAX_ROLL_DELTA));
   }
 }
