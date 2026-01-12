@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
+import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import 'script/Constants.s.sol' as Constants;
 import {Setup} from 'test/invariants/fuzz/Setup.t.sol';
 
@@ -314,5 +315,66 @@ contract ExecutionPaths is Setup {
 
     assertEq(vs.replayNonce(), initialNonce + 3, 'Nonce should increase by 3');
     assertEq(handlerVerifierSpace.ghost_successfulVerifyCalls(), 3, 'Should have 3 successful calls');
+  }
+
+  // ==================== Regression Tests ====================
+
+  /// Test the previously found H-0 "vote-migrate-vote again" vulnerability
+  function test_regression_vote_migrate_vote_again() public {
+    address daoSpace = daoSpaceActors[0];
+    address voter1 = eoaActors[0];
+    address voter2 = eoaActors[1];
+    DAOSpace dao = DAOSpace(daoSpace);
+
+    // Register voter1 and make them an editor
+    vm.prank(voter1);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'voter1 registration should succeed');
+
+    vm.prank(voter1);
+    handlerDAOSpace.handler_daoSpace_addEditor(0, 0);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'addEditor should succeed');
+
+    // Create a proposal
+    vm.prank(voter1);
+    handlerDAOSpace.handler_daoSpace_createProposal(0, 0);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'createProposal should succeed');
+
+    bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpace, 0);
+
+    // First vote (Yes vote = option 1)
+    vm.prank(voter1);
+    handlerDAOSpace.handler_daoSpace_vote(0, 0, 1);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'First vote should succeed');
+
+    // Get the spaceId before migration
+    bytes16 voterSpaceId = spaceRegistryProxy.addressToSpaceId(voter1);
+
+    // Check vote count after first vote
+    (,,, IDAOSpace.Tally memory tallyAfterFirst,) = dao.getLatestProposalInformation(proposalId);
+
+    // Propose migration from voter1 to voter2
+    vm.prank(voter1);
+    handlerSpaceRegistry.handler_proposeSpaceMigration(1); // 1 maps to voter2 (eoaActors[1])
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'proposeSpaceMigration should succeed');
+
+    // Accept migration as voter2
+    vm.prank(voter2);
+    handlerSpaceRegistry.handler_acceptSpaceMigration();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'acceptSpaceMigration should succeed');
+
+    // Verify spaceId migrated
+    assertEq(spaceRegistryProxy.addressToSpaceId(voter2), voterSpaceId, 'spaceId should have migrated');
+    assertEq(spaceRegistryProxy.addressToSpaceId(voter1), bytes16(0), 'voter1 should have no spaceId');
+
+    // Try to vote again from the new address (voter2)
+    vm.prank(voter2);
+    handlerDAOSpace.handler_daoSpace_vote(0, 0, 1);
+
+    // The vulnerability would allow double voting - check that vote count hasn't increased
+    (,,, IDAOSpace.Tally memory tallyAfterSecond,) = dao.getLatestProposalInformation(proposalId);
+    assertEq(
+      tallyAfterSecond.yes, tallyAfterFirst.yes, 'Vote count should not increase after migration (no double voting)'
+    );
   }
 }

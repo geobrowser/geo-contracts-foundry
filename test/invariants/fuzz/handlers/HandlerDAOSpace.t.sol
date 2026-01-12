@@ -228,7 +228,7 @@ contract HandlerDAOSpace is BaseHandler {
     return ghost_activeProposals[_daoSpace][_index];
   }
 
-  function _hasActors() internal returns (bool _hasActors) {
+  function _hasActors() internal returns (bool _actorExists) {
     if (daoSpaceActors.length == 0 || eoaActors.length == 0) {
       lastTxSucceeded = false;
       return false;
