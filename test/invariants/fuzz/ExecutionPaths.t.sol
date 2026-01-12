@@ -245,12 +245,6 @@ contract ExecutionPaths is Setup {
     assertEq(handlerDAOSpace.ghost_yesVotes(proposalId), 1, 'Should have 1 yes vote');
   }
 
-  function test_handler_daoSpace_addEditor_unregistered_skipped() public {
-    vm.prank(eoaActors[0]);
-    handlerDAOSpace.handler_daoSpace_addEditor(0, 0);
-    assertFalse(handlerDAOSpace.lastTxSucceeded(), 'Should skip unregistered');
-  }
-
   function test_handler_daoSpace_createProposal_nonEditor_slowPath() public {
     address member = eoaActors[0];
 

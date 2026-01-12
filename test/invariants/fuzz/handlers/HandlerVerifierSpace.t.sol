@@ -10,7 +10,7 @@ import {BaseHandler} from './BaseHandler.t.sol';
 /// @notice Handler for VerifierSpace operations
 contract HandlerVerifierSpace is BaseHandler {
   bytes32 internal constant MESSAGE_TYPEHASH =
-    keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
+    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
   bytes32 internal constant DOMAIN_TYPEHASH =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
 
@@ -56,8 +56,9 @@ contract HandlerVerifierSpace is BaseHandler {
     bytes16 toSpaceId = spaceRegistry.addressToSpaceId(toSpace);
 
     bytes memory data = abi.encode('test');
-    bytes memory signature =
-      _signMessage(verifierSpace, ownerKey, toSpace, ActionsConstants.UPVOTED, bytes32(uint256(1)), nonceBefore, data);
+    bytes memory signature = _signMessage(
+      verifierSpace, ownerKey, toSpaceId, ActionsConstants.UPVOTED, bytes32(uint256(1)), nonceBefore, data
+    );
 
     vm.prank(msg.sender);
     try spaceRegistry.enter(
@@ -95,7 +96,7 @@ contract HandlerVerifierSpace is BaseHandler {
     uint256 oldNonce = currentNonce - 1;
     bytes memory data = abi.encode('replay');
     bytes memory signature = _signMessage(
-      verifierSpace, ownerKey, verifierSpace, ActionsConstants.UPVOTED, bytes32(uint256(1)), oldNonce, data
+      verifierSpace, ownerKey, verifierSpaceId, ActionsConstants.UPVOTED, bytes32(uint256(1)), oldNonce, data
     );
 
     vm.prank(msg.sender);
@@ -123,14 +124,14 @@ contract HandlerVerifierSpace is BaseHandler {
   function _signMessage(
     address _verifierSpace,
     uint256 _ownerKey,
-    address _toSpace,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     uint256 _nonce,
     bytes memory _data
   ) internal view returns (bytes memory) {
     bytes32 domainSeparator = _computeDomainSeparator(_verifierSpace);
-    bytes32 structHash = keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpace, _action, _topic, _nonce, keccak256(_data)));
+    bytes32 structHash = keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, _nonce, keccak256(_data)));
     bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(_ownerKey, digest);
     return abi.encodePacked(r, s, v);
