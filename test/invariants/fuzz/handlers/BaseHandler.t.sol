@@ -5,7 +5,7 @@ import {Test} from 'forge-std/Test.sol';
 
 import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
 
-import {GhostState} from './GhostState.sol';
+import {GhostState} from 'test/invariants/fuzz/handlers/GhostState.sol';
 
 /// @notice Base contract for all handlers
 abstract contract BaseHandler is Test, GhostState {

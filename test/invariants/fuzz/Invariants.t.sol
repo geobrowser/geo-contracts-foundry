@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
-import {Setup} from './Setup.t.sol';
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
+import {Setup} from 'test/invariants/fuzz/Setup.t.sol';
 
 /// @notice Invariant tests for SpaceRegistry, Factory, DAOSpace, and VerifierSpace
 contract Invariants is Setup {

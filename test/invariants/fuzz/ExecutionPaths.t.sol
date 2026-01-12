@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.30;
 
-import {Setup} from './Setup.t.sol';
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import 'script/Constants.s.sol' as Constants;
+import {Setup} from 'test/invariants/fuzz/Setup.t.sol';
 
 /// @title ExecutionPaths
 /// @notice Validates that handlers can execute their intended paths

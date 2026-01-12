@@ -6,7 +6,7 @@ import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
-import {BaseHandler} from './BaseHandler.t.sol';
+import {BaseHandler} from 'test/invariants/fuzz/handlers/BaseHandler.t.sol';
 
 /// @notice Handler for DAOSpace governance operations
 contract HandlerDAOSpace is BaseHandler {

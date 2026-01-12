@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
 
-import {BaseHandler} from './BaseHandler.t.sol';
+import {BaseHandler} from 'test/invariants/fuzz/handlers/BaseHandler.t.sol';
 
 /// @notice Handler for SpaceRegistry operations
 contract HandlerSpaceRegistry is BaseHandler {
