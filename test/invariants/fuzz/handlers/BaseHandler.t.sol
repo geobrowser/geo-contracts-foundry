@@ -63,19 +63,19 @@ abstract contract BaseHandler is Test, GhostState {
     ghost_factoryCreatedSpaceAddresses.push(_space);
   }
 
-  function isEOA(address _addr) public view returns (bool) {
+  function isEOA(address _addr) public view returns (bool _isEOA) {
     return ghost_actorType[_addr] == ActorType.EOA;
   }
 
-  function isDAOSpace(address _addr) public view returns (bool) {
+  function isDAOSpace(address _addr) public view returns (bool _isDAOSpace) {
     return ghost_actorType[_addr] == ActorType.DAOSpace;
   }
 
-  function isVerifierSpace(address _addr) public view returns (bool) {
+  function isVerifierSpace(address _addr) public view returns (bool _isVerifierSpace) {
     return ghost_actorType[_addr] == ActorType.VerifierSpace;
   }
 
-  function isSpaceContract(address _addr) public view returns (bool) {
+  function isSpaceContract(address _addr) public view returns (bool _isSpaceContract) {
     return isDAOSpace(_addr) || isVerifierSpace(_addr);
   }
 

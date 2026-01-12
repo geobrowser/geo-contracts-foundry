@@ -109,7 +109,7 @@ contract HandlerSpaceRegistry is BaseHandler {
     ghost_isSpaceIdRegistered[_spaceId] = true;
   }
 
-  function _findUnregisteredEOA(uint256 _seed, address _exclude) internal view returns (address) {
+  function _findUnregisteredEOA(uint256 _seed, address _exclude) internal view returns (address _unregisteredEOA) {
     _seed = bound(_seed, 0, type(uint128).max);
     for (uint256 i = 0; i < eoaActors.length; i++) {
       uint256 idx = (_seed + i) % eoaActors.length;
@@ -124,7 +124,7 @@ contract HandlerSpaceRegistry is BaseHandler {
   function _findPendingMigration(address _proposedAddr)
     internal
     view
-    returns (bytes16 spaceId, address oldAddress, bool found)
+    returns (bytes16 _spaceId, address _oldAddress, bool _found)
   {
     for (uint256 i = 0; i < ghost_registeredSpaceIds.length; i++) {
       bytes16 id = ghost_registeredSpaceIds[i];

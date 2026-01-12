@@ -110,7 +110,7 @@ contract HandlerVerifierSpace is BaseHandler {
     }
   }
 
-  function _selectTargetSpace(uint256 _seed) internal view returns (address) {
+  function _selectTargetSpace(uint256 _seed) internal view returns (address _targetSpace) {
     uint256 totalSpaces = daoSpaceActors.length + verifierSpaceActors.length;
     if (totalSpaces == 0) return address(0);
 
@@ -129,7 +129,7 @@ contract HandlerVerifierSpace is BaseHandler {
     bytes32 _topic,
     uint256 _nonce,
     bytes memory _data
-  ) internal view returns (bytes memory) {
+  ) internal view returns (bytes memory _signature) {
     bytes32 domainSeparator = _computeDomainSeparator(_verifierSpace);
     bytes32 structHash = keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, _nonce, keccak256(_data)));
     bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
@@ -137,7 +137,7 @@ contract HandlerVerifierSpace is BaseHandler {
     return abi.encodePacked(r, s, v);
   }
 
-  function _computeDomainSeparator(address _verifierSpace) internal view returns (bytes32) {
+  function _computeDomainSeparator(address _verifierSpace) internal view returns (bytes32 _domainSeparator) {
     VerifierSpace vs = VerifierSpace(_verifierSpace);
     return keccak256(
       abi.encode(

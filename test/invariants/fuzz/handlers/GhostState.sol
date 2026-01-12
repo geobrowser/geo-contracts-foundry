@@ -56,23 +56,23 @@ abstract contract GhostState {
 
   // ==================== View Functions ====================
 
-  function ghost_registeredAddressesLength() external view returns (uint256) {
+  function ghost_registeredAddressesLength() external view returns (uint256 _length) {
     return ghost_registeredAddresses.length;
   }
 
-  function ghost_registeredSpaceIdsLength() external view returns (uint256) {
+  function ghost_registeredSpaceIdsLength() external view returns (uint256 _length) {
     return ghost_registeredSpaceIds.length;
   }
 
-  function ghost_factoryCreatedSpaceAddressesLength() external view returns (uint256) {
+  function ghost_factoryCreatedSpaceAddressesLength() external view returns (uint256 _length) {
     return ghost_factoryCreatedSpaceAddresses.length;
   }
 
-  function ghost_activeProposalsLength(address _daoSpace) external view returns (uint256) {
+  function ghost_activeProposalsLength(address _daoSpace) external view returns (uint256 _length) {
     return ghost_activeProposals[_daoSpace].length;
   }
 
-  function ghost_daoEditorsLength(address _daoSpace) external view returns (uint256) {
+  function ghost_daoEditorsLength(address _daoSpace) external view returns (uint256 _length) {
     return ghost_daoEditors[_daoSpace].length;
   }
 }
