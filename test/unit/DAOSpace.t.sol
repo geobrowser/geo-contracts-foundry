@@ -521,6 +521,32 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
   }
 
+  function test_Write_WhenTheTargetAddressIsNotTheDAOContractItself(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_CREATED
+    whenTheVotingModeIsFast
+  {
+    // it reverts with InvalidTarget
+    vm.expectRevert(IDAOSpace.InvalidTarget.selector);
+
+    bytes memory proposalData = _createFastPathProposalToAddMemberOnAnotherContract();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
+  }
+
+  function test_Write_WhenTheProposalAttemptsToTransferValue(bytes32 _topic)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_CREATED
+    whenTheVotingModeIsFast
+  {
+    // it reverts with InvalidFundsTransfer
+    vm.expectRevert(IDAOSpace.InvalidFundsTransfer.selector);
+
+    bytes memory proposalData = _createFastPathProposalToAddMemberAndMoveValue();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _topic, proposalData);
+  }
+
   function test_Write_When_createProposalParamsAreValid_WhenTheVotingModeIsFast(bytes32 _topic)
     external
     whenCalledBySpaceRegistry
@@ -2300,12 +2326,32 @@ contract UnitDAOSpace is TestHelper {
     return abi.encode(_proposalId, votingMode, actions);
   }
 
-  /// @dev invalid proposal because action is not fast path valid
+  /// @dev invalid proposal because the action is not fast path valid
   function _createFastPathProposalToAddEditor() internal view returns (bytes memory) {
     IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
     IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
     actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
+    });
+    return abi.encode(_proposalId, votingMode, actions);
+  }
+
+  /// @dev invalid target because the action attempts to write in another contract
+  function _createFastPathProposalToAddMemberOnAnotherContract() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller)))
+    });
+    return abi.encode(_proposalId, votingMode, actions);
+  }
+
+  /// @dev invalid funds transfer because the action entails a funds transfer
+  function _createFastPathProposalToAddMemberAndMoveValue() internal view returns (bytes memory) {
+    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 1, data: abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller)))
     });
     return abi.encode(_proposalId, votingMode, actions);
   }
