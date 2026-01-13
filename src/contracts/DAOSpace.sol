@@ -421,8 +421,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
       // limit the actions to one call
       if (_actions.length != 1) revert OneActionForFastPath();
-      bytes4 actionSelector = bytes4(_actions[0].data);
-      if (!$.actionIsFastPathValid[actionSelector]) revert InvalidAction();
+      // limit to only valid fast path actions
+      if (!$.actionIsFastPathValid[bytes4(_actions[0].data)]) revert InvalidAction();
+      // limit the target to only this address
+      if (_actions[0].to != address(this)) revert InvalidTarget();
+      // limit the transfer of funds
+      if (_actions[0].value != 0) revert InvalidFundsTransfer();
       proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
     }
     for (uint256 i; i < _actions.length; i++) {
