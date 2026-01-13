@@ -2005,9 +2005,9 @@ contract UnitDAOSpace is TestHelper {
 
   /// FETCH ///
 
-  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, uint256 _voteOption) external view {
-    _voteOption = bound(_voteOption, 0, 3);
-    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption), new IDAOSpace.Action[](0));
+  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, uint256 _votingMode) external view {
+    _votingMode = bound(_votingMode, 0, 1);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VotingMode(_votingMode), new IDAOSpace.Action[](0));
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_CREATED, _topicInput, _data), bytes32(_proposalId));
@@ -2021,9 +2021,9 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsPROPOSAL_UPDATED(bytes32 _topicInput, uint256 _voteOption) external view {
-    _voteOption = bound(_voteOption, 0, 3);
-    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption), new IDAOSpace.Action[](0));
+  function test_Fetch_When_actionEqualsPROPOSAL_UPDATED(bytes32 _topicInput, uint256 _votingMode) external view {
+    _votingMode = bound(_votingMode, 0, 1);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VotingMode(_votingMode), new IDAOSpace.Action[](0));
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_UPDATED, _topicInput, _data), bytes32(_proposalId));

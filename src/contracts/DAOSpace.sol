@@ -199,20 +199,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes calldata _data
   ) public view virtual returns (bytes32 _topicOutput) {
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
-      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VoteOption, Action[]));
+      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VotingMode, Action[]));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
       (bytes16 _proposalId,) = abi.decode(_data, (bytes16, VoteOption));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_UPDATED) {
-      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VoteOption, Action[]));
+      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VotingMode, Action[]));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       bytes16 _proposalId = abi.decode(_data, (bytes16));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
-      bytes32 role = abi.decode(_data, (bytes32));
-      return role;
+      bytes32 _role = abi.decode(_data, (bytes32));
+      return _role;
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       bytes16 _spaceId = abi.decode(_data, (bytes16));
       return bytes32(_spaceId);
