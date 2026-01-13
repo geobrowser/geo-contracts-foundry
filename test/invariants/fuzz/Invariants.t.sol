@@ -97,10 +97,10 @@ contract Invariants is Setup {
   function invariant_DS_INV_1_execution_requires_passed() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
-      uint256 proposalCount = handlerDAOSpace.getActiveProposalsCount(daoSpaceActors[i]);
+      uint256 proposalCount = handlerDAOSpace.ghost_activeProposalsLength(daoSpaceActors[i]);
 
       for (uint256 j = 0; j < proposalCount; j++) {
-        bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpaceActors[i], j);
+        bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpaceActors[i], j);
         (bool executed,,,,) = dao.getLatestProposalInformation(proposalId);
 
         if (executed) {
@@ -116,10 +116,10 @@ contract Invariants is Setup {
   function invariant_DS_INV_2_no_double_execution() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
-      uint256 proposalCount = handlerDAOSpace.getActiveProposalsCount(daoSpaceActors[i]);
+      uint256 proposalCount = handlerDAOSpace.ghost_activeProposalsLength(daoSpaceActors[i]);
 
       for (uint256 j = 0; j < proposalCount; j++) {
-        bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpaceActors[i], j);
+        bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpaceActors[i], j);
         (bool executed,,,,) = dao.getLatestProposalInformation(proposalId);
 
         if (handlerDAOSpace.ghost_proposalExecuted(proposalId)) {
@@ -133,11 +133,11 @@ contract Invariants is Setup {
   function invariant_DS_INV_3_single_vote_per_editor() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
-      uint256 proposalCount = handlerDAOSpace.getActiveProposalsCount(daoSpaceActors[i]);
+      uint256 proposalCount = handlerDAOSpace.ghost_activeProposalsLength(daoSpaceActors[i]);
       uint256 maxEditorsEver = handlerDAOSpace.ghost_editorsAdded(daoSpaceActors[i]);
 
       for (uint256 j = 0; j < proposalCount; j++) {
-        bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpaceActors[i], j);
+        bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpaceActors[i], j);
         (,,, IDAOSpace.Tally memory tally,) = dao.getLatestProposalInformation(proposalId);
         uint256 totalVotesCast = tally.yes + tally.no + tally.abstain;
         assertLe(totalVotesCast, maxEditorsEver, 'DS-INV-3: Vote count exceeds max editors');
@@ -161,10 +161,10 @@ contract Invariants is Setup {
   function invariant_DS_INV_5_vote_tally_consistency() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
-      uint256 proposalCount = handlerDAOSpace.getActiveProposalsCount(daoSpaceActors[i]);
+      uint256 proposalCount = handlerDAOSpace.ghost_activeProposalsLength(daoSpaceActors[i]);
 
       for (uint256 j = 0; j < proposalCount; j++) {
-        bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpaceActors[i], j);
+        bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpaceActors[i], j);
         (,,, IDAOSpace.Tally memory tally,) = dao.getLatestProposalInformation(proposalId);
 
         assertEq(tally.yes, handlerDAOSpace.ghost_yesVotes(proposalId), 'DS-INV-5: Yes mismatch');

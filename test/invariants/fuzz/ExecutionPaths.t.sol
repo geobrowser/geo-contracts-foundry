@@ -236,13 +236,13 @@ contract ExecutionPaths is Setup {
     vm.prank(editor);
     handlerDAOSpace.handler_daoSpace_createProposal(0, 0);
     assertTrue(handlerDAOSpace.lastTxSucceeded(), 'createProposal should succeed');
-    assertEq(handlerDAOSpace.getActiveProposalsCount(daoSpace), 1, 'Should have 1 proposal');
+    assertEq(handlerDAOSpace.ghost_activeProposalsLength(daoSpace), 1, 'Should have 1 proposal');
 
     vm.prank(editor);
     handlerDAOSpace.handler_daoSpace_vote(0, 0, 2);
     assertTrue(handlerDAOSpace.lastTxSucceeded(), 'vote should succeed');
 
-    bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpace, 0);
+    bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpace, 0);
     assertEq(handlerDAOSpace.ghost_yesVotes(proposalId), 1, 'Should have 1 yes vote');
   }
 
@@ -340,7 +340,7 @@ contract ExecutionPaths is Setup {
     handlerDAOSpace.handler_daoSpace_createProposal(0, 0);
     assertTrue(handlerDAOSpace.lastTxSucceeded(), 'createProposal should succeed');
 
-    bytes16 proposalId = handlerDAOSpace.getActiveProposal(daoSpace, 0);
+    bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpace, 0);
 
     // First vote (Yes vote = option 1)
     vm.prank(voter1);

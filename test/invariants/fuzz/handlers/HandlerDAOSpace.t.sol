@@ -220,14 +220,6 @@ contract HandlerDAOSpace is BaseHandler {
     }
   }
 
-  function getActiveProposalsCount(address _daoSpace) external view returns (uint256 _count) {
-    return ghost_activeProposals[_daoSpace].length;
-  }
-
-  function getActiveProposal(address _daoSpace, uint256 _index) external view returns (bytes16 _proposalId) {
-    return ghost_activeProposals[_daoSpace][_index];
-  }
-
   function _hasActors() internal returns (bool _actorExists) {
     if (daoSpaceActors.length == 0 || eoaActors.length == 0) {
       lastTxSucceeded = false;
