@@ -6,8 +6,7 @@ The SpaceRegistry maintains bidirectional mappings between addresses and spaceId
 |----|-----------|
 | SR-INV-1 | For any registered spaceId: `addressToSpaceId[spaceIdToAddress[spaceId]] == spaceId` |
 | SR-INV-2 | For any registered address: `spaceIdToAddress[addressToSpaceId[addr]] == addr` |
-| SR-INV-4 | After migration completes: old address has no spaceId AND new address has the migrated spaceId |
-| SR-INV-7 | If `msg.sender != _from` and _from is not an EOA, `enter()` succeeds if and only if `ISpace(_from).verify()` returns successfully (Verification coupling) |
+| SR-INV-3 | After migration completes: old address has no spaceId AND new address has the migrated spaceId |
 
 ---
 
@@ -34,10 +33,8 @@ The DAOSpace contract manages governance with roles and a proposal lifecycle.
 |----|-----------|
 | DS-INV-4 | Member/Editor counts must match the actual number of addresses granted those roles in AccessControl |
 | DS-INV-5 | `yesVotes + noVotes + abstainVotes == totalVotesCast` for any proposal |
-| DS-INV-6 | `totalVotesCast` on a proposal cannot exceed the total number of eligible voters (Editors) at the snapshot |
-
-| SR-INV-8 | Quorum setting must be less than or equal to total editors |
-| SR-INV-9 | Fast path flat threshold setting must be less than or equal to total editors |
+| DS-INV-6 | Quorum setting must be less than or equal to total editors |
+| DS-INV-7 | Fast path flat threshold setting must be less than or equal to total editors |
 ---
 
 ## 4. VerifierSpace

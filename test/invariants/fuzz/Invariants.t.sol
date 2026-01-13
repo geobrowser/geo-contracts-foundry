@@ -40,8 +40,8 @@ contract Invariants is Setup {
     }
   }
 
-  /// @notice SR-INV-4: After migration, old address has no spaceId (unless re-registered)
-  function invariant_SR_INV_4_migration_consistency() public view {
+  /// @notice SR-INV-3: After migration, old address has no spaceId (unless re-registered)
+  function invariant_SR_INV_3_migration_consistency() public view {
     uint256 length = handlerSpaceRegistry.ghost_registeredAddressesLength();
 
     for (uint256 i = 0; i < length; i++) {
@@ -53,9 +53,9 @@ contract Invariants is Setup {
       bool isRegistered = handlerSpaceRegistry.ghost_isAddressRegistered(oldAddr);
 
       if (isRegistered) {
-        assertNotEq(oldSpaceId, bytes16(0), 'SR-INV-4: Re-registered address has no spaceId');
+        assertNotEq(oldSpaceId, bytes16(0), 'SR-INV-3: Re-registered address has no spaceId');
       } else {
-        assertEq(oldSpaceId, bytes16(0), 'SR-INV-4: Old address still has spaceId after migration');
+        assertEq(oldSpaceId, bytes16(0), 'SR-INV-3: Old address still has spaceId after migration');
       }
     }
   }
@@ -174,20 +174,20 @@ contract Invariants is Setup {
     }
   }
 
-  /// @notice SR-INV-8: Quorum setting must be <= total editors
-  function invariant_SR_INV_8_quorum_valid() public view {
+  /// @notice DS-INV-6: Quorum setting must be <= total editors
+  function invariant_DS_INV_6_quorum_valid() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
-      assertLe(dao.votingSettings().quorum, dao.totalEditors(), 'SR-INV-8: Quorum exceeds total editors');
+      assertLe(dao.votingSettings().quorum, dao.totalEditors(), 'DS-INV-6: Quorum exceeds total editors');
     }
   }
 
-  /// @notice SR-INV-9: Fast path threshold must be <= total editors
-  function invariant_SR_INV_9_fastpath_threshold_valid() public view {
+  /// @notice DS-INV-7: Fast path threshold must be <= total editors
+  function invariant_DS_INV_7_fastpath_threshold_valid() public view {
     for (uint256 i = 0; i < daoSpaceActors.length; i++) {
       DAOSpace dao = DAOSpace(daoSpaceActors[i]);
       assertLe(
-        dao.votingSettings().fastPathFlatThreshold, dao.totalEditors(), 'SR-INV-9: Fast path threshold exceeds editors'
+        dao.votingSettings().fastPathFlatThreshold, dao.totalEditors(), 'DS-INV-7: Fast path threshold exceeds editors'
       );
     }
   }
