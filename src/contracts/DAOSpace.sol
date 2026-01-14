@@ -42,6 +42,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice The storage location of the DAO space contract
    * @custom:storage-location erc7201:geo.storage.DAOSpace
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpace")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _DAO_SPACE_STORAGE_LOCATION =
     0xca9a28eed6337bb89b7996aa1033645556bf4017a5207860882394677302bc00;

@@ -15,6 +15,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
   /**
    * @notice The storage location of the Space Access Control contract
    * @custom:storage-location erc7201:geo.storage.SpaceAccessControl
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceAccessControl")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _SPACE_ACCESS_CONTROL_STORAGE_LOCATION =
     0x2ecb2b2cb0272cfecbe1c3011e1b6356b5ce9fc13d93226dfee5064ba9cec500;

@@ -24,6 +24,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   /**
    * @notice The storage location of the verifier space contract
    * @custom:storage-location erc7201:geo.storage.VerifierSpace
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _VERIFIER_SPACE_STORAGE_LOCATION =
     0xc1676672be845731e27a8a9dcb0bb8dcd73102852fa8f3d5fb86df9b24265c00;
