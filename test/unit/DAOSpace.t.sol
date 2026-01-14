@@ -1535,6 +1535,7 @@ contract UnitDAOSpace is TestHelper {
   /// VERIFY ///
 
   function test_Verify_WhenCalled(
+    address _sender,
     address _from,
     address _to,
     bytes32 _action,
@@ -1547,7 +1548,7 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with VerifyDisabled
     vm.expectRevert(IDAOSpace.VerifyDisabled.selector);
     bytes16 toSpaceId = _getSpaceId(_to);
-    daoSpaceProxy.verify(toSpaceId, _action, _topic, _data, _signature);
+    daoSpaceProxy.verify(_sender, toSpaceId, _action, _topic, _data, _signature);
   }
 
   /// ADD EDITOR ///

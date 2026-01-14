@@ -59,6 +59,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
   /// @inheritdoc ISpace
   function verify(
+    address,
     bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,

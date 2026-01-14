@@ -215,6 +215,7 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Verify_WhenSignatureIsValid(
+    address _sender,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data
@@ -244,13 +245,14 @@ contract UnitVerifierSpace is TestHelper {
     // signature
     (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, digest);
     bytes memory _signature = abi.encodePacked(_r, _s, _v);
-    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
 
     // it increments replayNonce
     assertEq(verifierSpaceProxy.replayNonce(), _replayNonce + 1);
   }
 
   function test_Verify_WhenSignatureIsNotValid(
+    address _sender,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,
@@ -261,10 +263,11 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidSignature
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
 
-    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
   }
 
   function test_Verify_WhenCallerIsNotSpaceRegistry(
+    address _sender,
     bytes32 _action,
     bytes32 _topic,
     bytes calldata _data,
@@ -276,7 +279,7 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
 
-    verifierSpaceProxy.verify(_toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
   }
 
   function test_Write_WhenWriterIsValid(

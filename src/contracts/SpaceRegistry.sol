@@ -56,8 +56,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     if (_fromSpace == address(0) || _toSpace == address(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
-    // Then pass the to space ID, action, topic, data, and signature to the from space
-    if (msg.sender != _fromSpace) ISpace(_fromSpace).verify(_toSpaceId, _action, _topic, _data, _signature);
+    // Then pass the msg.sender, to space ID, action, topic, data, and signature to the from space
+    if (msg.sender != _fromSpace) {
+      ISpace(_fromSpace).verify(msg.sender, _toSpaceId, _action, _topic, _data, _signature);
+    }
 
     // No fetch or write with permissionless actions
     if ($.permissionlessActions[_action]) {

@@ -171,7 +171,7 @@ contract UnitSpaceRegistry is TestHelper {
     vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
-    _mockVerify(_fromSpace, _toSpaceId, _action, _topic, _data, _signature);
+    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _topic, _data, _signature);
 
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _topic, _data, _signature);
   }
@@ -562,6 +562,7 @@ contract UnitSpaceRegistry is TestHelper {
 
   function _mockVerify(
     address __fromSpace,
+    address _sender,
     bytes16 __toSpaceId,
     bytes32 _action,
     bytes32 _topic,
@@ -569,7 +570,9 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) internal {
     _mockAndExpect(
-      __fromSpace, abi.encodeCall(ISpace.verify, (__toSpaceId, _action, _topic, _data, _signature)), abi.encode()
+      __fromSpace,
+      abi.encodeCall(ISpace.verify, (_sender, __toSpaceId, _action, _topic, _data, _signature)),
+      abi.encode()
     );
   }
 

@@ -134,7 +134,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function verify(bytes16, bytes32, bytes32, bytes calldata, bytes calldata) external pure virtual {
+  function verify(address, bytes16, bytes32, bytes32, bytes calldata, bytes calldata) external pure virtual {
     revert VerifyDisabled();
   }
 
