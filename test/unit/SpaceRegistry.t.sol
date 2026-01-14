@@ -347,6 +347,12 @@ contract UnitSpaceRegistry is TestHelper {
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
     vm.startPrank(_fromSpace);
 
+    // it emits Action with SPACE_ID_MIGRATION_PROPOSED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_MIGRATION_PROPOSED, bytes32(bytes20(_newAccount)), ''
+    );
+
     spaceRegistryProxy.proposeSpaceMigration(_newAccount);
 
     // it updates spaceIdToProposedAddress

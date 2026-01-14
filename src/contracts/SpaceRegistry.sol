@@ -103,6 +103,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     if (_spaceId == bytes16(0)) revert InvalidCaller();
 
     $.spaceIdToProposedAddress[_spaceId] = _newAccount;
+
+    emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATION_PROPOSED, bytes32(bytes20(_newAccount)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
