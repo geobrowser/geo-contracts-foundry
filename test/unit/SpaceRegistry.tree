@@ -46,7 +46,9 @@ UnitSpaceRegistry::registerSpaceId
     └── it reverts with SpaceAlreadyRegistered
 
 UnitSpaceRegistry::clearSpaceId
-└── when called
+├── when spaceId is not registered
+│   └── it reverts with SpaceNotRegistered
+└── when spaceId is registered
     ├── it resets addressToSpaceId
     ├── it resets spaceIdToAddress
     ├── it resets spaceIdToProposedAddress

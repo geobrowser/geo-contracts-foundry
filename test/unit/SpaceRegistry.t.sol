@@ -310,7 +310,14 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.registerSpaceId(_type, _version);
   }
 
-  function test_ClearSpaceId_WhenCalled() external {
+  function test_ClearSpaceId_WhenSpaceIdIsNotRegistered() external {
+    // it reverts with SpaceNotRegistered
+    vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
+
+    spaceRegistryProxy.clearSpaceId();
+  }
+
+  function test_ClearSpaceId_WhenSpaceIdIsRegistered() external {
     // set caller up as proposer from space
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
     _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);

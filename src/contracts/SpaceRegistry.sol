@@ -83,12 +83,15 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function clearSpaceId() external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
-    bytes16 spaceId = $.addressToSpaceId[msg.sender];
-    $.addressToSpaceId[msg.sender] = bytes16(0);
-    $.spaceIdToAddress[spaceId] = address(0);
-    $.spaceIdToProposedAddress[spaceId] = address(0);
+    // Space must first be registered
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
 
-    emit Action(spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
+    $.addressToSpaceId[msg.sender] = bytes16(0);
+    $.spaceIdToAddress[_spaceId] = address(0);
+    $.spaceIdToProposedAddress[_spaceId] = address(0);
+
+    emit Action(_spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -96,10 +99,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Must be called by the space itself
-    bytes16 spaceId = $.addressToSpaceId[msg.sender];
-    if (spaceId == bytes16(0)) revert InvalidCaller();
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert InvalidCaller();
 
-    $.spaceIdToProposedAddress[spaceId] = _newAccount;
+    $.spaceIdToProposedAddress[_spaceId] = _newAccount;
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -112,12 +115,12 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // New address must not be registered
     if ($.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
 
-    address oldAccount = $.spaceIdToAddress[_spaceId];
+    address _oldAccount = $.spaceIdToAddress[_spaceId];
 
     // Update the bi-directional mappings and reset the proposal
     $.spaceIdToProposedAddress[_spaceId] = address(0);
     $.spaceIdToAddress[_spaceId] = msg.sender;
-    $.addressToSpaceId[oldAccount] = bytes16(0);
+    $.addressToSpaceId[_oldAccount] = bytes16(0);
     $.addressToSpaceId[msg.sender] = _spaceId;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
