@@ -26,7 +26,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   bytes32 internal constant _SPACE_REGISTRY_STORAGE_LOCATION =
     0xa1b85c99b52a518d0806b31f4568cbd8c3970d0ca846714c1d12666d5d19bc00;
 
-  /// @notice Constructor
+  /**
+   * @notice Constructor
+   * @custom:oz-upgrades-unsafe-allow constructor
+   */
   constructor() {
     _disableInitializers();
   }

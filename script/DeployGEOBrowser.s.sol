@@ -4,7 +4,8 @@ pragma solidity 0.8.30;
 import {Script} from 'forge-std/Script.sol';
 
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
+import {Options} from '@openzeppelin/foundry-upgrades/Options.sol';
+import {Upgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {DAOSpaceFactory} from 'contracts/DAOSpaceFactory.sol';
@@ -36,40 +37,51 @@ contract DeployGEOBrowser is Script {
   function run() public {
     vm.startBroadcast();
 
-    // Deploy the implementation contracts
-    spaceRegistryImplementation = new SpaceRegistry();
-    daoSpaceFactoryImplementation = new DAOSpaceFactory();
+    // Deploy the implementation contracts for the beacons
     daoSpaceImplementation = new DAOSpace();
-    verifierSpaceFactoryImplementation = new VerifierSpaceFactory();
     verifierSpaceImplementation = new VerifierSpace();
+
+    // Checks everything unless flagged on the contract (constructors)
+    Options memory opts;
 
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation),
-        abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL)))
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'SpaceRegistry.sol:SpaceRegistry',
+          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))),
+          opts
+        ))
     );
+    spaceRegistryImplementation = SpaceRegistry(Upgrades.getImplementationAddress(address(spaceRegistryProxy)));
+
     daoSpaceFactoryProxy = DAOSpaceFactory(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation),
-        abi.encodeCall(
-          DAOSpaceFactory.initialize,
-          (abi.encode(spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)))
-        )
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'DAOSpaceFactory.sol:DAOSpaceFactory',
+          abi.encodeCall(
+            DAOSpaceFactory.initialize,
+            (abi.encode(
+                spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)
+              ))
+          ),
+          opts
+        ))
     );
+    daoSpaceFactoryImplementation = DAOSpaceFactory(Upgrades.getImplementationAddress(address(daoSpaceFactoryProxy)));
+
     verifierSpaceFactoryProxy = VerifierSpaceFactory(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(
-          VerifierSpaceFactory.initialize,
-          (abi.encode(
-              spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
-            ))
-        )
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'VerifierSpaceFactory.sol:VerifierSpaceFactory',
+          abi.encodeCall(
+            VerifierSpaceFactory.initialize,
+            (abi.encode(
+                spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
+              ))
+          ),
+          opts
+        ))
     );
+    verifierSpaceFactoryImplementation =
+      VerifierSpaceFactory(Upgrades.getImplementationAddress(address(verifierSpaceFactoryProxy)));
 
     // Sanity check on deployments
     _verifyDeployments();

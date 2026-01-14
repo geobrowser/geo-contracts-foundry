@@ -24,7 +24,10 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   bytes32 internal constant _DAO_SPACE_FACTORY_STORAGE_LOCATION =
     0x79f182c2bed0e30afe0ad6b057fc5f574a8b461be8bd0d1c0aab98f3c2fef400;
 
-  /// @notice Constructor
+  /**
+   * @notice Constructor
+   * @custom:oz-upgrades-unsafe-allow constructor
+   */
   constructor() {
     _disableInitializers();
   }

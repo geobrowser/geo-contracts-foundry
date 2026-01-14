@@ -20,10 +20,10 @@
     "lint:natspec": "lintspec",
     "lint:sol": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky",
-    "test": "forge test -vvv",
+    "test": "forge clean && forge build && forge test --ffi -vvv",
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",
-    "test:integration": "forge test --match-contract Integration -vvv",
+    "test:integration": "forge clean && forge build && forge test --ffi --match-contract Integration -vvv",
     "test:unit": "forge test --match-contract Unit -vvv",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit"
   },
