@@ -13,11 +13,13 @@ interface IVerifierSpaceFactory is ISemver {
    * @notice The storage struct of the verifier space factory contract
    * @param verifierSpaceBeacon The address of the verifier space beacon contract
    * @param spaceRegistry The address of the space registry contract
+   * @param proxyIsChildOfFactory A mapping that tracks whether a proxy was produced by this factory
    * @custom:storage-location erc7201:geo.storage.VerifierSpaceFactory
    */
   struct VerifierSpaceFactoryStorage {
     address verifierSpaceBeacon;
     ISpaceRegistry spaceRegistry;
+    mapping(address _proxy => bool _isChild) proxyIsChildOfFactory;
   }
 
   /**
@@ -31,6 +33,13 @@ interface IVerifierSpaceFactory is ISemver {
    * @return _spaceRegistry The address of the space registry contract
    */
   function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
+
+  /**
+   * @notice Checks whether a proxy address was created by this factory
+   * @param _proxy The proxy address to check
+   * @return _isChild True if the proxy was created by this factory, false otherwise
+   */
+  function proxyIsChildOfFactory(address _proxy) external view returns (bool _isChild);
 
   /**
    * @notice Initializes the contract

@@ -66,6 +66,8 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
         )
       )
     );
+
+    $.proxyIsChildOfFactory[_newDAOSpaceProxy] = true;
   }
 
   /// @inheritdoc IDAOSpaceFactory
@@ -78,6 +80,12 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
     _spaceRegistry = $.spaceRegistry;
+  }
+
+  /// @inheritdoc IDAOSpaceFactory
+  function proxyIsChildOfFactory(address _proxy) public view returns (bool _isChild) {
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
+    _isChild = $.proxyIsChildOfFactory[_proxy];
   }
 
   /// @inheritdoc ISemver

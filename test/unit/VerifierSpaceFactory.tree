@@ -23,6 +23,7 @@ UnitVerifierSpaceFactory::initialize
 UnitVerifierSpaceFactory::createVerifierSpaceProxy
 └── when called 
     ├── it deploys and initializes verifier space proxy
+    ├── it updates the proxyIsChildOfFactory for the deployed proxy to true
     └── it returns new verifier space proxy
 
 UnitVerifierSpaceFactory::typeId
