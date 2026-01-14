@@ -158,7 +158,10 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Initialize_WhenDelegateCalled(address __spaceRegistry) external whenDelegateCalled {
+  function test_Initialize_WhenDelegateCalled(
+    address __spaceRegistry,
+    bytes memory __publishEditsData
+  ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -172,14 +175,16 @@ contract UnitDAOSpace is TestHelper {
     _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
-    _mockEnter(
-      __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
-      ActionsConstants.EDITS_PUBLISHED,
-      '',
-      _publishEditsData
-    );
+    if (__publishEditsData.length != 0) {
+      _mockEnter(
+        __spaceRegistry,
+        predictedDAOSpaceProxySpaceId,
+        predictedDAOSpaceProxySpaceId,
+        ActionsConstants.EDITS_PUBLISHED,
+        '',
+        __publishEditsData
+      );
+    }
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
@@ -210,7 +215,7 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData))
         )
       )
     );
@@ -246,7 +251,10 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.unflag.selector), true);
   }
 
-  function test_Initialize_WhenDelegateCalledAgain(address __spaceRegistry) external whenDelegateCalled {
+  function test_Initialize_WhenDelegateCalledAgain(
+    address __spaceRegistry,
+    bytes memory __publishEditsData
+  ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
@@ -260,14 +268,16 @@ contract UnitDAOSpace is TestHelper {
     _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
-    _mockEnter(
-      __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
-      ActionsConstants.EDITS_PUBLISHED,
-      '',
-      _publishEditsData
-    );
+    if (__publishEditsData.length != 0) {
+      _mockEnter(
+        __spaceRegistry,
+        predictedDAOSpaceProxySpaceId,
+        predictedDAOSpaceProxySpaceId,
+        ActionsConstants.EDITS_PUBLISHED,
+        '',
+        __publishEditsData
+      );
+    }
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
@@ -298,7 +308,7 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData))
         )
       )
     );

@@ -164,7 +164,11 @@ contract UnitDAOSpaceFactory is TestHelper {
     daoSpaceFactoryImplementation.initialize(abi.encode(__spaceRegistry, __owner, __daoSpaceImplementation));
   }
 
-  function test_CreateDAOSpaceProxy_WhenCalled(IDAOSpace.VotingSettings memory __votingSettings) external {
+  function test_CreateDAOSpaceProxy_WhenCalled(
+    IDAOSpace.VotingSettings memory __votingSettings,
+    bytes memory __initialEditsContentUri,
+    bytes memory __initialEditsMetadata
+  ) external {
     __votingSettings.slowPathPercentageThreshold = bound(__votingSettings.slowPathPercentageThreshold, 0, 1e6);
     __votingSettings.fastPathFlatThreshold = bound(__votingSettings.fastPathFlatThreshold, 0, 1);
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
@@ -174,19 +178,21 @@ contract UnitDAOSpaceFactory is TestHelper {
     address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
 
     // it deploys and initializes DAO space proxy
-    bytes memory _initializerData = abi.encode(
-      daoSpaceFactoryProxy.spaceRegistry(),
-      __votingSettings,
-      _initialEditors,
-      _initialMembers,
-      abi.encode(_initialEditsContentUri, _initialEditsMetadata)
-    );
+    bytes memory _initializerData = (__initialEditsContentUri.length != 0 || __initialEditsMetadata.length != 0)
+      ? abi.encode(
+        daoSpaceFactoryProxy.spaceRegistry(),
+        __votingSettings,
+        _initialEditors,
+        _initialMembers,
+        abi.encode(__initialEditsContentUri, __initialEditsMetadata)
+      )
+      : abi.encode(daoSpaceFactoryProxy.spaceRegistry(), __votingSettings, _initialEditors, _initialMembers, '');
     _mockAndExpect(_daoSpaceImplementation, abi.encodeCall(IDAOSpace.initialize, (_initializerData)), abi.encode());
 
     // it returns new DAO space proxy
     assertEq(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        __votingSettings, _initialEditors, _initialMembers, _initialEditsContentUri, _initialEditsMetadata
+        __votingSettings, _initialEditors, _initialMembers, __initialEditsContentUri, __initialEditsMetadata
       ),
       address(_daoSpaceProxy)
     );
