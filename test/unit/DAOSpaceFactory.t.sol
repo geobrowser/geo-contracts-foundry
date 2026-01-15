@@ -176,6 +176,7 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
+    assertFalse(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
 
     // it deploys and initializes DAO space proxy
     bytes memory _initializerData = (__initialEditsContentUri.length != 0 || __initialEditsMetadata.length != 0)
@@ -194,13 +195,16 @@ contract UnitDAOSpaceFactory is TestHelper {
       daoSpaceFactoryProxy.createDAOSpaceProxy(
         __votingSettings, _initialEditors, _initialMembers, __initialEditsContentUri, __initialEditsMetadata
       ),
-      address(_daoSpaceProxy)
+      _daoSpaceProxy
     );
 
     assertEq(
-      address(uint160(uint256(vm.load(address(_daoSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
+      address(uint160(uint256(vm.load(_daoSpaceProxy, ERC1967Utils.BEACON_SLOT)))),
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
+
+    // it updates the proxyIsChildOfFactory for the deployed proxy to true
+    assertTrue(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
   }
 
   function test_TypeId_WhenCalled() external view {

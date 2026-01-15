@@ -13,14 +13,20 @@ solc_version = '0.8.30'
 evm_version = 'prague'
 libs = ['node_modules']
 optimizer_runs = 10_000
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
 [profile.optimized]
 via_ir = true
 out = 'out-via-ir'
+ast = true
 
 [profile.test]
 via_ir = true
-out = 'out-via-ir'
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
 [profile.docs]
 src = 'src/interfaces/'

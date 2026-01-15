@@ -227,28 +227,28 @@ contract UnitDAOSpace is TestHelper {
     assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
 
     // it grants the new editor the EDITOR role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
     // it grants the new member the MEMBER role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
     // it grants itself the DAO role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _getSpaceId(address(daoSpaceProxy))), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _getSpaceId(address(daoSpaceProxy))));
 
     // it sets addMember as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector), true);
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector));
 
     // it sets removeMember as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector), true);
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector));
 
     // it sets publish as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.publish.selector), true);
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.publish.selector));
 
     // it sets flag as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.flag.selector), true);
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.flag.selector));
 
     // it sets unflag as a valid fast path action
-    assertEq(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.unflag.selector), true);
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.unflag.selector));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
@@ -1065,7 +1065,7 @@ contract UnitDAOSpace is TestHelper {
       actions
     );
 
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1083,7 +1083,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it loops over the stored proposal actions and performs the external callsc
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
   }
 
   /// WRITE - UPDATE PROPOSAL ///
@@ -1317,7 +1317,7 @@ contract UnitDAOSpace is TestHelper {
     // warp to after last date
     vm.warp(block.timestamp + 2);
 
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1334,7 +1334,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _topic, executeData);
 
     // it loops over the stored proposal actions and performs the external calls
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
   }
 
   function test_Write_WhenAnExternalCallFails(bytes32 _topic)
@@ -1385,7 +1385,7 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_LEFT
   {
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_REMOVED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1402,7 +1402,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // it revokes the role of MEMBER from the _fromSpaceId
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
   }
 
   function test_Write_WhenTheRoleSpecifiedIsEDITORAndThe_fromSpaceIdIsAnEditor(bytes32 _topic)
@@ -1420,7 +1420,7 @@ contract UnitDAOSpace is TestHelper {
       })
     );
 
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
     // it calls enter on the spaceRegistry with the EDITOR_REMOVED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1437,7 +1437,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
 
     // it revokes the role of EDITOR from the _fromSpaceId
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
   }
 
   function test_Write_WhenTheRoleIsNotHeldByThe_fromSpaceIdOrTheRoleIsNeitherMEMBERNorEDITOR(
@@ -1487,14 +1487,14 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_FAST_PATH_RESTRICTED
   {
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
 
     // initial editor flags themselves
     bytes memory flagData = abi.encode(_getSpaceId(_randomCaller));
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _topic, flagData);
 
     // it flags the editor from using the fast path
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
   }
 
   /// WRITE - REVERT ///
@@ -1535,6 +1535,7 @@ contract UnitDAOSpace is TestHelper {
   /// VERIFY ///
 
   function test_Verify_WhenCalled(
+    address _sender,
     address _from,
     address _to,
     bytes32 _action,
@@ -1547,7 +1548,7 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with VerifyDisabled
     vm.expectRevert(IDAOSpace.VerifyDisabled.selector);
     bytes16 toSpaceId = _getSpaceId(_to);
-    daoSpaceProxy.verify(toSpaceId, _action, _topic, _data, _signature);
+    daoSpaceProxy.verify(_sender, toSpaceId, _action, _topic, _data, _signature);
   }
 
   /// ADD EDITOR ///
@@ -1567,7 +1568,7 @@ contract UnitDAOSpace is TestHelper {
   function test_AddEditor_When_newEditorIsNotAnEditor(bytes16 _newEditorSpaceId) external whenCalledByDAO {
     vm.assume(_newEditorSpaceId != _initialEditorSpaceId);
 
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId));
 
     uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
     assertEq(totalEditorsBefore, 1);
@@ -1590,7 +1591,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore + 1);
 
     // it grants _newEditor the EDITOR role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId));
   }
 
   function test_AddEditor_WhenCalledByNon_DAO(address _caller, bytes16 _newEditorSpaceId) external {
@@ -1659,7 +1660,7 @@ contract UnitDAOSpace is TestHelper {
       })
     );
 
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
     uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
     assertEq(totalEditorsBefore, 1);
@@ -1680,7 +1681,7 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore - 1);
 
     // it removes the EDITOR role from _oldEditor
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
   }
 
   function test_RemoveEditor_WhenCalledByNon_DAO(address _caller, bytes16 _oldEditorSpaceId) external {
@@ -1704,7 +1705,7 @@ contract UnitDAOSpace is TestHelper {
 
   function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId) external whenCalledByDAO {
     vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1719,7 +1720,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.addMember(_newMemberSpaceId);
 
     // it grants _newMember the MEMBER role
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
   }
 
   function test_AddMember_WhenCalledByNon_DAO(address _caller, bytes16 _newMemberSpaceId) external {
@@ -1744,7 +1745,7 @@ contract UnitDAOSpace is TestHelper {
   }
 
   function test_RemoveMember_When_oldMemberIsAMember() external whenCalledByDAO {
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), true);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_REMOVED action
     bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
@@ -1759,7 +1760,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeMember(_initialMemberSpaceId);
 
     // it removes the MEMBER role from _oldMember
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
   }
 
   function test_RemoveMember_WhenCalledByNon_DAO(address _caller, bytes16 _oldMemberSpaceId) external {
@@ -1794,7 +1795,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.unrestrictSpace(_getSpaceId(_randomCaller));
 
     // it revokes the FAST_PATH_RESTRICTED role from _space
-    assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)), false);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
   }
 
   function test_UnrestrictSpace_WhenCalledByNon_DAO(address _caller) external {
@@ -2005,9 +2006,9 @@ contract UnitDAOSpace is TestHelper {
 
   /// FETCH ///
 
-  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, uint256 _voteOption) external view {
-    _voteOption = bound(_voteOption, 0, 3);
-    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption), new IDAOSpace.Action[](0));
+  function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, uint256 _votingMode) external view {
+    _votingMode = bound(_votingMode, 0, 1);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VotingMode(_votingMode), new IDAOSpace.Action[](0));
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_CREATED, _topicInput, _data), bytes32(_proposalId));
@@ -2021,9 +2022,9 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_VOTED, _topicInput, _data), bytes32(_proposalId));
   }
 
-  function test_Fetch_When_actionEqualsPROPOSAL_UPDATED(bytes32 _topicInput, uint256 _voteOption) external view {
-    _voteOption = bound(_voteOption, 0, 3);
-    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VoteOption(_voteOption), new IDAOSpace.Action[](0));
+  function test_Fetch_When_actionEqualsPROPOSAL_UPDATED(bytes32 _topicInput, uint256 _votingMode) external view {
+    _votingMode = bound(_votingMode, 0, 1);
+    bytes memory _data = abi.encode(_proposalId, IDAOSpace.VotingMode(_votingMode), new IDAOSpace.Action[](0));
 
     // it returns bytes32(_proposalId)
     assertEq(daoSpaceProxy.fetch(ActionsConstants.PROPOSAL_UPDATED, _topicInput, _data), bytes32(_proposalId));
@@ -2091,7 +2092,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // it returns false
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), false);
+    assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheVotingQuorumHasNotBeenReached(
@@ -2123,7 +2124,7 @@ contract UnitDAOSpace is TestHelper {
     vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns false
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), false);
+    assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheYesVotesAreNotGreaterThanThePercentageSupportThreshold(
@@ -2157,7 +2158,7 @@ contract UnitDAOSpace is TestHelper {
     vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns false
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), false);
+    assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheYesVotesAreGreaterThanThePercentageSupportThreshold(
@@ -2191,7 +2192,7 @@ contract UnitDAOSpace is TestHelper {
     vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration + 1);
 
     // it returns true
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), true);
+    assertTrue(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheYesVotesAreNotGreaterThanTheFlatSupportThreshold(
@@ -2217,7 +2218,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, 0, 0);
 
     // it returns false
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), false);
+    assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheYesVotesAreGreaterThanTheFlatSupportThreshold(
@@ -2243,7 +2244,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, 0, 0);
 
     // it returns true
-    assertEq(daoSpaceProxy.isSupportThresholdReached(_proposalId), true);
+    assertTrue(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   /// TYPEID ///

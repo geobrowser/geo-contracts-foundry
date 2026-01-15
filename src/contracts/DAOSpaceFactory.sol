@@ -19,11 +19,15 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   /**
    * @notice The storage location of the DAO space factory contract
    * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpaceFactory")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _DAO_SPACE_FACTORY_STORAGE_LOCATION =
     0x79f182c2bed0e30afe0ad6b057fc5f574a8b461be8bd0d1c0aab98f3c2fef400;
 
-  /// @notice Constructor
+  /**
+   * @notice Constructor
+   * @custom:oz-upgrades-unsafe-allow constructor
+   */
   constructor() {
     _disableInitializers();
   }
@@ -62,6 +66,8 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
         )
       )
     );
+
+    $.proxyIsChildOfFactory[_newDAOSpaceProxy] = true;
   }
 
   /// @inheritdoc IDAOSpaceFactory
@@ -74,6 +80,12 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
     _spaceRegistry = $.spaceRegistry;
+  }
+
+  /// @inheritdoc IDAOSpaceFactory
+  function proxyIsChildOfFactory(address _proxy) public view returns (bool _isChild) {
+    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
+    _isChild = $.proxyIsChildOfFactory[_proxy];
   }
 
   /// @inheritdoc ISemver

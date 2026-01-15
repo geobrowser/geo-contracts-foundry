@@ -57,6 +57,28 @@ interface IVerifierSpace is ISpace, ISemver {
   error InvalidSignature();
 
   /**
+   * @notice Initializes the contract
+   * @param _initializerData The encoded initializer data:
+   *        _spaceRegistry The address of the space registry contract
+   *        _owner The address of the owner
+   */
+  function initialize(bytes calldata _initializerData) external;
+
+  /**
+   * @notice Sets the writer validity status of a space ID
+   * @dev Must be called by the owner
+   * @param _spaceId The space ID of the writer
+   * @param _valid Whether the writer will be valid
+   */
+  function setValidWriters(bytes16 _spaceId, bool _valid) external;
+
+  /**
+   * @notice The message typehash for the struct used in the signature verification
+   * @return _messageTypehash The bytes32 message typehash constant
+   */
+  function MESSAGE_TYPEHASH() external view returns (bytes32 _messageTypehash);
+
+  /**
    * @notice Returns the space registry contract address
    * @return _spaceRegistry The address of the space registry contract
    */
@@ -74,20 +96,4 @@ interface IVerifierSpace is ISpace, ISemver {
    * @return _replayNonce The nonce used to prevent replay
    */
   function replayNonce() external view returns (uint256 _replayNonce);
-
-  /**
-   * @notice Initializes the contract
-   * @param _initializerData The encoded initializer data:
-   *        _spaceRegistry The address of the space registry contract
-   *        _owner The address of the owner
-   */
-  function initialize(bytes calldata _initializerData) external;
-
-  /**
-   * @notice Sets the writer validity status of a space ID
-   * @dev Must be called by the owner
-   * @param _spaceId The space ID of the writer
-   * @param _valid Whether the writer will be valid
-   */
-  function setValidWriters(bytes16 _spaceId, bool _valid) external;
 }

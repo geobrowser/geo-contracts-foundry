@@ -21,10 +21,6 @@ contract MockVerifierSpace is VerifierSpace {
     _versionHash = _EIP712VersionHash();
   }
 
-  function exposed__MESSAGE_TYPEHASH() external pure returns (bytes32 _messageTypeHash) {
-    _messageTypeHash = _MESSAGE_TYPEHASH;
-  }
-
   function exposed__VERIFIER_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _verifierSpaceStorageLocation) {
     _verifierSpaceStorageLocation = _VERIFIER_SPACE_STORAGE_LOCATION;
   }
