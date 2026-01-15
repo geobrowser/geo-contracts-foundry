@@ -32,7 +32,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    */
   function _grantRole(bytes32 _role, bytes16 _spaceId) internal virtual {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    if (!$.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = true;
+    $.hasRole[_role][_spaceId] = true;
   }
 
   /**
@@ -42,7 +42,7 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    */
   function _revokeRole(bytes32 _role, bytes16 _spaceId) internal virtual {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    if ($.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = false;
+    $.hasRole[_role][_spaceId] = false;
   }
 
   /**
