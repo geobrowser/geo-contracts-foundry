@@ -12,7 +12,7 @@
   "scripts": {
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
-    "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*'",
+    "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*' --no-match-coverage '(script|test)'",
     "deploy:geo-browser": "bash -c 'source .env && forge script DeployGEOBrowser --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain geo_testnet -vvvvv'",
     "lint:bulloak": "find test/unit -name '*.tree' | xargs bulloak check",
     "lint:check": "forge fmt --check && yarn lint:sol",
