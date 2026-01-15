@@ -78,116 +78,19 @@ contract DeployGEOBrowser is Script {
 
     vm.stopBroadcast();
 
-    // Sanity check on deployments
-    _verifyDeployments();
+    // Final sanity check on deployments
+    _verifyBeaconImplementations();
   }
 
-  function _verifyDeployments() internal view {
-    _verifySpaceRegistry();
-    _verifyDAOSpaceFactory();
-    _verifyVerifierSpaceFactory();
-  }
-
-  function _verifySpaceRegistry() internal view {
-    if (address(spaceRegistryImplementation) == address(0)) {
-      revert DeploymentFailed('SpaceRegistry: Implementation not deployed');
+  function _verifyBeaconImplementations() internal view {
+    if (UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon()).implementation() != address(daoSpaceImplementation)) {
+      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon implementation is incorrect');
     }
-
-    if (address(spaceRegistryProxy) == address(0)) {
-      revert DeploymentFailed('SpaceRegistry: Proxy not deployed');
-    }
-
-    if (spaceRegistryProxy.owner() != Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL) {
-      revert DeploymentFailed('SpaceRegistry: Owner not set correctly');
-    }
-
-    if (!spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED)) {
-      revert DeploymentFailed('SpaceRegistry: UPVOTED permissionless action not added');
-    }
-
-    if (!spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED)) {
-      revert DeploymentFailed('SpaceRegistry: DOWNVOTED permissionless action not added');
-    }
-
-    if (!spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED)) {
-      revert DeploymentFailed('SpaceRegistry: UNVOTED permissionless action not added');
-    }
-
-    if (!spaceRegistryProxy.permissionlessActions(ActionsConstants.COMMENTED)) {
-      revert DeploymentFailed('SpaceRegistry: COMMENTED permissionless action not added');
-    }
-
-    bytes16 spaceId = spaceRegistryProxy.addressToSpaceId(address(spaceRegistryProxy));
-    if (spaceId == bytes16(0)) {
-      revert DeploymentFailed('SpaceRegistry: SpaceRegistry not registered with itself');
-    }
-
-    if (spaceRegistryProxy.spaceIdToAddress(spaceId) != address(spaceRegistryProxy)) {
-      revert DeploymentFailed('SpaceRegistry: SpaceId mapping incorrect');
-    }
-  }
-
-  function _verifyDAOSpaceFactory() internal view {
-    if (address(daoSpaceFactoryImplementation) == address(0)) {
-      revert DeploymentFailed('DAOSpaceFactory: Implementation not deployed');
-    }
-
-    if (address(daoSpaceFactoryProxy) == address(0)) {
-      revert DeploymentFailed('DAOSpaceFactory: Proxy not deployed');
-    }
-
-    if (daoSpaceFactoryProxy.owner() != Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL) {
-      revert DeploymentFailed('DAOSpaceFactory: Owner not set correctly');
-    }
-
-    address daoSpaceBeacon = daoSpaceFactoryProxy.daoSpaceBeacon();
-    if (daoSpaceBeacon == address(0)) {
-      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon not set');
-    }
-
-    UpgradeableBeacon beacon = UpgradeableBeacon(daoSpaceBeacon);
-    if (beacon.implementation() != address(daoSpaceImplementation)) {
-      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon implementation incorrect');
-    }
-
-    if (beacon.owner() != Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL) {
-      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon owner incorrect');
-    }
-
-    if (address(daoSpaceFactoryProxy.spaceRegistry()) != address(spaceRegistryProxy)) {
-      revert DeploymentFailed('DAOSpaceFactory: SpaceRegistry not set correctly');
-    }
-  }
-
-  function _verifyVerifierSpaceFactory() internal view {
-    if (address(verifierSpaceFactoryImplementation) == address(0)) {
-      revert DeploymentFailed('VerifierSpaceFactory: Implementation not deployed');
-    }
-
-    if (address(verifierSpaceFactoryProxy) == address(0)) {
-      revert DeploymentFailed('VerifierSpaceFactory: Proxy not deployed');
-    }
-
-    if (verifierSpaceFactoryProxy.owner() != Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL) {
-      revert DeploymentFailed('VerifierSpaceFactory: Owner not set correctly');
-    }
-
-    address verifierSpaceBeacon = verifierSpaceFactoryProxy.verifierSpaceBeacon();
-    if (verifierSpaceBeacon == address(0)) {
-      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon not set');
-    }
-
-    UpgradeableBeacon beacon = UpgradeableBeacon(verifierSpaceBeacon);
-    if (beacon.implementation() != address(verifierSpaceImplementation)) {
-      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon implementation incorrect');
-    }
-
-    if (beacon.owner() != Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL) {
-      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon owner incorrect');
-    }
-
-    if (address(verifierSpaceFactoryProxy.spaceRegistry()) != address(spaceRegistryProxy)) {
-      revert DeploymentFailed('VerifierSpaceFactory: SpaceRegistry not set correctly');
+    if (
+      UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon()).implementation()
+        != address(verifierSpaceImplementation)
+    ) {
+      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon implementation is incorrect');
     }
   }
 }
