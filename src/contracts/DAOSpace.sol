@@ -320,7 +320,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes16 _proposalId,
     uint8 _version,
     bytes16 _voterSpaceId
-  ) external view returns (VoteOption _voteOption) {
+  ) public view returns (VoteOption _voteOption) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _voteOption = $.proposals[_proposalId][_version].voters[_voterSpaceId];
   }
@@ -329,13 +329,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function getLatestProposalVote(
     bytes16 _proposalId,
     bytes16 _voterSpaceId
-  ) external view returns (VoteOption _voteOption) {
+  ) public view returns (VoteOption _voteOption) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     _voteOption = proposal_.voters[_voterSpaceId];
   }
 
   /// @inheritdoc IDAOSpace
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry) {
+  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _spaceRegistry = $.spaceRegistry;
   }

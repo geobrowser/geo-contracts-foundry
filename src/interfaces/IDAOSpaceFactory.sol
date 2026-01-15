@@ -24,25 +24,6 @@ interface IDAOSpaceFactory is ISemver {
   }
 
   /**
-   * @notice Returns the DAO space beacon contract address
-   * @return _daoSpaceBeacon The address of the DAO space beacon contract
-   */
-  function daoSpaceBeacon() external view returns (address _daoSpaceBeacon);
-
-  /**
-   * @notice Returns the space registry contract address
-   * @return _spaceRegistry The address of the space registry contract
-   */
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
-
-  /**
-   * @notice Checks whether a proxy address was created by this factory
-   * @param _proxy The proxy address to check
-   * @return _isChild True if the proxy was created by this factory, false otherwise
-   */
-  function proxyIsChildOfFactory(address _proxy) external view returns (bool _isChild);
-
-  /**
    * @notice Initializes the contract
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
@@ -68,4 +49,23 @@ interface IDAOSpaceFactory is ISemver {
     bytes calldata _initialEditsContentUri,
     bytes calldata _initialEditsMetadata
   ) external returns (address _newDAOSpaceProxy);
+
+  /**
+   * @notice Returns the DAO space beacon contract address
+   * @return _daoSpaceBeacon The address of the DAO space beacon contract
+   */
+  function daoSpaceBeacon() external view returns (address _daoSpaceBeacon);
+
+  /**
+   * @notice Returns the space registry contract address
+   * @return _spaceRegistry The address of the space registry contract
+   */
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
+
+  /**
+   * @notice Checks whether a proxy address was created by this factory
+   * @param _proxy The proxy address to check
+   * @return _isChild True if the proxy was created by this factory, false otherwise
+   */
+  function proxyIsChildOfFactory(address _proxy) external view returns (bool _isChild);
 }

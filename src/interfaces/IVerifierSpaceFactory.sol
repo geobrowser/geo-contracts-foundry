@@ -23,6 +23,23 @@ interface IVerifierSpaceFactory is ISemver {
   }
 
   /**
+   * @notice Initializes the contract
+   * @param _initializerData The encoded initializer data:
+   *        _spaceRegistry The address of the space registry contract
+   *        _owner The address of the owner
+   *        _verifierSpaceImplementation The address of a pre-deployed VerifierSpace implementation
+   */
+  function initialize(bytes calldata _initializerData) external;
+
+  /**
+   * @notice Creates a verifier space proxy contract
+   * @dev Verifier space should register with space registry when initialized
+   * @param _owner The address of the owner
+   * @return _newVerifierSpaceProxy The address of the new verifier space proxy contract
+   */
+  function createVerifierSpaceProxy(address _owner) external returns (address _newVerifierSpaceProxy);
+
+  /**
    * @notice Returns the verifier space beacon contract address
    * @return _verifierSpaceBeacon The address of the verifier space beacon contract
    */
@@ -40,21 +57,4 @@ interface IVerifierSpaceFactory is ISemver {
    * @return _isChild True if the proxy was created by this factory, false otherwise
    */
   function proxyIsChildOfFactory(address _proxy) external view returns (bool _isChild);
-
-  /**
-   * @notice Initializes the contract
-   * @param _initializerData The encoded initializer data:
-   *        _spaceRegistry The address of the space registry contract
-   *        _owner The address of the owner
-   *        _verifierSpaceImplementation The address of a pre-deployed VerifierSpace implementation
-   */
-  function initialize(bytes calldata _initializerData) external;
-
-  /**
-   * @notice Creates a verifier space proxy contract
-   * @dev Verifier space should register with space registry when initialized
-   * @param _owner The address of the owner
-   * @return _newVerifierSpaceProxy The address of the new verifier space proxy contract
-   */
-  function createVerifierSpaceProxy(address _owner) external returns (address _newVerifierSpaceProxy);
 }
