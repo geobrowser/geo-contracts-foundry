@@ -57,6 +57,12 @@ interface IVerifierSpace is ISpace, ISemver {
   error InvalidSignature();
 
   /**
+   * @notice The message typehash for the struct used in the signature verification
+   * @return _messageTypehash The bytes32 message typehash constant
+   */
+  function MESSAGE_TYPEHASH() external view returns (bytes32 _messageTypehash);
+
+  /**
    * @notice Returns the space registry contract address
    * @return _spaceRegistry The address of the space registry contract
    */

@@ -17,8 +17,8 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
  *      An arbitrary number of these contracts allows for an EOA (or a DAO) to control multiple spaces simultaneously
  */
 contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace {
-  /// @notice The message typehash for the struct used in the signature verification
-  bytes32 internal constant _MESSAGE_TYPEHASH =
+  /// @inheritdoc IVerifierSpace
+  bytes32 public constant MESSAGE_TYPEHASH =
     keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
 
   /**
@@ -73,7 +73,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(_MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
     if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();

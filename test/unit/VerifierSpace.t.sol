@@ -56,9 +56,9 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
-    // it sets the _MESSAGE_TYPEHASH to keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+    // it sets the MESSAGE_TYPEHASH to keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     assertEq(
-      verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(),
+      verifierSpaceProxy.MESSAGE_TYPEHASH(),
       keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
     );
 
@@ -225,9 +225,7 @@ contract UnitVerifierSpace is TestHelper {
 
     // struct hash
     bytes32 structHash = keccak256(
-      abi.encode(
-        verifierSpaceProxy.exposed__MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, _replayNonce, keccak256(_data)
-      )
+      abi.encode(verifierSpaceProxy.MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, _replayNonce, keccak256(_data))
     );
     // domain separator
     bytes32 domainSeparator = keccak256(
