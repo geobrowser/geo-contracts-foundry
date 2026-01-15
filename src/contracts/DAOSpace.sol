@@ -124,7 +124,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       _executeProposal(_data);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
-      _leave(_fromSpaceId, _data);
+      _leaveSpace(_fromSpaceId, _data);
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       _restrictSpace(_fromSpaceId, _data);
     } else {
@@ -560,7 +560,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID leaving
    * @param _data The encoded role data used to determine which role a user wants to leave
    */
-  function _leave(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
+  function _leaveSpace(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     bytes32 role = abi.decode(_data, (bytes32));
     if (role == MEMBER && hasRole(MEMBER, _fromSpaceId)) {
       _removeMember(_fromSpaceId);

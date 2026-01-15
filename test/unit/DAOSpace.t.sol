@@ -1362,8 +1362,8 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    bytes memory leaveData = abi.encode(daoSpaceProxy.MEMBER());
-    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
+    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
+    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
 
     // it revokes the role of MEMBER from the _fromSpaceId
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId), false);
@@ -1397,8 +1397,8 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    bytes memory leaveData = abi.encode(daoSpaceProxy.EDITOR());
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
+    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
 
     // it revokes the role of EDITOR from the _fromSpaceId
     assertEq(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId), false);
@@ -1413,19 +1413,19 @@ contract UnitDAOSpace is TestHelper {
 
     // it reverts with InvalidFromSpace
     // role is neither MEMBER or EDITOR
-    bytes memory leaveData = abi.encode(daoSpaceProxy.DAO());
+    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.DAO());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_callerSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_callerSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
 
     // _fromSpaceId doesn't have role
-    leaveData = abi.encode(daoSpaceProxy.MEMBER());
+    leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
 
     // _fromSpaceId doesn't have role
-    leaveData = abi.encode(daoSpaceProxy.EDITOR());
+    leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveData);
+    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
   }
 
   /// WRITE - SPACE FAST PATH RESTRICTED ///

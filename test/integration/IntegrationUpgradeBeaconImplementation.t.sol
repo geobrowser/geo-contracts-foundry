@@ -54,8 +54,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyA.version(), '1.0.0');
     assertEq(daoSpaceProxyB.version(), '1.0.0');
     // _initialMembers
-    assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), _eoaSpaceId));
-    assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), _eoaSpaceId));
+    assertTrue(daoSpaceProxyA.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
+    assertTrue(daoSpaceProxyB.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
     // actionIsFastPathValid
     assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
     assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
