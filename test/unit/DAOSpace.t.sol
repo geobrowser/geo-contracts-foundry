@@ -2004,6 +2004,80 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(__votingSettings);
   }
 
+  /// SYNC ///
+
+  function test_Sync_When_spaceIdIsNotAnEditor() external {
+    // it reverts with InvalidTarget
+    vm.expectRevert(IDAOSpace.InvalidTarget.selector);
+    daoSpaceProxy.sync(_getSpaceId(_randomCaller));
+  }
+
+  modifier when_spaceIdIsAnEditor() {
+    _;
+  }
+
+  function test_Sync_When_spaceIdHasNotBeenCleared() external when_spaceIdIsAnEditor {
+    /// @dev return _random caller to pass the cleared check
+    _mockSpaceIdToAddress(_spaceRegistry, _initialEditorSpaceId, _randomCaller);
+
+    // it reverts with InvalidTarget
+    vm.expectRevert(IDAOSpace.InvalidTarget.selector);
+    daoSpaceProxy.sync(_initialEditorSpaceId);
+  }
+
+  function test_Sync_When_spaceIdHasBeenCleared(
+    uint256 _quorum,
+    uint256 _fastPathFlatThreshold
+  ) external when_spaceIdIsAnEditor {
+    uint256 totalEditors = daoSpaceProxy.totalEditors();
+    _quorum = bound(_quorum, 1, 2);
+    _fastPathFlatThreshold = bound(_fastPathFlatThreshold, 1, 2);
+
+    daoSpaceProxy.workaround_setVotingSettings(
+      IDAOSpace.VotingSettings({
+        slowPathPercentageThreshold: _votingSettings.slowPathPercentageThreshold,
+        fastPathFlatThreshold: _fastPathFlatThreshold,
+        quorum: _quorum,
+        duration: _votingSettings.duration
+      })
+    );
+
+    // Mock the space being cleared
+    _mockSpaceIdToAddress(_spaceRegistry, _initialEditorSpaceId, address(0));
+
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
+    IDAOSpace.VotingSettings memory votingSettingsBefore = daoSpaceProxy.votingSettings();
+    assertEq(votingSettingsBefore.quorum, _quorum);
+    assertEq(votingSettingsBefore.fastPathFlatThreshold, _fastPathFlatThreshold);
+
+    // it calls enter on the spaceRegistry with the EDITOR_REMOVED action
+    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockEnter(
+      _spaceRegistry,
+      daoSpaceProxySpaceId,
+      daoSpaceProxySpaceId,
+      ActionsConstants.EDITOR_REMOVED,
+      bytes32(_initialEditorSpaceId),
+      ''
+    );
+
+    daoSpaceProxy.sync(_initialEditorSpaceId);
+
+    // it removes the editor
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
+
+    // it decrements the quorum
+    IDAOSpace.VotingSettings memory votingSettingsAfter = daoSpaceProxy.votingSettings();
+    (_quorum == totalEditors)
+      ? assertEq(votingSettingsAfter.quorum, _quorum - 1)
+      : assertEq(votingSettingsAfter.quorum, _quorum);
+
+    // it decrements the fastPathFlatThreshold
+    (_fastPathFlatThreshold == totalEditors)
+      ? assertEq(votingSettingsAfter.fastPathFlatThreshold, _fastPathFlatThreshold - 1)
+      : assertEq(votingSettingsAfter.fastPathFlatThreshold, _fastPathFlatThreshold);
+  }
+
   /// FETCH ///
 
   function test_Fetch_When_actionEqualsPROPOSAL_CREATED(bytes32 _topicInput, uint256 _votingMode) external view {
@@ -2272,6 +2346,10 @@ contract UnitDAOSpace is TestHelper {
 
   function _mockAddressToSpaceId(address __spaceRegistry, address __account, bytes16 __spaceId) internal {
     _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.addressToSpaceId, (__account)), abi.encode(__spaceId));
+  }
+
+  function _mockSpaceIdToAddress(address __spaceRegistry, bytes16 __spaceId, address __account) internal {
+    _mockAndExpect(__spaceRegistry, abi.encodeCall(ISpaceRegistry.spaceIdToAddress, (__spaceId)), abi.encode(__account));
   }
 
   function _mockRegisterSpaceId(

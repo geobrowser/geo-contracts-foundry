@@ -250,6 +250,17 @@ UnitDAOSpace::updateVotingSettings
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
+UnitDAOSpace::sync
+├── when _spaceId is not an editor
+│   └── it reverts with InvalidTarget
+└── when _spaceId is an editor
+    ├── when _spaceId has not been cleared
+    │   └── it reverts with InvalidTarget
+    └── when _spaceId has been cleared
+        ├── it removes the editor
+        ├── it decrements the quorum
+        └── it decrements the fastPathFlatThreshold
+
 UnitDAOSpace::fetch
 ├── when _action equals PROPOSAL_CREATED
 │   └── it returns bytes32(_proposalId)
