@@ -100,10 +100,10 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.owner(), __owner);
 
     // it adds the permissionless actions
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED), true);
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED), true);
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.COMMENTED), true);
+    assertTrue(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED));
+    assertTrue(spaceRegistryProxy.permissionlessActions(ActionsConstants.DOWNVOTED));
+    assertTrue(spaceRegistryProxy.permissionlessActions(ActionsConstants.UNVOTED));
+    assertTrue(spaceRegistryProxy.permissionlessActions(ActionsConstants.COMMENTED));
 
     // it registers the space registry
     assertEq(spaceRegistryProxy.addressToSpaceId(address(spaceRegistryProxy)), _spaceId);
@@ -460,7 +460,7 @@ contract UnitSpaceRegistry is TestHelper {
   function test_SetPermissionlessAction_When_setIsTrue(bytes32 _action) external whenCalledByOwner {
     _whenActionIsNotPermissionless(_action);
 
-    assertEq(spaceRegistryProxy.permissionlessActions(_action), false);
+    assertFalse(spaceRegistryProxy.permissionlessActions(_action));
 
     // it emits Action with PERMISSIONLESS_ACTION_ADDED
     vm.expectEmit();
@@ -468,11 +468,11 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.setPermissionlessAction(_action, true);
 
     // it updates the permissionlessActions mapping to add the action
-    assertEq(spaceRegistryProxy.permissionlessActions(_action), true);
+    assertTrue(spaceRegistryProxy.permissionlessActions(_action));
   }
 
   function test_SetPermissionlessAction_When_setIsFalse() external whenCalledByOwner {
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), true);
+    assertTrue(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED));
 
     // it emits Action with PERMISSIONLESS_ACTION_REMOVED
     vm.expectEmit();
@@ -482,7 +482,7 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.setPermissionlessAction(ActionsConstants.UPVOTED, false);
 
     // it updates the permissionlessActions mapping to remove the action
-    assertEq(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED), false);
+    assertFalse(spaceRegistryProxy.permissionlessActions(ActionsConstants.UPVOTED));
   }
 
   function test_SetPermissionlessAction_WhenCalledByNon_owner(bytes32 _action, bool _set) external {

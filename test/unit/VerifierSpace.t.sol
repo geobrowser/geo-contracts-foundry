@@ -126,8 +126,8 @@ contract UnitVerifierSpace is TestHelper {
     // it sets validWriters
     bytes16 ownerSpaceId = _getSpaceId(__owner);
     bytes16 verifierSpaceProxySpaceId = _getSpaceId(address(verifierSpaceProxy));
-    assertEq(verifierSpaceProxy.validWriters(ownerSpaceId), true);
-    assertEq(verifierSpaceProxy.validWriters(verifierSpaceProxySpaceId), true);
+    assertTrue(verifierSpaceProxy.validWriters(ownerSpaceId));
+    assertTrue(verifierSpaceProxy.validWriters(verifierSpaceProxySpaceId));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(

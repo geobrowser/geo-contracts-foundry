@@ -4,7 +4,6 @@ pragma solidity 0.8.30;
 import {Script} from 'forge-std/Script.sol';
 
 import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-import {Options} from '@openzeppelin/foundry-upgrades/Options.sol';
 import {Upgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
@@ -41,15 +40,11 @@ contract DeployGEOBrowser is Script {
     daoSpaceImplementation = new DAOSpace();
     verifierSpaceImplementation = new VerifierSpace();
 
-    // Checks everything unless flagged on the contract (constructors)
-    Options memory opts;
-
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
       payable(Upgrades.deployUUPSProxy(
           'SpaceRegistry.sol:SpaceRegistry',
-          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL))),
-          opts
+          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL)))
         ))
     );
     spaceRegistryImplementation = SpaceRegistry(Upgrades.getImplementationAddress(address(spaceRegistryProxy)));
@@ -62,8 +57,7 @@ contract DeployGEOBrowser is Script {
             (abi.encode(
                 spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)
               ))
-          ),
-          opts
+          )
         ))
     );
     daoSpaceFactoryImplementation = DAOSpaceFactory(Upgrades.getImplementationAddress(address(daoSpaceFactoryProxy)));
@@ -76,17 +70,16 @@ contract DeployGEOBrowser is Script {
             (abi.encode(
                 spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
               ))
-          ),
-          opts
+          )
         ))
     );
     verifierSpaceFactoryImplementation =
       VerifierSpaceFactory(Upgrades.getImplementationAddress(address(verifierSpaceFactoryProxy)));
 
+    vm.stopBroadcast();
+
     // Sanity check on deployments
     _verifyDeployments();
-
-    vm.stopBroadcast();
   }
 
   function _verifyDeployments() internal view {
@@ -96,6 +89,10 @@ contract DeployGEOBrowser is Script {
   }
 
   function _verifySpaceRegistry() internal view {
+    if (address(spaceRegistryImplementation) == address(0)) {
+      revert DeploymentFailed('SpaceRegistry: Implementation not deployed');
+    }
+
     if (address(spaceRegistryProxy) == address(0)) {
       revert DeploymentFailed('SpaceRegistry: Proxy not deployed');
     }
@@ -131,6 +128,10 @@ contract DeployGEOBrowser is Script {
   }
 
   function _verifyDAOSpaceFactory() internal view {
+    if (address(daoSpaceFactoryImplementation) == address(0)) {
+      revert DeploymentFailed('DAOSpaceFactory: Implementation not deployed');
+    }
+
     if (address(daoSpaceFactoryProxy) == address(0)) {
       revert DeploymentFailed('DAOSpaceFactory: Proxy not deployed');
     }
@@ -159,6 +160,10 @@ contract DeployGEOBrowser is Script {
   }
 
   function _verifyVerifierSpaceFactory() internal view {
+    if (address(verifierSpaceFactoryImplementation) == address(0)) {
+      revert DeploymentFailed('VerifierSpaceFactory: Implementation not deployed');
+    }
+
     if (address(verifierSpaceFactoryProxy) == address(0)) {
       revert DeploymentFailed('VerifierSpaceFactory: Proxy not deployed');
     }
