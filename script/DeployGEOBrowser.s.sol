@@ -3,7 +3,8 @@ pragma solidity 0.8.30;
 
 import {Script} from 'forge-std/Script.sol';
 
-import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
+import {UpgradeableBeacon} from '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
+import {Upgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {DAOSpaceFactory} from 'contracts/DAOSpaceFactory.sol';
@@ -12,8 +13,11 @@ import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {VerifierSpaceFactory} from 'contracts/VerifierSpaceFactory.sol';
 
 import 'script/Constants.s.sol' as Constants;
+import 'src/ActionsConstants.sol' as ActionsConstants;
 
 contract DeployGEOBrowser is Script {
+  error DeploymentFailed(string _reason);
+
   SpaceRegistry public spaceRegistryImplementation;
   SpaceRegistry public spaceRegistryProxy;
 
@@ -21,52 +25,76 @@ contract DeployGEOBrowser is Script {
   DAOSpaceFactory public daoSpaceFactoryProxy;
 
   DAOSpace public daoSpaceImplementation;
+  UpgradeableBeacon public daoSpaceBeacon;
 
   VerifierSpaceFactory public verifierSpaceFactoryImplementation;
   VerifierSpaceFactory public verifierSpaceFactoryProxy;
 
   VerifierSpace public verifierSpaceImplementation;
+  UpgradeableBeacon public verifierSpaceBeacon;
 
   function setUp() public virtual {}
 
   function run() public {
     vm.startBroadcast();
 
-    // Deploy the implementation contracts
-    spaceRegistryImplementation = new SpaceRegistry();
-    daoSpaceFactoryImplementation = new DAOSpaceFactory();
+    // Deploy the implementation contracts for the beacons
     daoSpaceImplementation = new DAOSpace();
-    verifierSpaceFactoryImplementation = new VerifierSpaceFactory();
     verifierSpaceImplementation = new VerifierSpace();
 
     // Deploy and initialize the proxy contracts
     spaceRegistryProxy = SpaceRegistry(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(spaceRegistryImplementation),
-        abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL)))
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'SpaceRegistry.sol:SpaceRegistry',
+          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL)))
+        ))
     );
+    spaceRegistryImplementation = SpaceRegistry(Upgrades.getImplementationAddress(address(spaceRegistryProxy)));
+
     daoSpaceFactoryProxy = DAOSpaceFactory(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(daoSpaceFactoryImplementation),
-        abi.encodeCall(
-          DAOSpaceFactory.initialize,
-          (abi.encode(spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)))
-        )
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'DAOSpaceFactory.sol:DAOSpaceFactory',
+          abi.encodeCall(
+            DAOSpaceFactory.initialize,
+            (abi.encode(
+                spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)
+              ))
+          )
+        ))
     );
+    daoSpaceFactoryImplementation = DAOSpaceFactory(Upgrades.getImplementationAddress(address(daoSpaceFactoryProxy)));
+    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
+
     verifierSpaceFactoryProxy = VerifierSpaceFactory(
-      UnsafeUpgrades.deployUUPSProxy(
-        address(verifierSpaceFactoryImplementation),
-        abi.encodeCall(
-          VerifierSpaceFactory.initialize,
-          (abi.encode(
-              spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
-            ))
-        )
-      )
+      payable(Upgrades.deployUUPSProxy(
+          'VerifierSpaceFactory.sol:VerifierSpaceFactory',
+          abi.encodeCall(
+            VerifierSpaceFactory.initialize,
+            (abi.encode(
+                spaceRegistryProxy, Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)
+              ))
+          )
+        ))
     );
+    verifierSpaceFactoryImplementation =
+      VerifierSpaceFactory(Upgrades.getImplementationAddress(address(verifierSpaceFactoryProxy)));
+    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
     vm.stopBroadcast();
+
+    // Final sanity check on deployments
+    _verifyBeaconImplementations();
+  }
+
+  function _verifyBeaconImplementations() internal view {
+    if (UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon()).implementation() != address(daoSpaceImplementation)) {
+      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon implementation is incorrect');
+    }
+    if (
+      UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon()).implementation()
+        != address(verifierSpaceImplementation)
+    ) {
+      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon implementation is incorrect');
+    }
   }
 }

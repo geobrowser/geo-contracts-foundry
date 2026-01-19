@@ -47,34 +47,6 @@ interface ISpaceRegistry is ISemver {
   error SpaceAlreadyRegistered();
 
   /**
-   * @notice Maps each unique space ID to its current address
-   * @param _spaceId The ID of the space
-   * @return _account The current address of the space
-   */
-  function spaceIdToAddress(bytes16 _spaceId) external view returns (address _account);
-
-  /**
-   * @notice Maps each unique space ID to its proposed address
-   * @param _spaceId The ID of the space
-   * @return _account The proposed address of the space
-   */
-  function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address _account);
-
-  /**
-   * @notice Reverse mapping: address to its space ID
-   * @param _account The address of the space
-   * @return _spaceId The ID of the space
-   */
-  function addressToSpaceId(address _account) external view returns (bytes16 _spaceId);
-
-  /**
-   * @notice Records each permissionless action
-   * @param _action The action identifier
-   * @return _isPermissionless The boolean of whether or not the action is permissionless
-   */
-  function permissionlessActions(bytes32 _action) external view returns (bool _isPermissionless);
-
-  /**
    * @notice Initializes the contract
    * @param _initializerData The encoded initializer data:
    *        _owner The address of the owner
@@ -108,7 +80,7 @@ interface ISpaceRegistry is ISemver {
   function registerSpaceId(bytes32 _type, bytes calldata _version) external returns (bytes16 _spaceId);
 
   /**
-   * @notice Clears a space id from the registry and disconnects it from any address
+   * @notice Clears a space ID from the registry and disconnects it from any address
    */
   function clearSpaceId() external;
 
@@ -135,6 +107,34 @@ interface ISpaceRegistry is ISemver {
    * @dev Permissionless actions are those where, even if the caller is not the toSpace, fetch and write do not occur
    */
   function setPermissionlessAction(bytes32 _action, bool _set) external;
+
+  /**
+   * @notice Maps each unique space ID to its current address
+   * @param _spaceId The ID of the space
+   * @return _account The current address of the space
+   */
+  function spaceIdToAddress(bytes16 _spaceId) external view returns (address _account);
+
+  /**
+   * @notice Maps each unique space ID to its proposed address
+   * @param _spaceId The ID of the space
+   * @return _account The proposed address of the space
+   */
+  function spaceIdToProposedAddress(bytes16 _spaceId) external view returns (address _account);
+
+  /**
+   * @notice Reverse mapping: address to its space ID
+   * @param _account The address of the space
+   * @return _spaceId The ID of the space
+   */
+  function addressToSpaceId(address _account) external view returns (bytes16 _spaceId);
+
+  /**
+   * @notice Records each permissionless action
+   * @param _action The action identifier
+   * @return _isPermissionless The boolean of whether or not the action is permissionless
+   */
+  function permissionlessActions(bytes32 _action) external view returns (bool _isPermissionless);
 
   /**
    * @notice Generates a space ID for a given address and nonce

@@ -21,11 +21,15 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /**
    * @notice The storage location of the space registry contract
    * @custom:storage-location erc7201:geo.storage.SpaceRegistry
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _SPACE_REGISTRY_STORAGE_LOCATION =
     0xa1b85c99b52a518d0806b31f4568cbd8c3970d0ca846714c1d12666d5d19bc00;
 
-  /// @notice Constructor
+  /**
+   * @notice Constructor
+   * @custom:oz-upgrades-unsafe-allow constructor
+   */
   constructor() {
     _disableInitializers();
   }
@@ -56,8 +60,10 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     if (_fromSpace == address(0) || _toSpace == address(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
-    // Then pass the to space ID, action, topic, data, and signature to the from space
-    if (msg.sender != _fromSpace) ISpace(_fromSpace).verify(_toSpaceId, _action, _topic, _data, _signature);
+    // Then pass the msg.sender, to space ID, action, topic, data, and signature to the from space
+    if (msg.sender != _fromSpace) {
+      ISpace(_fromSpace).verify(msg.sender, _toSpaceId, _action, _topic, _data, _signature);
+    }
 
     // No fetch or write with permissionless actions
     if ($.permissionlessActions[_action]) {
@@ -83,12 +89,15 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function clearSpaceId() external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
-    bytes16 spaceId = $.addressToSpaceId[msg.sender];
-    $.addressToSpaceId[msg.sender] = bytes16(0);
-    $.spaceIdToAddress[spaceId] = address(0);
-    $.spaceIdToProposedAddress[spaceId] = address(0);
+    // Space must first be registered
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
 
-    emit Action(spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
+    $.addressToSpaceId[msg.sender] = bytes16(0);
+    $.spaceIdToAddress[_spaceId] = address(0);
+    $.spaceIdToProposedAddress[_spaceId] = address(0);
+
+    emit Action(_spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -96,10 +105,12 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Must be called by the space itself
-    bytes16 spaceId = $.addressToSpaceId[msg.sender];
-    if (spaceId == bytes16(0)) revert InvalidCaller();
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert InvalidCaller();
 
-    $.spaceIdToProposedAddress[spaceId] = _newAccount;
+    $.spaceIdToProposedAddress[_spaceId] = _newAccount;
+
+    emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATION_PROPOSED, bytes32(bytes20(_newAccount)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -112,12 +123,12 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // New address must not be registered
     if ($.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
 
-    address oldAccount = $.spaceIdToAddress[_spaceId];
+    address _oldAccount = $.spaceIdToAddress[_spaceId];
 
     // Update the bi-directional mappings and reset the proposal
     $.spaceIdToProposedAddress[_spaceId] = address(0);
     $.spaceIdToAddress[_spaceId] = msg.sender;
-    $.addressToSpaceId[oldAccount] = bytes16(0);
+    $.addressToSpaceId[_oldAccount] = bytes16(0);
     $.addressToSpaceId[msg.sender] = _spaceId;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
@@ -160,7 +171,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256(bytes('SPACE_REGISTRY'));
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver

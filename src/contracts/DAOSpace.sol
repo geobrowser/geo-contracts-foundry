@@ -42,6 +42,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice The storage location of the DAO space contract
    * @custom:storage-location erc7201:geo.storage.DAOSpace
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.DAOSpace")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _DAO_SPACE_STORAGE_LOCATION =
     0xca9a28eed6337bb89b7996aa1033645556bf4017a5207860882394677302bc00;
@@ -134,7 +135,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc ISpace
-  function verify(bytes16, bytes32, bytes32, bytes calldata, bytes calldata) external pure virtual {
+  function verify(address, bytes16, bytes32, bytes32, bytes calldata, bytes calldata) external pure virtual {
     revert VerifyDisabled();
   }
 
@@ -199,20 +200,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes calldata _data
   ) public view virtual returns (bytes32 _topicOutput) {
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
-      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VoteOption, Action[]));
+      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VotingMode, Action[]));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
       (bytes16 _proposalId,) = abi.decode(_data, (bytes16, VoteOption));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_UPDATED) {
-      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VoteOption, Action[]));
+      (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VotingMode, Action[]));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
       bytes16 _proposalId = abi.decode(_data, (bytes16));
       return bytes32(_proposalId);
     } else if (_action == ActionsConstants.SPACE_LEFT) {
-      bytes32 role = abi.decode(_data, (bytes32));
-      return role;
+      bytes32 _role = abi.decode(_data, (bytes32));
+      return _role;
     } else if (_action == ActionsConstants.SPACE_FAST_PATH_RESTRICTED) {
       bytes16 _spaceId = abi.decode(_data, (bytes16));
       return bytes32(_spaceId);
@@ -319,7 +320,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes16 _proposalId,
     uint8 _version,
     bytes16 _voterSpaceId
-  ) external view returns (VoteOption _voteOption) {
+  ) public view returns (VoteOption _voteOption) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _voteOption = $.proposals[_proposalId][_version].voters[_voterSpaceId];
   }
@@ -328,20 +329,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function getLatestProposalVote(
     bytes16 _proposalId,
     bytes16 _voterSpaceId
-  ) external view returns (VoteOption _voteOption) {
+  ) public view returns (VoteOption _voteOption) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     _voteOption = proposal_.voters[_voterSpaceId];
   }
 
   /// @inheritdoc IDAOSpace
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry) {
+  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     _spaceRegistry = $.spaceRegistry;
   }
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256(bytes('DAO_SPACE'));
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver
@@ -421,8 +422,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
       // limit the actions to one call
       if (_actions.length != 1) revert OneActionForFastPath();
-      bytes4 actionSelector = bytes4(_actions[0].data);
-      if (!$.actionIsFastPathValid[actionSelector]) revert InvalidAction();
+      // limit to only valid fast path actions
+      if (!$.actionIsFastPathValid[bytes4(_actions[0].data)]) revert InvalidAction();
+      // limit the target to only this address
+      if (_actions[0].to != address(this)) revert InvalidTarget();
+      // limit the transfer of funds
+      if (_actions[0].value != 0) revert InvalidFundsTransfer();
       proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
     }
     for (uint256 i; i < _actions.length; i++) {

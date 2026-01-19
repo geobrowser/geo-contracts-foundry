@@ -3,13 +3,12 @@ pragma solidity 0.8.30;
 
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
  * @title IDAOSpace
  * @notice Manages governance proposals and voting for a DAO Space
  */
-interface IDAOSpace is ISpace, ISemver {
+interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
    * @param None Default state, cannot be cast
@@ -183,6 +182,16 @@ interface IDAOSpace is ISpace, ISemver {
    * @dev Fast path limited to single action
    */
   error OneActionForFastPath();
+
+  /**
+   * @notice Thrown when a fast path proposal attempts to call a contract other than the DAO itself
+   */
+  error InvalidTarget();
+
+  /**
+   * @notice Thrown when a fast path proposal attempts to transfer funds
+   */
+  error InvalidFundsTransfer();
 
   /**
    * @notice Thrown when attempting to create a proposal using the fast path when the creator

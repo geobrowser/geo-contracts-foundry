@@ -62,6 +62,10 @@ UnitDAOSpace::write
 │   │       │   └── it reverts with OneActionForFastPath
 │   │       ├── when the function selector of the decoded proposal action is not fast path valid
 │   │       │   └── it reverts with InvalidAction
+│   │       ├── when the target address is not the DAO contract itself
+│   │       │   └── it reverts with InvalidTarget
+│   │       ├── when the proposal attempts to transfer value
+│   │       │   └── it reverts with InvalidFundsTransfer
 │   │       └── when _createProposal params are valid
 │   │           ├── it increments the proposal version
 │   │           ├── it sets the proposal creator to _fromSpaceId

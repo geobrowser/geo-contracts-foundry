@@ -17,13 +17,14 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
  *      An arbitrary number of these contracts allows for an EOA (or a DAO) to control multiple spaces simultaneously
  */
 contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace {
-  /// @notice The message typehash for the struct used in the signature verification
-  bytes32 internal constant _MESSAGE_TYPEHASH =
+  /// @inheritdoc IVerifierSpace
+  bytes32 public constant MESSAGE_TYPEHASH =
     keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
 
   /**
    * @notice The storage location of the verifier space contract
    * @custom:storage-location erc7201:geo.storage.VerifierSpace
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _VERIFIER_SPACE_STORAGE_LOCATION =
     0xc1676672be845731e27a8a9dcb0bb8dcd73102852fa8f3d5fb86df9b24265c00;
@@ -59,6 +60,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
   /// @inheritdoc ISpace
   function verify(
+    address,
     bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
@@ -71,7 +73,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(_MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
     if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
@@ -112,7 +114,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
   /// @inheritdoc ISemver
   function typeId() public pure virtual returns (bytes32 _type) {
-    _type = keccak256(bytes('VERIFIER_SPACE'));
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver
