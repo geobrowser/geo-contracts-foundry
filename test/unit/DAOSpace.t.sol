@@ -1464,6 +1464,136 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _topic, leaveSpaceData);
   }
 
+  /// WRITE - REQUEST MEMBERSHIP ///
+
+  modifier when_actionEqualsMEMBERSHIP_REQUESTED() {
+    _;
+  }
+
+  function test_Write_When_proposalIdHasAlreadyBeenUsed_When_actionEqualsMEMBERSHIP_REQUESTED()
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsMEMBERSHIP_REQUESTED
+  {
+    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId, false, 0, randomCallerSpaceId, 1, 1, IDAOSpace.VotingMode.Fast, 1, 1, new IDAOSpace.Action[](0)
+    );
+
+    // it reverts with InvalidProposalId
+    vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
+
+    daoSpaceProxy.write(
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
+    );
+  }
+
+  function test_Write_When_fromSpaceIdIsRestricted_When_actionEqualsMEMBERSHIP_REQUESTED()
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsMEMBERSHIP_REQUESTED
+  {
+    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
+    daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), randomCallerSpaceId);
+
+    // it reverts with FastPathRestricted
+    vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
+
+    daoSpaceProxy.write(
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
+    );
+  }
+
+  function test_Write_WhenTheRequestCanBeMade()
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsMEMBERSHIP_REQUESTED
+  {
+    // get voting settings
+    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+
+    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
+    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
+    actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
+    });
+
+    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+
+    // Mock addressToSpaceId for _ping calls (called twice: once for PROPOSAL_CREATED, once for PROPOSAL_SETTINGS_SELECTED)
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
+    _mockEnter(
+      _spaceRegistry,
+      daoSpaceProxySpaceId,
+      daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_CREATED,
+      bytes32(_proposalId),
+      abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, actions)
+    );
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
+    _mockEnter(
+      _spaceRegistry,
+      daoSpaceProxySpaceId,
+      daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(
+        vm.getBlockTimestamp(),
+        vm.getBlockTimestamp() + votingSettings.duration,
+        IDAOSpace.VotingMode.Fast,
+        votingSettings.quorum,
+        votingSettings.fastPathFlatThreshold
+      )
+    );
+
+    daoSpaceProxy.write(
+      randomCallerSpaceId,
+      ActionsConstants.MEMBERSHIP_REQUESTED,
+      bytes32(0),
+      abi.encode(_proposalId, randomCallerSpaceId)
+    );
+
+    // it creates a fast path proposal to add the new member
+    (, bytes16 creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actionsA) =
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
+
+    // it increments the proposal version
+    assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
+
+    // it sets the proposal creator to _fromSpaceId
+    assertEq(creator, randomCallerSpaceId);
+
+    // it sets the proposal start date to block.timestamp
+    assertEq(parameters.startDate, vm.getBlockTimestamp());
+
+    // it sets the proposal last date to block.timestamp plus votingSettings.duration
+    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets the proposal voting mode
+    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
+
+    // it sets the proposal support threshold to the slow path percentage threshold
+    assertEq(parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
+
+    // it stores the decoded proposal actions
+    assertEq(actionsA.length, 1);
+    assertEq(actionsA[0].to, address(daoSpaceProxy));
+    assertEq(actionsA[0].value, 0);
+    assertEq(actionsA[0].data, abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId)));
+  }
+
   /// WRITE - SPACE FAST PATH RESTRICTED ///
 
   modifier when_actionEqualsSPACE_FAST_PATH_RESTRICTED() {
@@ -1509,6 +1639,7 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
     vm.assume(_action != ActionsConstants.PROPOSAL_UPDATED);
     vm.assume(_action != ActionsConstants.SPACE_LEFT);
+    vm.assume(_action != ActionsConstants.MEMBERSHIP_REQUESTED);
     vm.assume(_action != ActionsConstants.SPACE_FAST_PATH_RESTRICTED);
 
     // it reverts with InvalidAction
@@ -2044,6 +2175,16 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(ActionsConstants.SPACE_LEFT, _topicInput, _data), bytes32(_role));
   }
 
+  function test_Fetch_When_actionEqualsMEMBERSHIP_REQUESTED(
+    bytes32 _topicInput,
+    bytes16 _newMemberSpaceId
+  ) external view {
+    bytes memory _data = abi.encode(_proposalId, _newMemberSpaceId);
+
+    // it returns bytes32(_proposalId)
+    assertEq(daoSpaceProxy.fetch(ActionsConstants.MEMBERSHIP_REQUESTED, _topicInput, _data), bytes32(_proposalId));
+  }
+
   function test_Fetch_When_actionEqualsSPACE_FAST_PATH_RESTRICTED(bytes32 _topicInput, bytes16 _spaceId) external view {
     bytes memory _data = abi.encode(_spaceId);
 
@@ -2060,8 +2201,9 @@ contract UnitDAOSpace is TestHelper {
     vm.assume(_action != ActionsConstants.PROPOSAL_VOTED);
     vm.assume(_action != ActionsConstants.PROPOSAL_UPDATED);
     vm.assume(_action != ActionsConstants.PROPOSAL_EXECUTED);
-    vm.assume(_action != ActionsConstants.SPACE_FAST_PATH_RESTRICTED);
     vm.assume(_action != ActionsConstants.SPACE_LEFT);
+    vm.assume(_action != ActionsConstants.MEMBERSHIP_REQUESTED);
+    vm.assume(_action != ActionsConstants.SPACE_FAST_PATH_RESTRICTED);
 
     // it returns _topicInput
     assertEq(daoSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
