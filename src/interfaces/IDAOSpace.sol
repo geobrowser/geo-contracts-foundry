@@ -2,6 +2,7 @@
 pragma solidity 0.8.30;
 
 import {ISpace} from 'interfaces/ISpace.sol';
+import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 /**
@@ -66,18 +67,18 @@ interface IDAOSpace is ISpace, ISemver {
   /**
    * @notice Proposal information
    * @param executed Whether proposal has been executed
-   * @param creator The creator of the proposal
+   * @param creator The creator space ID of the proposal
    * @param parameters Proposal parameters (may change if fast path escalates)
    * @param tally Vote tally (yes, no, abstain counts)
-   * @param voters Mapping of editor addresses to vote options
+   * @param voters Mapping of editor space IDs to vote options
    * @param actions Actions to execute when proposal passes (fast path: 1 action max)
    */
   struct Proposal {
     bool executed;
-    address creator;
+    bytes16 creator;
     ProposalParameters parameters;
     Tally tally;
-    mapping(address _voter => VoteOption _vote) voters;
+    mapping(bytes16 _voterSpaceId => VoteOption _vote) voters;
     Action[] actions;
   }
 
@@ -107,6 +108,7 @@ interface IDAOSpace is ISpace, ISemver {
 
   /**
    * @notice The storage struct of the DAO space contract
+   * @param spaceRegistry The space registry contract
    * @param votingSettings Voting settings for proposals
    * @param totalEditors Total editors
    * @param actionIsFastPathValid Maps action selectors to whether they are valid for fast path proposals
@@ -115,6 +117,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @custom:storage-location erc7201:geo.storage.DAOSpace
    */
   struct DAOSpaceStorage {
+    ISpaceRegistry spaceRegistry;
     VotingSettings votingSettings;
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
@@ -143,9 +146,9 @@ interface IDAOSpace is ISpace, ISemver {
   error InvalidFromSpace();
 
   /**
-   * @notice Thrown when attempting to assign/unassign a role to an inappropriate address
+   * @notice Thrown when attempting to assign/unassign a role to an inappropriate space id
    */
-  error InvalidAddressForRole();
+  error InvalidSpaceIdForRole();
 
   /**
    * @notice Thrown when attempting to update the voting settings with invalid parameters
@@ -182,6 +185,16 @@ interface IDAOSpace is ISpace, ISemver {
   error OneActionForFastPath();
 
   /**
+   * @notice Thrown when a fast path proposal attempts to call a contract other than the DAO itself
+   */
+  error InvalidTarget();
+
+  /**
+   * @notice Thrown when a fast path proposal attempts to transfer funds
+   */
+  error InvalidFundsTransfer();
+
+  /**
    * @notice Thrown when attempting to create a proposal using the fast path when the creator
    * is restricted from doing so.
    */
@@ -192,47 +205,47 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
    *        _votingSettings The voting settings to use for proposals
-   *        _initialEditors The initial list of editor addresses
-   *        _initialMembers The initial list of member addresses
+   *        _initialEditors The initial list of editor space IDs
+   *        _initialMembers The initial list of member space IDs
    */
   function initialize(bytes calldata _initializerData) external;
 
   /**
    * @notice Adds a new editor to the space
-   * @param _newEditor The address of the new editor
+   * @param _newEditorSpaceId The space ID of the new editor
    */
-  function addEditor(address _newEditor) external;
+  function addEditor(bytes16 _newEditorSpaceId) external;
 
   /**
    * @notice Removes an editor from the space
-   * @param _oldEditor The address of the editor to remove
+   * @param _oldEditorSpaceId The space ID of the editor to remove
    */
-  function removeEditor(address _oldEditor) external;
+  function removeEditor(bytes16 _oldEditorSpaceId) external;
 
   /**
    * @notice Adds a new member to the space
-   * @param _newMember The address of the new member
+   * @param _newMemberSpaceId The space ID of the new member
    */
-  function addMember(address _newMember) external;
+  function addMember(bytes16 _newMemberSpaceId) external;
 
   /**
    * @notice Removes a member from the space
-   * @param _oldMember The address of the member to remove
+   * @param _oldMemberSpaceId The space ID of the member to remove
    */
-  function removeMember(address _oldMember) external;
+  function removeMember(bytes16 _oldMemberSpaceId) external;
 
   /**
    * @notice Unrestricts a space, restoring their ability to create fast path proposals
-   * @param _space The address of the space to unrestrict
+   * @param _spaceId The space ID to unrestrict
    */
-  function unrestrictSpace(address _space) external;
+  function unrestrictSpace(bytes16 _spaceId) external;
 
   /**
    * @notice Re-enters the Space Registry to emit an Action event
    * @param _action An action identifier
    * @param _topic A topic identifier
    * @param _data Some extra arbitrary data that may hold additional information
-   * @dev _from and _to are always the DAO's address
+   * @dev _from and _to are always the DAO's space id
    */
   function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
 
@@ -241,7 +254,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @param _topic An optional topic identifier
    * @param _editsContentUri The uri for the content
    * @param _editsMetadata The uri for the metadata
-   * @dev _from and _to are always the DAO's address
+   * @dev _from and _to are always the DAO's space id
    */
   function publish(bytes32 _topic, bytes calldata _editsContentUri, bytes calldata _editsMetadata) external;
 
@@ -249,7 +262,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice Flags something for additional consideration via an Action event emission
    * @param _topic An optional topic identifier
    * @param _flaggedId The id or uri of the thing being flagged (e.g. content, topic, proposal)
-   * @dev _from and _to are always the DAO's address
+   * @dev _from and _to are always the DAO's space id
    */
   function flag(bytes32 _topic, bytes calldata _flaggedId) external;
 
@@ -257,7 +270,7 @@ interface IDAOSpace is ISpace, ISemver {
    * @notice Unflags something via an Action event emission
    * @param _topic An optional topic identifier
    * @param _unflaggedId The id or uri of the thing being unflagged (e.g. content, topic, proposal)
-   * @dev _from and _to are always the DAO's address
+   * @dev _from and _to are always the DAO's space id
    */
   function unflag(bytes32 _topic, bytes calldata _unflaggedId) external;
 
@@ -318,7 +331,7 @@ interface IDAOSpace is ISpace, ISemver {
     view
     returns (
       bool _executed,
-      address _creator,
+      bytes16 _creator,
       ProposalParameters memory _parameters,
       Tally memory _tally,
       Action[] memory _actions
@@ -338,32 +351,41 @@ interface IDAOSpace is ISpace, ISemver {
     view
     returns (
       bool _executed,
-      address _creator,
+      bytes16 _creator,
       ProposalParameters memory _parameters,
       Tally memory _tally,
       Action[] memory _actions
     );
 
   /**
-   * @notice Gets the vote option cast by a given account on a proposal and version pairing
+   * @notice Gets the vote option cast by a given space on a proposal and version pairing
    * @param _proposalId The ID of the proposal
    * @param _version The version of the proposal to fetch
-   * @param _account The address of the account to check
-   * @return _voteOption The vote option cast by the account (None if not voted)
+   * @param _voterSpaceId The space ID of the voter to check
+   * @return _voteOption The vote option cast by the space (None if not voted)
    */
   function getProposalVote(
     bytes16 _proposalId,
     uint8 _version,
-    address _account
+    bytes16 _voterSpaceId
   ) external view returns (VoteOption _voteOption);
 
   /**
-   * @notice Gets the vote option cast by a given account on the latest version of a proposal
+   * @notice Gets the vote option cast by a given space on the latest version of a proposal
    * @param _proposalId The ID of the proposal
-   * @param _account The address of the account to check
-   * @return _voteOption The vote option cast by the account (None if not voted)
+   * @param _voterSpaceId The space ID of the voter to check
+   * @return _voteOption The vote option cast by the space (None if not voted)
    */
-  function getLatestProposalVote(bytes16 _proposalId, address _account) external view returns (VoteOption _voteOption);
+  function getLatestProposalVote(
+    bytes16 _proposalId,
+    bytes16 _voterSpaceId
+  ) external view returns (VoteOption _voteOption);
+
+  /**
+   * @notice Space Registry contract
+   * @return _spaceRegistry The address of the space registry singleton
+   */
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Returns the minimum voting duration for a slow path proposal

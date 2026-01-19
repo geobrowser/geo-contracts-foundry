@@ -14,24 +14,14 @@ interface IDAOSpaceFactory is ISemver {
    * @notice The storage struct of the DAO space factory contract
    * @param daoSpaceBeacon The address of the DAO space beacon contract
    * @param spaceRegistry The address of the space registry contract
+   * @param proxyIsChildOfFactory A mapping that tracks whether a proxy was produced by this factory
    * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
    */
   struct DAOSpaceFactoryStorage {
     address daoSpaceBeacon;
     ISpaceRegistry spaceRegistry;
+    mapping(address _proxy => bool _isChild) proxyIsChildOfFactory;
   }
-
-  /**
-   * @notice Returns the DAO space beacon contract address
-   * @return _daoSpaceBeacon The address of the DAO space beacon contract
-   */
-  function daoSpaceBeacon() external view returns (address _daoSpaceBeacon);
-
-  /**
-   * @notice Returns the space registry contract address
-   * @return _spaceRegistry The address of the space registry contract
-   */
-  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
 
   /**
    * @notice Initializes the contract
@@ -46,17 +36,36 @@ interface IDAOSpaceFactory is ISemver {
    * @notice Creates a DAO space proxy contract
    * @dev DAO space should register with space registry when initialized
    * @param _votingSettings The voting settings to use for proposals
-   * @param _initialEditors The initial list of editor addresses
-   * @param _initialMembers The initial list of member addresses
+   * @param _initialEditors The initial list of editor space IDs
+   * @param _initialMembers The initial list of member space IDs
    * @param _initialEditsContentUri The initial edit publish content uri
    * @param _initialEditsMetadata The initial edit publish metadata
    * @return _newDAOSpaceProxy The address of the new DAO space proxy contract
    */
   function createDAOSpaceProxy(
     IDAOSpace.VotingSettings calldata _votingSettings,
-    address[] calldata _initialEditors,
-    address[] calldata _initialMembers,
+    bytes16[] calldata _initialEditors,
+    bytes16[] calldata _initialMembers,
     bytes calldata _initialEditsContentUri,
     bytes calldata _initialEditsMetadata
   ) external returns (address _newDAOSpaceProxy);
+
+  /**
+   * @notice Returns the DAO space beacon contract address
+   * @return _daoSpaceBeacon The address of the DAO space beacon contract
+   */
+  function daoSpaceBeacon() external view returns (address _daoSpaceBeacon);
+
+  /**
+   * @notice Returns the space registry contract address
+   * @return _spaceRegistry The address of the space registry contract
+   */
+  function spaceRegistry() external view returns (ISpaceRegistry _spaceRegistry);
+
+  /**
+   * @notice Checks whether a proxy address was created by this factory
+   * @param _proxy The proxy address to check
+   * @return _isChild True if the proxy was created by this factory, false otherwise
+   */
+  function proxyIsChildOfFactory(address _proxy) external view returns (bool _isChild);
 }

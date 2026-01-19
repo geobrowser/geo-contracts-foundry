@@ -158,6 +158,7 @@ contract UnitVerifierSpaceFactory is TestHelper {
   function test_CreateVerifierSpaceProxy_WhenCalled(address __owner) external whenOwnerIsNotZeroAddress(__owner) {
     uint256 _verifierSpaceProxyNonce = vm.getNonce(address(verifierSpaceFactoryProxy));
     address _verifierSpaceProxy = vm.computeCreateAddress(address(verifierSpaceFactoryProxy), _verifierSpaceProxyNonce);
+    assertFalse(verifierSpaceFactoryProxy.proxyIsChildOfFactory(_verifierSpaceProxy));
 
     // it deploys and initializes verifier space proxy
     bytes memory _initializerData = abi.encode(verifierSpaceFactoryProxy.spaceRegistry(), __owner);
@@ -166,12 +167,15 @@ contract UnitVerifierSpaceFactory is TestHelper {
     );
 
     // it returns new verifier space proxy
-    assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), address(_verifierSpaceProxy));
+    assertEq(verifierSpaceFactoryProxy.createVerifierSpaceProxy(__owner), _verifierSpaceProxy);
 
     assertEq(
-      address(uint160(uint256(vm.load(address(_verifierSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
+      address(uint160(uint256(vm.load(_verifierSpaceProxy, ERC1967Utils.BEACON_SLOT)))),
       verifierSpaceFactoryProxy.verifierSpaceBeacon()
     );
+
+    // it updates the proxyIsChildOfFactory for the deployed proxy to true
+    assertTrue(verifierSpaceFactoryProxy.proxyIsChildOfFactory(_verifierSpaceProxy));
   }
 
   function test_TypeId_WhenCalled() external view {
