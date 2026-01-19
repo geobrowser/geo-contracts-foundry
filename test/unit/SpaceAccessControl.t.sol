@@ -42,7 +42,7 @@ contract UnitSpaceAccessControl is TestHelper {
     spaceAccessControlProxy.workaround_grantRole(_role, _spaceId);
 
     // it grants _role to _spaceId
-    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), true);
+    assertTrue(spaceAccessControlProxy.hasRole(_role, _spaceId));
   }
 
   function test_RevokeRole_WhenCalled(bytes32 _role, bytes16 _spaceId) external {
@@ -50,13 +50,13 @@ contract UnitSpaceAccessControl is TestHelper {
 
     // when _spaceId has the _role
     spaceAccessControlProxy.workaround_grantRole(_role, _spaceId);
-    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), true);
+    assertTrue(spaceAccessControlProxy.hasRole(_role, _spaceId));
 
     // when called
     spaceAccessControlProxy.workaround_revokeRole(_role, _spaceId);
 
     // it revokes _role from _spaceId
-    assertEq(spaceAccessControlProxy.hasRole(_role, _spaceId), false);
+    assertFalse(spaceAccessControlProxy.hasRole(_role, _spaceId));
   }
 
   function _mockAddressToSpaceId(address __spaceRegistry, address __account, bytes16 __spaceId) internal {
