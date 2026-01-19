@@ -25,11 +25,13 @@ contract DeployGEOBrowser is Script {
   DAOSpaceFactory public daoSpaceFactoryProxy;
 
   DAOSpace public daoSpaceImplementation;
+  UpgradeableBeacon public daoSpaceBeacon;
 
   VerifierSpaceFactory public verifierSpaceFactoryImplementation;
   VerifierSpaceFactory public verifierSpaceFactoryProxy;
 
   VerifierSpace public verifierSpaceImplementation;
+  UpgradeableBeacon public verifierSpaceBeacon;
 
   function setUp() public virtual {}
 
@@ -61,6 +63,7 @@ contract DeployGEOBrowser is Script {
         ))
     );
     daoSpaceFactoryImplementation = DAOSpaceFactory(Upgrades.getImplementationAddress(address(daoSpaceFactoryProxy)));
+    daoSpaceBeacon = UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon());
 
     verifierSpaceFactoryProxy = VerifierSpaceFactory(
       payable(Upgrades.deployUUPSProxy(
@@ -75,6 +78,7 @@ contract DeployGEOBrowser is Script {
     );
     verifierSpaceFactoryImplementation =
       VerifierSpaceFactory(Upgrades.getImplementationAddress(address(verifierSpaceFactoryProxy)));
+    verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
     vm.stopBroadcast();
 

@@ -12,7 +12,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 contract MockNewImplementation is UUPSUpgradeable, ISemver {
   /// @inheritdoc ISemver
   function typeId() public pure returns (bytes32 _type) {
-    _type = keccak256(bytes('MOCK'));
+    _type = keccak256(bytes(name()));
   }
 
   /// @inheritdoc ISemver

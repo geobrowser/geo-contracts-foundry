@@ -8,6 +8,7 @@ node_modules
 cache
 out-via-ir
 lcov.info
+test/invariants/fuzz/corpus/
 
 # Config files
 .env
