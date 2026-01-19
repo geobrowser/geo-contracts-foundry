@@ -151,8 +151,8 @@ contract IntegrationSpaceMigration is IntegrationBase {
     );
     // PROPOSAL_VOTED
     spaceRegistryProxy.enter(_eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, '');
-    // PROPOSAL_EXECUTED
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
+    // PROPOSAL_EXECUTED
     spaceRegistryProxy.enter(
       _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
     );
@@ -185,8 +185,8 @@ contract IntegrationSpaceMigration is IntegrationBase {
     spaceRegistryProxy.enter(
       _eoaSpaceBisId, _daoSpaceProxyBisId, ActionsConstants.PROPOSAL_VOTED, '', _voteProposalData, ''
     );
-    // PROPOSAL_EXECUTED
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
+    // PROPOSAL_EXECUTED
     spaceRegistryProxy.enter(
       _eoaSpaceBisId, _daoSpaceProxyBisId, ActionsConstants.PROPOSAL_EXECUTED, '', _executeProposalData, ''
     );
