@@ -37,6 +37,20 @@ jobs:
 
       - name: Run tests
         run: yarn test:integration
+    
+  invariant-tests:
+    name: Run Invariant Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: install-tools
+        uses: ./.github/workflows/install-tools
+
+      - name: Run tests
+        shell: bash
+        run: yarn test:invariant
 
   lint:
     name: Static Analysis
