@@ -12,7 +12,7 @@
   "scripts": {
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
-    "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*'",
+    "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*' --no-match-coverage '(script|test)'",
     "deploy:geo-browser": "bash -c 'source .env && forge script DeployGEOBrowser --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain geo_testnet -vvvvv'",
     "lint:bulloak": "find test/unit -name '*.tree' | xargs bulloak check",
     "lint:check": "forge fmt --check && yarn lint:sol",
@@ -20,10 +20,10 @@
     "lint:natspec": "lintspec",
     "lint:sol": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky",
-    "test": "forge test -vvv",
+    "test": "forge clean && forge build && forge test --ffi -vvv",
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",
-    "test:integration": "forge test --match-contract Integration -vvv",
+    "test:integration": "forge clean && forge build && forge test --ffi --match-contract Integration -vvv",
     "test:unit": "forge test --match-contract Unit -vvv",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit"
   },

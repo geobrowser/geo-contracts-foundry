@@ -39,13 +39,16 @@ UnitSpaceRegistry::registerSpaceId
 │   ├── it sets addressToSpaceId
 │   ├── it sets spaceIdToAddress
 │   ├── it emits Action with SPACE_ID_REGISTERED
+│   ├── it returns the newly generated spaceId
 │   └── when _type exists
 │       └── it emits Action with SPACE_TYPE_DECLARED
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
 UnitSpaceRegistry::clearSpaceId
-└── when called
+├── when spaceId is not registered
+│   └── it reverts with SpaceNotRegistered
+└── when spaceId is registered
     ├── it resets addressToSpaceId
     ├── it resets spaceIdToAddress
     ├── it resets spaceIdToProposedAddress
@@ -53,7 +56,8 @@ UnitSpaceRegistry::clearSpaceId
 
 UnitSpaceRegistry::proposeSpaceMigration
 ├── when caller is space
-│   └── it updates spaceIdToProposedAddress
+│   ├── it updates spaceIdToProposedAddress 
+│   └── it emits Action with SPACE_ID_MIGRATION_PROPOSED
 └── when caller is not space
     └── it reverts with InvalidCaller
 

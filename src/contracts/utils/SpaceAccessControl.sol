@@ -3,7 +3,6 @@ pragma solidity 0.8.30;
 
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {ISpaceAccessControl} from 'interfaces/utils/ISpaceAccessControl.sol';
 
 /**
@@ -16,57 +15,35 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
   /**
    * @notice The storage location of the Space Access Control contract
    * @custom:storage-location erc7201:geo.storage.SpaceAccessControl
+   * @dev Computed with: keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceAccessControl")) - 1)) & ~bytes32(uint256(0xff))
    */
   bytes32 internal constant _SPACE_ACCESS_CONTROL_STORAGE_LOCATION =
     0x2ecb2b2cb0272cfecbe1c3011e1b6356b5ce9fc13d93226dfee5064ba9cec500;
 
   /// @inheritdoc ISpaceAccessControl
-  function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
+  function hasRole(bytes32 _role, bytes16 _spaceId) public view virtual returns (bool _hasRole) {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    _spaceRegistry = $.spaceRegistry;
-  }
-
-  /// @inheritdoc ISpaceAccessControl
-  function hasRole(bytes32 _role, address _account) public view virtual returns (bool _hasRole) {
-    SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    bytes16 _spaceId = $.spaceRegistry.addressToSpaceId(_account);
     return $.hasRole[_role][_spaceId];
   }
 
   /**
-   * @notice Attempts to grant `role` to `space`, and returns the associated space id of the space
+   * @notice Attempts to grant `role` to `space`
    * @param _role The role to grant to the space id
-   * @param _account The account associated with the space id to receive the new role
-   * @return _spaceId The space id associated with the account receiving the new role
+   * @param _spaceId The space id to receive the new role
    */
-  function _grantRole(bytes32 _role, address _account) internal virtual returns (bytes16 _spaceId) {
+  function _grantRole(bytes32 _role, bytes16 _spaceId) internal virtual {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    _spaceId = $.spaceRegistry.addressToSpaceId(_account);
-    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if (!$.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = true;
+    $.hasRole[_role][_spaceId] = true;
   }
 
   /**
-   * @notice Attempts to revoke `role` from `space`, and returns the associated space id of the space
+   * @notice Attempts to revoke `role` from `space`
    * @param _role The role to revoke from the space id
-   * @param _account The account associated with the space id to have their role revoked
-   * @return _spaceId The space id associated with the account receiving the new role
+   * @param _spaceId The space id to have their role revoked
    */
-  function _revokeRole(bytes32 _role, address _account) internal virtual returns (bytes16 _spaceId) {
+  function _revokeRole(bytes32 _role, bytes16 _spaceId) internal virtual {
     SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    _spaceId = $.spaceRegistry.addressToSpaceId(_account);
-    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if ($.hasRole[_role][_spaceId]) $.hasRole[_role][_spaceId] = false;
-  }
-
-  /**
-   * @notice Records the space registry address into storage
-   * @param _spaceRegistry The space registry address
-   * @dev Should be called in the initializer
-   */
-  function __spaceAccessControlControl_init(ISpaceRegistry _spaceRegistry) internal virtual onlyInitializing {
-    SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    $.spaceRegistry = _spaceRegistry;
+    $.hasRole[_role][_spaceId] = false;
   }
 
   /**

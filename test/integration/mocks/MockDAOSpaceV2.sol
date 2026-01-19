@@ -66,16 +66,16 @@ contract MockDAOSpaceV2 is DAOSpace {
   }
 
   /// @inheritdoc DAOSpace
-  function _addMember(address _newMember) internal virtual override {
-    DAOSpace._addMember(_newMember);
+  function _addMember(bytes16 _newMemberSpaceId) internal virtual override {
+    DAOSpace._addMember(_newMemberSpaceId);
     // Update counter
     DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
     $2.totalMembers++;
   }
 
   /// @inheritdoc DAOSpace
-  function _removeMember(address _oldMember) internal virtual override {
-    DAOSpace._removeMember(_oldMember);
+  function _removeMember(bytes16 _oldMemberSpaceId) internal virtual override {
+    DAOSpace._removeMember(_oldMemberSpaceId);
     // Update counter
     DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
     $2.totalMembers--;
