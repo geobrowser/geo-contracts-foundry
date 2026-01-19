@@ -28,6 +28,8 @@ contract IntegrationSafe is IntegrationBase {
   address[] internal _safeOwners;
   uint256[] internal _safeOwnersPrivateKeys;
   uint256 internal _safeThreshold;
+  bytes16 internal _verifierSpaceId;
+  bytes16[] internal _safeOwnerSpaceIds;
 
   function setUp() public override {
     IntegrationBase.setUp();
@@ -59,6 +61,12 @@ contract IntegrationSafe is IntegrationBase {
     // Register space id for use below
     vm.prank(_safeOwners[0]);
     spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), abi.encode('1.0.0'));
+
+    // Set space IDs for use in tests
+    _verifierSpaceId = spaceRegistryProxy.addressToSpaceId(address(verifierSpace));
+    _safeOwnerSpaceIds = new bytes16[](2);
+    _safeOwnerSpaceIds[0] = spaceRegistryProxy.addressToSpaceId(_safeOwners[0]);
+    _safeOwnerSpaceIds[1] = spaceRegistryProxy.addressToSpaceId(_safeOwners[1]);
   }
 
   function test_SafeInit() external view {
@@ -71,8 +79,9 @@ contract IntegrationSafe is IntegrationBase {
   function test_VerifierSpace_SafeSignsAndEmitsEvent_WithPreApprovedHash() external {
     // Pre-approve the message using SignMessageLib
     /// @dev Use a permissionless action to isolate the verify logic
-    bytes32 verifierDigest =
-      _getVerifierSpaceDigest(_safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''));
+    bytes32 verifierDigest = _getVerifierSpaceDigest(
+      spaceRegistryProxy.addressToSpaceId(_safeOwners[0]), ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
+    );
     bytes memory signMessageData = abi.encodeCall(SignMessageLib.signMessage, (abi.encode(verifierDigest)));
     bytes32 signTxHash = userSafe.getTransactionHash(
       address(signMessageLib),
@@ -106,17 +115,13 @@ contract IntegrationSafe is IntegrationBase {
 
     vm.expectEmit();
     emit ISpaceRegistry.Action(
-      spaceRegistryProxy.addressToSpaceId(address(verifierSpace)),
-      spaceRegistryProxy.addressToSpaceId(_safeOwners[0]),
-      ActionsConstants.UPVOTED,
-      bytes32(0),
-      abi.encode('')
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
     );
 
     // Enter the space registry using the verify flow
     /// @dev Use empty signature given pre-approval
     spaceRegistryProxy.enter(
-      address(verifierSpace), _safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
     );
 
     // Verify the replay nonce was incremented
@@ -125,15 +130,16 @@ contract IntegrationSafe is IntegrationBase {
     // Verify replay protection
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
     spaceRegistryProxy.enter(
-      address(verifierSpace), _safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
     );
   }
 
   function test_VerifierSpace_SafeSignsAndEmitsEvent_WithSignature() external {
     // Create a signature for the verify flow
     /// @dev Use a permissionless action to isolate the verify logic
-    bytes32 verifierDigest =
-      _getVerifierSpaceDigest(_safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''));
+    bytes32 verifierDigest = _getVerifierSpaceDigest(
+      spaceRegistryProxy.addressToSpaceId(_safeOwners[0]), ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
+    );
     bytes32 safeMessageHash = fallbackHandler.getMessageHashForSafe(userSafe, abi.encode(verifierDigest));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(_safeOwnersPrivateKeys[0], safeMessageHash);
     bytes memory signature = abi.encodePacked(r, s, v);
@@ -141,15 +147,11 @@ contract IntegrationSafe is IntegrationBase {
     // Enter the space registry using the verify flow
     vm.expectEmit();
     emit ISpaceRegistry.Action(
-      spaceRegistryProxy.addressToSpaceId(address(verifierSpace)),
-      spaceRegistryProxy.addressToSpaceId(_safeOwners[0]),
-      ActionsConstants.UPVOTED,
-      bytes32(0),
-      abi.encode('')
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
     );
 
     spaceRegistryProxy.enter(
-      address(verifierSpace), _safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), signature
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), signature
     );
 
     // Verify the replay nonce was incremented
@@ -158,21 +160,20 @@ contract IntegrationSafe is IntegrationBase {
     // Verify replay protection
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
     spaceRegistryProxy.enter(
-      address(verifierSpace), _safeOwners[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), ''
     );
   }
 
   function _getVerifierSpaceDigest(
-    address _toSpace,
+    bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
     bytes memory _data
   ) internal view returns (bytes32 _digest) {
     uint256 replayNonce = verifierSpace.replayNonce();
-    bytes32 messageTypeHash =
-      keccak256('Message(address toSpace,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
-    bytes32 structHash =
-      keccak256(abi.encode(messageTypeHash, _toSpace, _action, _topic, replayNonce, keccak256(_data)));
+    bytes32 structHash = keccak256(
+      abi.encode(verifierSpace.MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, replayNonce, keccak256(_data))
+    );
     bytes32 domainSeparator = keccak256(
       abi.encode(
         keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
