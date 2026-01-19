@@ -211,7 +211,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     // when called
 
     // it returns the type
-    assertEq(daoSpaceFactoryProxy.typeId(), keccak256(bytes('DAO_SPACE_FACTORY')));
+    assertEq(daoSpaceFactoryProxy.typeId(), keccak256('DAO_SPACE_FACTORY'));
   }
 
   function test_Name_WhenCalled() external view {

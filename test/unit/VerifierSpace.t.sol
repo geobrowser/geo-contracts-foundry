@@ -34,7 +34,7 @@ contract UnitVerifierSpace is TestHelper {
     verifierSpaceBeacon = UnsafeUpgrades.deployBeacon(address(verifierSpaceImplementation), _owner);
 
     // And the space type and version
-    _spaceType = keccak256(bytes(verifierSpaceImplementation.name()));
+    _spaceType = verifierSpaceImplementation.typeId();
     _spaceVersion = abi.encode(verifierSpaceImplementation.version());
 
     // Get predicted Verifier Space proxy address
@@ -231,7 +231,7 @@ contract UnitVerifierSpace is TestHelper {
     bytes32 domainSeparator = keccak256(
       abi.encode(
         keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-        keccak256(bytes('VERIFIER_SPACE')),
+        keccak256('VERIFIER_SPACE'),
         keccak256(bytes(verifierSpaceProxy.version())),
         block.chainid,
         address(verifierSpaceProxy)
@@ -326,7 +326,7 @@ contract UnitVerifierSpace is TestHelper {
     // when called
 
     // it returns the type
-    assertEq(verifierSpaceProxy.typeId(), keccak256(bytes('VERIFIER_SPACE')));
+    assertEq(verifierSpaceProxy.typeId(), keccak256('VERIFIER_SPACE'));
   }
 
   function test_Name_WhenCalled() external view {

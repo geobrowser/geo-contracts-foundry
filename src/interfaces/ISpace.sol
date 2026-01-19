@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+import {ISemver} from 'interfaces/utils/ISemver.sol';
+
 /**
  * @title ISpace
  * @notice Interface for spaces
  */
-interface ISpace {
+interface ISpace is ISemver {
   /**
    * @notice Writes to this space from another space
    * @param _fromSpaceId The space ID that writes
