@@ -139,6 +139,15 @@ UnitDAOSpace::write
 │   │   │   └── it calls enter on the spaceRegistry with the EDITOR_REMOVED action
 │   │   └── when the role is not held by the _fromSpaceId or the role is neither MEMBER nor EDITOR
 │   │       └── it reverts with InvalidFromSpace
+│   ├── when _action equals MEMBERSHIP_REQUESTED
+│   │   ├── when _proposalId has already been used
+│   │   │   └── it reverts with InvalidProposalId
+│   │   ├── when _fromSpaceId is restricted
+│   │   │   └── it reverts with FastPathRestricted
+│   │   └── when the request can be made
+│   │       ├── it creates a fast path proposal to add the new member
+│   │       ├── it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
+│   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
@@ -261,6 +270,8 @@ UnitDAOSpace::fetch
 │   └── it returns bytes32(_proposalId)
 ├── when _action equals SPACE_LEFT
 │   └── it returns role
+├── when _action equals MEMBERSHIP_REQUESTED
+│   └── it returns bytes32(_proposalId)
 ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   └── it returns bytes32(_spaceId)
 └── when _action equals anything else

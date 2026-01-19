@@ -52,6 +52,9 @@ bytes32 constant MEMBER_ADDED = keccak256('GOVERNANCE.MEMBER_ADDED');
 /// @dev The ID of the action to remove a member
 bytes32 constant MEMBER_REMOVED = keccak256('GOVERNANCE.MEMBER_REMOVED');
 
+/// @dev The ID of the action to request a space to become a member
+bytes32 constant MEMBERSHIP_REQUESTED = keccak256('GOVERNANCE.MEMBERSHIP_REQUESTED');
+
 /// @dev The ID of the action to restrict a space (fast path access)
 bytes32 constant SPACE_FAST_PATH_RESTRICTED = keccak256('GOVERNANCE.SPACE_FAST_PATH_RESTRICTED');
 
