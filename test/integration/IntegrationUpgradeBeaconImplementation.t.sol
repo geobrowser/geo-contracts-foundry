@@ -73,8 +73,6 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceProxyA.initialize(abi.encode(_initialTotalMembers));
     daoSpaceProxyB.initialize(abi.encode(_initialTotalMembers));
 
-    bytes16 daoSpaceProxyASpaceId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyA));
-    bytes16 daoSpaceProxyBSpaceId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyB));
     vm.prank(address(daoSpaceProxyA));
     daoSpaceProxyA.addMember(_daoSpaceProxyAId);
     vm.prank(address(daoSpaceProxyB));
