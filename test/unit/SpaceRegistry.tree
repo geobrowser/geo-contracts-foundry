@@ -46,17 +46,18 @@ UnitSpaceRegistry::registerSpaceId
     └── it reverts with SpaceAlreadyRegistered
 
 UnitSpaceRegistry::clearSpaceId
-├── when caller is space
-│   ├── it resets addressToSpaceId
-│   ├── it resets spaceIdToAddress
-│   ├── it resets spaceIdToProposedAddress
-│   └── it emits Action with SPACE_ID_CLEARED
-└── when caller is not space
-    └── it reverts with InvalidCaller
+├── when spaceId is not registered
+│   └── it reverts with SpaceNotRegistered
+└── when spaceId is registered
+    ├── it resets addressToSpaceId
+    ├── it resets spaceIdToAddress
+    ├── it resets spaceIdToProposedAddress
+    └── it emits Action with SPACE_ID_CLEARED
 
 UnitSpaceRegistry::proposeSpaceMigration
 ├── when caller is space
-│   └── it updates spaceIdToProposedAddress
+│   ├── it updates spaceIdToProposedAddress 
+│   └── it emits Action with SPACE_ID_MIGRATION_PROPOSED
 └── when caller is not space
     └── it reverts with InvalidCaller
 

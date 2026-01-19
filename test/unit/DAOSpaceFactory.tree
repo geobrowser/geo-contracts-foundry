@@ -23,6 +23,7 @@ UnitDAOSpaceFactory::initialize
 UnitDAOSpaceFactory::createDAOSpaceProxy
 └── when called
     ├── it deploys and initializes DAO space proxy
+    ├── it updates the proxyIsChildOfFactory for the deployed proxy to true
     └── it returns new DAO space proxy
 
 UnitDAOSpaceFactory::typeId

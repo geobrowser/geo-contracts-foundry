@@ -164,7 +164,11 @@ contract UnitDAOSpaceFactory is TestHelper {
     daoSpaceFactoryImplementation.initialize(abi.encode(__spaceRegistry, __owner, __daoSpaceImplementation));
   }
 
-  function test_CreateDAOSpaceProxy_WhenCalled(IDAOSpace.VotingSettings memory __votingSettings) external {
+  function test_CreateDAOSpaceProxy_WhenCalled(
+    IDAOSpace.VotingSettings memory __votingSettings,
+    bytes memory __initialEditsContentUri,
+    bytes memory __initialEditsMetadata
+  ) external {
     __votingSettings.slowPathPercentageThreshold = bound(__votingSettings.slowPathPercentageThreshold, 0, 1e6);
     __votingSettings.fastPathFlatThreshold = bound(__votingSettings.fastPathFlatThreshold, 0, 1);
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
@@ -172,29 +176,35 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
+    assertFalse(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
 
     // it deploys and initializes DAO space proxy
-    bytes memory _initializerData = abi.encode(
-      daoSpaceFactoryProxy.spaceRegistry(),
-      __votingSettings,
-      _initialEditors,
-      _initialMembers,
-      abi.encode(_initialEditsContentUri, _initialEditsMetadata)
-    );
+    bytes memory _initializerData = (__initialEditsContentUri.length != 0 || __initialEditsMetadata.length != 0)
+      ? abi.encode(
+        daoSpaceFactoryProxy.spaceRegistry(),
+        __votingSettings,
+        _initialEditors,
+        _initialMembers,
+        abi.encode(__initialEditsContentUri, __initialEditsMetadata)
+      )
+      : abi.encode(daoSpaceFactoryProxy.spaceRegistry(), __votingSettings, _initialEditors, _initialMembers, '');
     _mockAndExpect(_daoSpaceImplementation, abi.encodeCall(IDAOSpace.initialize, (_initializerData)), abi.encode());
 
     // it returns new DAO space proxy
     assertEq(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        __votingSettings, _initialEditors, _initialMembers, _initialEditsContentUri, _initialEditsMetadata
+        __votingSettings, _initialEditors, _initialMembers, __initialEditsContentUri, __initialEditsMetadata
       ),
-      address(_daoSpaceProxy)
+      _daoSpaceProxy
     );
 
     assertEq(
-      address(uint160(uint256(vm.load(address(_daoSpaceProxy), ERC1967Utils.BEACON_SLOT)))),
+      address(uint160(uint256(vm.load(_daoSpaceProxy, ERC1967Utils.BEACON_SLOT)))),
       daoSpaceFactoryProxy.daoSpaceBeacon()
     );
+
+    // it updates the proxyIsChildOfFactory for the deployed proxy to true
+    assertTrue(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
   }
 
   function test_TypeId_WhenCalled() external view {

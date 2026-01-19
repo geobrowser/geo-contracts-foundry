@@ -57,14 +57,14 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertTrue(daoSpaceProxyA.hasRole(daoSpaceProxyA.MEMBER(), _eoaSpaceId));
     assertTrue(daoSpaceProxyB.hasRole(daoSpaceProxyB.MEMBER(), _eoaSpaceId));
     // actionIsFastPathValid
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), true);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), true);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector), true);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector), true);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector), false);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector), false);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector), false);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector), false);
+    assertTrue(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector));
+    assertTrue(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector));
+    assertTrue(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector));
+    assertTrue(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector));
+    assertFalse(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector));
+    assertFalse(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector));
+    assertFalse(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector));
+    assertFalse(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector));
 
     vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
     daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationBis));
@@ -73,6 +73,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     daoSpaceProxyA.initialize(abi.encode(_initialTotalMembers));
     daoSpaceProxyB.initialize(abi.encode(_initialTotalMembers));
 
+    bytes16 daoSpaceProxyASpaceId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyA));
+    bytes16 daoSpaceProxyBSpaceId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyB));
     vm.prank(address(daoSpaceProxyA));
     daoSpaceProxyA.addMember(_daoSpaceProxyAId);
     vm.prank(address(daoSpaceProxyB));
@@ -86,14 +88,14 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(daoSpaceProxyA.totalMembers(), _initialTotalMembers + 1);
     assertEq(daoSpaceProxyB.totalMembers(), _initialTotalMembers + 1);
     // actionIsFastPathValid
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector), false);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector), false);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector), false);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector), false);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector), true);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector), true);
-    assertEq(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector), true);
-    assertEq(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector), true);
+    assertFalse(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addMember.selector));
+    assertFalse(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addMember.selector));
+    assertFalse(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeMember.selector));
+    assertFalse(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeMember.selector));
+    assertTrue(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.addEditor.selector));
+    assertTrue(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.addEditor.selector));
+    assertTrue(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector));
+    assertTrue(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector));
   }
 
   function test_UpgradeBeaconImplementation_VerifierSpace() external {

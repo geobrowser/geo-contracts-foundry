@@ -7,6 +7,9 @@ bytes32 constant SPACE_ID_REGISTERED = keccak256('GOVERNANCE.SPACE_ID_REGISTERED
 /// @dev The ID of the action to clear a space from the registry
 bytes32 constant SPACE_ID_CLEARED = keccak256('GOVERNANCE.SPACE_ID_CLEARED');
 
+/// @dev The ID of the action to propose a space migration
+bytes32 constant SPACE_ID_MIGRATION_PROPOSED = keccak256('GOVERNANCE.SPACE_ID_MIGRATION_PROPOSED');
+
 /// @dev The ID of the action to migrate a space
 bytes32 constant SPACE_ID_MIGRATED = keccak256('GOVERNANCE.SPACE_ID_MIGRATED');
 

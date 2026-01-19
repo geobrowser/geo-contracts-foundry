@@ -184,6 +184,16 @@ interface IDAOSpace is ISpace {
   error OneActionForFastPath();
 
   /**
+   * @notice Thrown when a fast path proposal attempts to call a contract other than the DAO itself
+   */
+  error InvalidTarget();
+
+  /**
+   * @notice Thrown when a fast path proposal attempts to transfer funds
+   */
+  error InvalidFundsTransfer();
+
+  /**
    * @notice Thrown when attempting to create a proposal using the fast path when the creator
    * is restricted from doing so.
    */

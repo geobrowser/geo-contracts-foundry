@@ -19,6 +19,7 @@ interface ISpace is ISemver {
 
   /**
    * @notice Verifies a writing to another space from this space
+   * @param _sender The msg.sender of the call to the space registry
    * @param _toSpaceId The space ID to verify
    * @param _action The action to verify
    * @param _topic The topic to verify
@@ -26,6 +27,7 @@ interface ISpace is ISemver {
    * @param _signature The signature for verification
    */
   function verify(
+    address _sender,
     bytes16 _toSpaceId,
     bytes32 _action,
     bytes32 _topic,
