@@ -16,6 +16,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  * @dev This contract allows members and editors to create proposals, vote, and execute them.
  *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
  *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
+ * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
  */
 contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace

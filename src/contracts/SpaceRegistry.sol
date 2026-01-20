@@ -16,6 +16,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  * @dev This contract serves as the entry point for creating new spaces
  *      Each space has a unique ID that maps to an address
  *      Spaces can migrate to new addresses while keeping their ID
+ * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
  */
 contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /**
