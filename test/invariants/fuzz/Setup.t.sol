@@ -60,8 +60,9 @@ contract Setup is Test, DeployGEOBrowser {
     // Initial editors must already be registered spaces, so we pass empty arrays
     daoSpaceActors = new address[](NUM_DAO_SPACE_ACTORS);
     for (uint256 i = 0; i < NUM_DAO_SPACE_ACTORS; i++) {
-      daoSpaceActors[i] =
-        daoSpaceFactoryProxy.createDAOSpaceProxy(_defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '');
+      daoSpaceActors[i] = daoSpaceFactoryProxy.createDAOSpaceProxy(
+        _defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '', bytes16(0)
+      );
     }
   }
 

@@ -103,7 +103,7 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, bytes16(0)))
         )
       )
     );
@@ -160,7 +160,8 @@ contract UnitDAOSpace is TestHelper {
 
   function test_Initialize_WhenDelegateCalled(
     address __spaceRegistry,
-    bytes memory __publishEditsData
+    bytes memory __publishEditsData,
+    bytes16 __initialTopicId
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
@@ -183,6 +184,18 @@ contract UnitDAOSpace is TestHelper {
         ActionsConstants.EDITS_PUBLISHED,
         '',
         __publishEditsData
+      );
+    }
+
+    // it calls enter on the spaceRegistry with the TOPIC_DECLARED action
+    if (__initialTopicId != bytes16(0)) {
+      _mockEnter(
+        __spaceRegistry,
+        predictedDAOSpaceProxySpaceId,
+        predictedDAOSpaceProxySpaceId,
+        ActionsConstants.TOPIC_DECLARED,
+        bytes32(__initialTopicId),
+        ''
       );
     }
 
@@ -215,7 +228,9 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData))
+          (abi.encode(
+              __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData, __initialTopicId
+            ))
         )
       )
     );
@@ -253,7 +268,8 @@ contract UnitDAOSpace is TestHelper {
 
   function test_Initialize_WhenDelegateCalledAgain(
     address __spaceRegistry,
-    bytes memory __publishEditsData
+    bytes memory __publishEditsData,
+    bytes16 __initialTopicId
   ) external whenDelegateCalled {
     _assumeFuzzable(__spaceRegistry);
 
@@ -276,6 +292,18 @@ contract UnitDAOSpace is TestHelper {
         ActionsConstants.EDITS_PUBLISHED,
         '',
         __publishEditsData
+      );
+    }
+
+    // it calls enter on the spaceRegistry with the TOPIC_DECLARED action
+    if (__initialTopicId != bytes16(0)) {
+      _mockEnter(
+        __spaceRegistry,
+        predictedDAOSpaceProxySpaceId,
+        predictedDAOSpaceProxySpaceId,
+        ActionsConstants.TOPIC_DECLARED,
+        bytes32(__initialTopicId),
+        ''
       );
     }
 
@@ -308,7 +336,9 @@ contract UnitDAOSpace is TestHelper {
         daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData))
+          (abi.encode(
+              __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData, __initialTopicId
+            ))
         )
       )
     );
@@ -318,7 +348,9 @@ contract UnitDAOSpace is TestHelper {
 
     // when delegate called again
     daoSpaceProxy.initialize(
-      abi.encode(__spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+      abi.encode(
+        __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, __initialTopicId
+      )
     );
   }
 
@@ -328,7 +360,7 @@ contract UnitDAOSpace is TestHelper {
 
     // when called again
     daoSpaceProxy.initialize(
-      abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData)
+      abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, bytes16(0))
     );
   }
 
