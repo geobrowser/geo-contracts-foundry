@@ -251,13 +251,13 @@ contract UnitDAOSpaceFactory is TestHelper {
     bytes16 _fromSpaceId,
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes memory _data,
     bytes memory _signature
   ) internal {
     _mockAndExpect(
       address(__spaceRegistry),
-      abi.encodeCall(ISpaceRegistry.enter, (_fromSpaceId, _toSpaceId, _action, _topic, _data, _signature)),
+      abi.encodeCall(ISpaceRegistry.enter, (_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature)),
       abi.encode()
     );
   }

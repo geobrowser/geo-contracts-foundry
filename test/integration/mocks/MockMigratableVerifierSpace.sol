@@ -12,14 +12,14 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @notice Enters the Space Registry to emit an Action event
    * @dev Must be called by the owner
    * @param _action An action identifier
-   * @param _topic A topic identifier
+   * @param _subject A subject identifier
    * @param _data Some extra arbitrary data that may hold additional information
    * @dev _from and _to are always the DAO's address
    */
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external virtual onlyOwner {
+  function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) external virtual onlyOwner {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
     bytes16 verifierSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
-    $.spaceRegistry.enter(verifierSpaceId, verifierSpaceId, _action, _topic, _data, '');
+    $.spaceRegistry.enter(verifierSpaceId, verifierSpaceId, _action, _subject, _data, '');
   }
 
   /**

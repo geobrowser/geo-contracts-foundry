@@ -10,7 +10,7 @@ import {BaseHandler} from 'test/invariants/fuzz/handlers/BaseHandler.t.sol';
 /// @notice Handler for VerifierSpace operations
 contract HandlerVerifierSpace is BaseHandler {
   bytes32 internal constant MESSAGE_TYPEHASH =
-    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
+    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 subject,uint256 nonce,bytes data)');
   bytes32 internal constant DOMAIN_TYPEHASH =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
 
@@ -126,12 +126,13 @@ contract HandlerVerifierSpace is BaseHandler {
     uint256 _ownerKey,
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     uint256 _nonce,
     bytes memory _data
   ) internal view returns (bytes memory _signature) {
     bytes32 domainSeparator = _computeDomainSeparator(_verifierSpace);
-    bytes32 structHash = keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, _nonce, keccak256(_data)));
+    bytes32 structHash =
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _subject, _nonce, keccak256(_data)));
     bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(_ownerKey, digest);
     return abi.encodePacked(r, s, v);

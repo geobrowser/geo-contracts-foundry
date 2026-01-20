@@ -14,6 +14,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 /**
  * @title VerifierSpaceFactory
  * @notice Produces beacon-proxy-upgradeable verifier spaces
+ * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
  */
 contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierSpaceFactory {
   /**

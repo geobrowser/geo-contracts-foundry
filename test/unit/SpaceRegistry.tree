@@ -25,7 +25,7 @@ UnitSpaceRegistry::enter
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
 │       ├── when _action is not permissionless
-│       │   ├── it calls toSpace to fetch _topicOutput
+│       │   ├── it calls toSpace to fetch _subjectOutput
 │       │   ├── it emits Action
 │       │   └── it calls toSpace to write
 │       └── when _action is permissionless

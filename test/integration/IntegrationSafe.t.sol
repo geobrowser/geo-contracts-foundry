@@ -167,12 +167,12 @@ contract IntegrationSafe is IntegrationBase {
   function _getVerifierSpaceDigest(
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes memory _data
   ) internal view returns (bytes32 _digest) {
     uint256 replayNonce = verifierSpace.replayNonce();
     bytes32 structHash = keccak256(
-      abi.encode(verifierSpace.MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, replayNonce, keccak256(_data))
+      abi.encode(verifierSpace.MESSAGE_TYPEHASH(), _toSpaceId, _action, _subject, replayNonce, keccak256(_data))
     );
     bytes32 domainSeparator = keccak256(
       abi.encode(
