@@ -12,15 +12,15 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
    * @param None Default state, cannot be cast
-   * @param Abstain Counts towards participation but doesn't influence support
    * @param Yes Increases support; fast path executes immediately when threshold met
    * @param No Decreases support; escalates fast path to slow path
+   * @param Abstain Counts towards participation but doesn't influence support
    */
   enum VoteOption {
     None,
-    Abstain,
     Yes,
-    No
+    No,
+    Abstain
   }
 
   /**
@@ -83,14 +83,14 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Proposal vote tally
-   * @param abstain Number of abstain votes
    * @param yes Number of yes votes
    * @param no Number of no votes
+   * @param abstain Number of abstain votes
    */
   struct Tally {
-    uint256 abstain;
     uint256 yes;
     uint256 no;
+    uint256 abstain;
   }
 
   /**

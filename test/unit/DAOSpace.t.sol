@@ -710,7 +710,7 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(0));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.None);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
   }
 
@@ -796,12 +796,12 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
     // set inital vote to yes and tally
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(2));
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Yes);
     (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.yes, 1);
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(3));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the yes vote tally by one
@@ -829,12 +829,12 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
     // set inital vote to no and tally
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(3));
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.No);
     (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.no, 1);
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(2));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the no vote tally by one
@@ -862,12 +862,12 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
     // set inital vote to abstain and tally
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(1));
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Abstain);
     (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(tally.abstain, 1);
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(2));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it decreases the abstain vote tally by one
@@ -896,7 +896,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(2));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the yes vote tally by one
@@ -925,7 +925,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(3));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the no vote tally by one
@@ -954,7 +954,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote abstain
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(1));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Abstain);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it increases the abstain vote tally by one
@@ -1017,7 +1017,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(3));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     (, creator, parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
@@ -1079,7 +1079,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(2));
+    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
     daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _topic, voteData);
 
     // it loops over the stored proposal actions and performs the external callsc
@@ -1312,7 +1312,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // set vote to yes
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(2));
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Yes);
 
     // warp to after last date
     vm.warp(block.timestamp + 2);
@@ -1362,7 +1362,7 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // set vote to yes
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(2));
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Yes);
 
     // warp to after last date
     vm.warp(block.timestamp + 2);
