@@ -242,36 +242,36 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Re-enters the Space Registry to emit an Action event
    * @param _action An action identifier
-   * @param _topic A topic identifier
+   * @param _subject A subject identifier
    * @param _data Some extra arbitrary data that may hold additional information
    * @dev _from and _to are always the DAO's space id
    */
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) external;
+  function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) external;
 
   /**
    * @notice Publishes content edits via an Action event emission
-   * @param _topic An optional topic identifier
+   * @param _subject An optional subject identifier
    * @param _editsContentUri The uri for the content
    * @param _editsMetadata The uri for the metadata
    * @dev _from and _to are always the DAO's space id
    */
-  function publish(bytes32 _topic, bytes calldata _editsContentUri, bytes calldata _editsMetadata) external;
+  function publish(bytes32 _subject, bytes calldata _editsContentUri, bytes calldata _editsMetadata) external;
 
   /**
    * @notice Flags something for additional consideration via an Action event emission
-   * @param _topic An optional topic identifier
-   * @param _flaggedId The id or uri of the thing being flagged (e.g. content, topic, proposal)
+   * @param _subject An optional subject identifier
+   * @param _flaggedId The id or uri of the thing being flagged (e.g. content, subject, proposal)
    * @dev _from and _to are always the DAO's space id
    */
-  function flag(bytes32 _topic, bytes calldata _flaggedId) external;
+  function flag(bytes32 _subject, bytes calldata _flaggedId) external;
 
   /**
    * @notice Unflags something via an Action event emission
-   * @param _topic An optional topic identifier
-   * @param _unflaggedId The id or uri of the thing being unflagged (e.g. content, topic, proposal)
+   * @param _subject An optional subject identifier
+   * @param _unflaggedId The id or uri of the thing being unflagged (e.g. content, subject, proposal)
    * @dev _from and _to are always the DAO's space id
    */
-  function unflag(bytes32 _topic, bytes calldata _unflaggedId) external;
+  function unflag(bytes32 _subject, bytes calldata _unflaggedId) external;
 
   /**
    * @notice Updates the voting settings for the DAO

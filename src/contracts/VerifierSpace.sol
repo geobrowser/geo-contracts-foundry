@@ -20,7 +20,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace {
   /// @inheritdoc IVerifierSpace
   bytes32 public constant MESSAGE_TYPEHASH =
-    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)');
+    keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 subject,uint256 nonce,bytes data)');
 
   /**
    * @notice The storage location of the verifier space contract
@@ -64,7 +64,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     address,
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
@@ -74,7 +74,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _topic, $.replayNonce++, keccak256(_data)))
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _subject, $.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
     if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
@@ -109,8 +109,8 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
   }
 
   /// @inheritdoc ISpace
-  function fetch(bytes32, bytes32 _topicInput, bytes calldata) public pure virtual returns (bytes32 _topicOutput) {
-    _topicOutput = _topicInput;
+  function fetch(bytes32, bytes32 _subjectInput, bytes calldata) public pure virtual returns (bytes32 _subjectOutput) {
+    _subjectOutput = _subjectInput;
   }
 
   /// @inheritdoc ISemver

@@ -30,11 +30,11 @@ interface ISpaceRegistry is ISemver {
    * @param fromSpaceId The from space ID involved
    * @param toSpaceId The to space ID involved
    * @param action An action, which is passed to the space contract
-   * @param topic A topic, which is passed to the space contract
+   * @param subject A subject, which is passed to the space contract
    * @param data Some extra arbitrary data that may be used for space contract execution
    */
   event Action(
-    bytes16 indexed fromSpaceId, bytes16 indexed toSpaceId, bytes32 indexed action, bytes32 indexed topic, bytes data
+    bytes16 indexed fromSpaceId, bytes16 indexed toSpaceId, bytes32 indexed action, bytes32 indexed subject, bytes data
   ) anonymous;
 
   /// @notice Thrown when the caller is not authorized for the operation
@@ -58,7 +58,7 @@ interface ISpaceRegistry is ISemver {
    * @param _fromSpaceId The space ID on which to call the verify function
    * @param _toSpaceId The space ID on which to call the write function
    * @param _action The action that is passed to the space contract
-   * @param _topic The topic that is passed to the space contract
+   * @param _subject The subject that is passed to the space contract
    * @param _data The arbitrary data for space contract execution
    * @param _signature The signature for account verification
    */
@@ -66,7 +66,7 @@ interface ISpaceRegistry is ISemver {
     bytes16 _fromSpaceId,
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external;

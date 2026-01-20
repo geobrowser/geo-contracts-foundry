@@ -56,10 +56,10 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function test_Constants_WhenDeployed() external view {
-    // it sets the MESSAGE_TYPEHASH to keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+    // it sets the MESSAGE_TYPEHASH to keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 subject,uint256 nonce,bytes data)')
     assertEq(
       verifierSpaceProxy.MESSAGE_TYPEHASH(),
-      keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 topic,uint256 nonce,bytes data)')
+      keccak256('Message(bytes16 toSpaceId,bytes32 action,bytes32 subject,uint256 nonce,bytes data)')
     );
 
     // it sets _VERIFIER_SPACE_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.VerifierSpace")) - 1)) & ~bytes32(uint256(0xff))
@@ -217,7 +217,7 @@ contract UnitVerifierSpace is TestHelper {
   function test_Verify_WhenSignatureIsValid(
     address _sender,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data
   ) external whenCallerIsSpaceRegistry {
     // when signature is valid
@@ -225,7 +225,7 @@ contract UnitVerifierSpace is TestHelper {
 
     // struct hash
     bytes32 structHash = keccak256(
-      abi.encode(verifierSpaceProxy.MESSAGE_TYPEHASH(), _toSpaceId, _action, _topic, _replayNonce, keccak256(_data))
+      abi.encode(verifierSpaceProxy.MESSAGE_TYPEHASH(), _toSpaceId, _action, _subject, _replayNonce, keccak256(_data))
     );
     // domain separator
     bytes32 domainSeparator = keccak256(
@@ -243,7 +243,7 @@ contract UnitVerifierSpace is TestHelper {
     // signature
     (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, digest);
     bytes memory _signature = abi.encodePacked(_r, _s, _v);
-    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
 
     // it increments replayNonce
     assertEq(verifierSpaceProxy.replayNonce(), _replayNonce + 1);
@@ -252,7 +252,7 @@ contract UnitVerifierSpace is TestHelper {
   function test_Verify_WhenSignatureIsNotValid(
     address _sender,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenCallerIsSpaceRegistry {
@@ -261,13 +261,13 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidSignature
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
 
-    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
   }
 
   function test_Verify_WhenCallerIsNotSpaceRegistry(
     address _sender,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external {
@@ -277,24 +277,24 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
 
-    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _topic, _data, _signature);
+    verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
   }
 
   function test_Write_WhenWriterIsValid(
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data
   ) external whenCallerIsSpaceRegistry {
     // when writer is valid
     _mockValidWriters(_fromSpaceId, true);
 
     // it does not revert
-    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _subject, _data);
   }
 
   function test_Write_WhenWriterIsNotValid(
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data
   ) external whenCallerIsSpaceRegistry {
     // when writer is not valid
@@ -302,24 +302,24 @@ contract UnitVerifierSpace is TestHelper {
     // it reverts with InvalidWriter
     vm.expectRevert(IVerifierSpace.InvalidWriter.selector);
 
-    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _subject, _data);
   }
 
-  function test_Write_WhenCallerIsNotSpaceRegistry(bytes32 _action, bytes32 _topic, bytes calldata _data) external {
+  function test_Write_WhenCallerIsNotSpaceRegistry(bytes32 _action, bytes32 _subject, bytes calldata _data) external {
     // when caller is not spaceRegistry
     vm.startPrank(_randomCaller);
 
     // it reverts with InvalidCaller
     vm.expectRevert(IVerifierSpace.InvalidCaller.selector);
 
-    verifierSpaceProxy.write(_fromSpaceId, _action, _topic, _data);
+    verifierSpaceProxy.write(_fromSpaceId, _action, _subject, _data);
   }
 
-  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _topicInput, bytes calldata _data) external view {
+  function test_Fetch_WhenCalled(bytes32 _action, bytes32 _subjectInput, bytes calldata _data) external view {
     // when called
 
-    // it returns _topicInput
-    assertEq(verifierSpaceProxy.fetch(_action, _topicInput, _data), _topicInput);
+    // it returns _subjectInput
+    assertEq(verifierSpaceProxy.fetch(_action, _subjectInput, _data), _subjectInput);
   }
 
   function test_TypeId_WhenCalled() external view {

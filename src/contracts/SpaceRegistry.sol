@@ -51,7 +51,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes16 _fromSpaceId,
     bytes16 _toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
@@ -61,23 +61,23 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     if (_fromSpace == address(0) || _toSpace == address(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
-    // Then pass the msg.sender, to space ID, action, topic, data, and signature to the from space
+    // Then pass the msg.sender, to space ID, action, subject, data, and signature to the from space
     if (msg.sender != _fromSpace) {
-      ISpace(_fromSpace).verify(msg.sender, _toSpaceId, _action, _topic, _data, _signature);
+      ISpace(_fromSpace).verify(msg.sender, _toSpaceId, _action, _subject, _data, _signature);
     }
 
     // No fetch or write with permissionless actions
     if ($.permissionlessActions[_action]) {
-      emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+      emit Action(_fromSpaceId, _toSpaceId, _action, _subject, _data);
     } else {
-      // Fetch future output variable and update `_topic` for emission if relevant
-      if (msg.sender != _toSpace) _topic = ISpace(_toSpace).fetch(_action, _topic, _data);
+      // Fetch future output variable and update `_subject` for emission if relevant
+      if (msg.sender != _toSpace) _subject = ISpace(_toSpace).fetch(_action, _subject, _data);
 
-      emit Action(_fromSpaceId, _toSpaceId, _action, _topic, _data);
+      emit Action(_fromSpaceId, _toSpaceId, _action, _subject, _data);
 
       // If msg.sender is not the to space
-      // Then pass the from space ID, action, topic, and data to the to space
-      if (msg.sender != _toSpace) ISpace(_toSpace).write(_fromSpaceId, _action, _topic, _data);
+      // Then pass the from space ID, action, subject, and data to the to space
+      if (msg.sender != _toSpace) ISpace(_toSpace).write(_fromSpaceId, _action, _subject, _data);
     }
   }
 

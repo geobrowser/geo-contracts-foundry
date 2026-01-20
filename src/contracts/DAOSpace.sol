@@ -168,27 +168,27 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function ping(bytes32 _action, bytes32 _topic, bytes calldata _data) public virtual onlyRole(DAO) {
-    _ping(_action, _topic, _data);
+  function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) public virtual onlyRole(DAO) {
+    _ping(_action, _subject, _data);
   }
 
   /// @inheritdoc IDAOSpace
   function publish(
-    bytes32 _topic,
+    bytes32 _subject,
     bytes memory _editsContentUri,
     bytes memory _editsMetadata
   ) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.EDITS_PUBLISHED, _topic, abi.encode(_editsContentUri, _editsMetadata));
+    _ping(ActionsConstants.EDITS_PUBLISHED, _subject, abi.encode(_editsContentUri, _editsMetadata));
   }
 
   /// @inheritdoc IDAOSpace
-  function flag(bytes32 _topic, bytes calldata _flaggedId) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.FLAGGED, _topic, _flaggedId);
+  function flag(bytes32 _subject, bytes calldata _flaggedId) public virtual onlyRole(DAO) {
+    _ping(ActionsConstants.FLAGGED, _subject, _flaggedId);
   }
 
   /// @inheritdoc IDAOSpace
-  function unflag(bytes32 _topic, bytes calldata _unflaggedId) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.UNFLAGGED, _topic, _unflaggedId);
+  function unflag(bytes32 _subject, bytes calldata _unflaggedId) public virtual onlyRole(DAO) {
+    _ping(ActionsConstants.UNFLAGGED, _subject, _unflaggedId);
   }
 
   /// @inheritdoc IDAOSpace
@@ -199,9 +199,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc ISpace
   function fetch(
     bytes32 _action,
-    bytes32 _topicInput,
+    bytes32 _subjectInput,
     bytes calldata _data
-  ) public view virtual returns (bytes32 _topicOutput) {
+  ) public view virtual returns (bytes32 _subjectOutput) {
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
       (bytes16 _proposalId,,) = abi.decode(_data, (bytes16, VotingMode, Action[]));
       return bytes32(_proposalId);
@@ -224,7 +224,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       bytes16 _spaceId = abi.decode(_data, (bytes16));
       return bytes32(_spaceId);
     } else {
-      return _topicInput;
+      return _subjectInput;
     }
   }
 
@@ -703,14 +703,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Internal function to re-enter the Space Registry and emit another Action event
    * @param _action An action identifier
-   * @param _topic A topic identifier
+   * @param _subject A subject identifier
    * @param _data Some extra arbitrary data that may hold additional information
    * @dev _from and _to are always the DAO's space ID
    */
-  function _ping(bytes32 _action, bytes32 _topic, bytes memory _data) internal virtual {
+  function _ping(bytes32 _action, bytes32 _subject, bytes memory _data) internal virtual {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
     bytes16 daoSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
-    $.spaceRegistry.enter(daoSpaceId, daoSpaceId, _action, _topic, _data, '');
+    $.spaceRegistry.enter(daoSpaceId, daoSpaceId, _action, _subject, _data, '');
   }
 
   /**
