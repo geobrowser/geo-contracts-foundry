@@ -26,9 +26,7 @@ UnitDAOSpace::initialize
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
-│   ├── it sets publish as a valid fast path action
-│   ├── it sets flag as a valid fast path action
-│   ├── it sets unflag as a valid fast path action
+│   ├── it sets ping as a valid fast path action
 │   ├── it calls spaceRegistry to register space ID
 │   └── when delegate called again
 │       └── it reverts with InvalidInitialization
@@ -221,27 +219,6 @@ UnitDAOSpace::ping
 ├── when called by DAO
 │   ├── it fetches the daoSpaceId from the spaceRegistry
 │   └── it calls enter on the spaceRegistry with the input variables passed
-└── when called by non-DAO
-    └── it reverts with InvalidCaller
-
-UnitDAOSpace::publish
-├── when called by DAO
-│   ├── it fetches the daoSpaceId from the spaceRegistry
-│   └── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
-└── when called by non-DAO
-    └── it reverts with InvalidCaller
-
-UnitDAOSpace::flag
-├── when called by DAO
-│   ├── it fetches the daoSpaceId from the spaceRegistry
-│   └── it calls enter on the spaceRegistry with the FLAGGED action
-└── when called by non-DAO
-    └── it reverts with InvalidCaller
-
-UnitDAOSpace::unflag
-├── when called by DAO
-│   ├── it fetches the daoSpaceId from the spaceRegistry
-│   └── it calls enter on the spaceRegistry with the UNFLAGGED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
