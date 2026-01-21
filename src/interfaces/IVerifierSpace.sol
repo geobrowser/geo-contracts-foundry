@@ -14,14 +14,14 @@ interface IVerifierSpace is ISpace {
    * @dev Uses EIP 712 for hashing and signing of typed structured data
    * @param toSpaceId The space ID that will be written to
    * @param action The action identifier
-   * @param topic The topic identifier
+   * @param subject The subject identifier
    * @param nonce The incremental counter to prevent signature reuse
    * @param data The data used for further execution
    */
   struct Message {
     bytes16 toSpaceId;
     bytes32 action;
-    bytes32 topic;
+    bytes32 subject;
     uint256 nonce;
     bytes data;
   }

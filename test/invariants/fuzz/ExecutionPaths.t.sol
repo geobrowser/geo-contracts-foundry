@@ -239,7 +239,7 @@ contract ExecutionPaths is Setup {
     assertEq(handlerDAOSpace.ghost_activeProposalsLength(daoSpace), 1, 'Should have 1 proposal');
 
     vm.prank(editor);
-    handlerDAOSpace.handler_daoSpace_vote(0, 0, 2);
+    handlerDAOSpace.handler_daoSpace_vote(0, 0, 1);
     assertTrue(handlerDAOSpace.lastTxSucceeded(), 'vote should succeed');
 
     bytes16 proposalId = handlerDAOSpace.ghost_activeProposals(daoSpace, 0);

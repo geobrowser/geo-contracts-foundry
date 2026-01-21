@@ -161,7 +161,7 @@ contract UnitSpaceRegistry is TestHelper {
 
   function test_Enter_WhenCallerIsNotFromSpace(
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered {
@@ -171,9 +171,9 @@ contract UnitSpaceRegistry is TestHelper {
     vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
-    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _topic, _data, _signature);
+    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subject, _data, _signature);
 
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _topic, _data, _signature);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature);
   }
 
   modifier whenCallerIsNotToSpace() {
@@ -185,8 +185,8 @@ contract UnitSpaceRegistry is TestHelper {
 
   function test_Enter_When_actionIsNotPermissionless(
     bytes32 _action,
-    bytes32 _topicInput,
-    bytes32 _topicOutput,
+    bytes32 _subjectInput,
+    bytes32 _subjectOutput,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
@@ -195,21 +195,21 @@ contract UnitSpaceRegistry is TestHelper {
     _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
     _mockSpaceIdToAddress(_toSpaceId, _toSpace);
 
-    // it calls toSpace to fetch _topicOutput
-    _mockFetch(_toSpace, _action, _topicInput, _data, _topicOutput);
+    // it calls toSpace to fetch _subjectOutput
+    _mockFetch(_toSpace, _action, _subjectInput, _data, _subjectOutput);
 
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _topicOutput, _data);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _subjectOutput, _data);
 
     // it calls toSpace to write
-    _mockWrite(_toSpace, _fromSpaceId, _action, _topicOutput, _data);
+    _mockWrite(_toSpace, _fromSpaceId, _action, _subjectOutput, _data);
 
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _topicInput, _data, _signature);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data, _signature);
   }
 
   function test_Enter_When_actionIsPermissionless(
-    bytes32 _topicInput,
+    bytes32 _subjectInput,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
@@ -217,15 +217,15 @@ contract UnitSpaceRegistry is TestHelper {
     _mockSpaceIdToAddress(_toSpaceId, _toSpace);
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _topicInput, _data);
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _topicInput, _data, _signature);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data, _signature);
   }
 
   function test_Enter_WhenSpaceIsNotRegistered(
     bytes16 __fromSpaceId,
     bytes16 __toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpaceIsNotRegistered {
@@ -234,7 +234,7 @@ contract UnitSpaceRegistry is TestHelper {
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
 
-    spaceRegistryProxy.enter(__fromSpaceId, __toSpaceId, _action, _topic, _data, _signature);
+    spaceRegistryProxy.enter(__fromSpaceId, __toSpaceId, _action, _subject, _data, _signature);
   }
 
   modifier whenSpaceIsNotRegistered() {
@@ -556,11 +556,11 @@ contract UnitSpaceRegistry is TestHelper {
   function _mockFetch(
     address __toSpace,
     bytes32 _action,
-    bytes32 _topicInput,
+    bytes32 _subjectInput,
     bytes calldata _data,
-    bytes32 _topicOutput
+    bytes32 _subjectOutput
   ) internal {
-    _mockAndExpect(__toSpace, abi.encodeCall(ISpace.fetch, (_action, _topicInput, _data)), abi.encode(_topicOutput));
+    _mockAndExpect(__toSpace, abi.encodeCall(ISpace.fetch, (_action, _subjectInput, _data)), abi.encode(_subjectOutput));
   }
 
   function _mockVerify(
@@ -568,13 +568,13 @@ contract UnitSpaceRegistry is TestHelper {
     address _sender,
     bytes16 __toSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) internal {
     _mockAndExpect(
       __fromSpace,
-      abi.encodeCall(ISpace.verify, (_sender, __toSpaceId, _action, _topic, _data, _signature)),
+      abi.encodeCall(ISpace.verify, (_sender, __toSpaceId, _action, _subject, _data, _signature)),
       abi.encode()
     );
   }
@@ -583,10 +583,10 @@ contract UnitSpaceRegistry is TestHelper {
     address __toSpace,
     bytes16 __fromSpaceId,
     bytes32 _action,
-    bytes32 _topic,
+    bytes32 _subject,
     bytes calldata _data
   ) internal {
-    _mockAndExpect(__toSpace, abi.encodeCall(ISpace.write, (__fromSpaceId, _action, _topic, _data)), abi.encode());
+    _mockAndExpect(__toSpace, abi.encodeCall(ISpace.write, (__fromSpaceId, _action, _subject, _data)), abi.encode());
   }
 
   function _whenActionIsNotPermissionless(bytes32 _action) internal pure {

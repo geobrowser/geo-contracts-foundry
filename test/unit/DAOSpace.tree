@@ -275,7 +275,7 @@ UnitDAOSpace::fetch
 ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   └── it returns bytes32(_spaceId)
 └── when _action equals anything else
-    └── it returns _topicInput
+    └── it returns _subjectInput
 
 UnitDAOSpace::isSupportThresholdReached
 ├── when the proposal voting mode is using the slow path
