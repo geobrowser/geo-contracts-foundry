@@ -48,7 +48,8 @@ contract IntegrationSpaceMigration is IntegrationBase {
         _initialSpaceEditorsBis,
         _initialSpaceMembersBis,
         _initialEditsContentUri,
-        _initialEditsMetadata
+        _initialEditsMetadata,
+        _initialTopicId
       )
     );
     _daoSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyBis));

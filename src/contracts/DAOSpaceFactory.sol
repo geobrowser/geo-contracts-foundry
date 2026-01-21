@@ -51,7 +51,8 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     bytes16[] calldata _initialEditors,
     bytes16[] calldata _initialMembers,
     bytes calldata _initialEditsContentUri,
-    bytes calldata _initialEditsMetadata
+    bytes calldata _initialEditsMetadata,
+    bytes16 _initialTopicId
   ) external virtual returns (address _newDAOSpaceProxy) {
     DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
 
@@ -63,7 +64,9 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
         $.daoSpaceBeacon,
         abi.encodeCall(
           IDAOSpace.initialize,
-          (abi.encode($.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData))
+          (abi.encode(
+              $.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId
+            ))
         )
       )
     );
