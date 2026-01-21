@@ -43,6 +43,10 @@ contract IntegrationSpaceVerification is IntegrationBase {
     _declareTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: _signature});
 
     assertEq(verifierSpaceProxy.replayNonce(), _replayNonce + 1);
+
+    vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
+    // TOPIC_DECLARED (permissioned action)
+    _declareTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
   }
 
   function _declareTopic(bytes16 _fromSpaceId, bytes16 _toSpaceId, bytes memory _signature) internal {
