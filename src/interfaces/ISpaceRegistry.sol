@@ -137,10 +137,10 @@ interface ISpaceRegistry is ISemver {
   function permissionlessActions(bytes32 _action) external view returns (bool _isPermissionless);
 
   /**
-   * @notice Generates a space ID for a given address and nonce
+   * @notice Generates a UUID v4 compliant space ID for a given address and nonce
    * @param _account The address to generate a space ID for
    * @param _nonce The nonce to generate a space ID for
-   * @return _spaceId The ID of the space that was generated
+   * @return _spaceId The UUID v4 compliant bytes16 space ID
    */
   function generateSpaceId(address _account, uint256 _nonce) external view returns (bytes16 _spaceId);
 }
