@@ -498,8 +498,16 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external view {
-    // it returns spaceId
-    assertEq(spaceRegistryProxy.generateSpaceId(_account, _nonce), _getSpaceId(_account, _nonce));
+    bytes16 _id = spaceRegistryProxy.generateSpaceId(_account, _nonce);
+
+    // it returns UUID v4 compliant spaceId (version nibble 4, variant bits 10)
+    assertEq(_id, _getSpaceId(_account, _nonce));
+
+    uint256 _idBits = uint256(bytes32(_id));
+    // UUID v4: version (0x4) in high nibble of byte 6 (bits 207-200)
+    assertEq((_idBits >> 200) & 0xf0, 0x40);
+    // UUID v4: variant (10) in high 2 bits of byte 8 (bits 191-184)
+    assertEq((_idBits >> 184) & 0xc0, 0x80);
   }
 
   function test_TypeId_WhenCalled() external view {
@@ -597,6 +605,8 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function _getSpaceId(address _account, uint256 _nonce) internal view returns (bytes16 _spaceId) {
-    return bytes16(keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid)));
+    bytes32 _hash = keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid));
+    _hash = _hash & ~(bytes32(uint256(0xf0)) << 200) | (bytes32(uint256(0x40)) << 200);
+    _spaceId = bytes16(_hash & ~(bytes32(uint256(0xc0)) << 184) | (bytes32(uint256(0x80)) << 184));
   }
 }

@@ -354,7 +354,9 @@ contract UnitVerifierSpace is TestHelper {
   }
 
   function _getSpaceId(address _account) internal view returns (bytes16 _spaceId) {
-    return bytes16(keccak256(abi.encodePacked('grc20.space', _account, uint256(0), block.chainid)));
+    bytes32 _hash = keccak256(abi.encodePacked('grc20.space', _account, uint256(0), block.chainid));
+    _hash = _hash & ~(bytes32(uint256(0xf0)) << 200) | (bytes32(uint256(0x40)) << 200);
+    _spaceId = bytes16(_hash & ~(bytes32(uint256(0xc0)) << 184) | (bytes32(uint256(0x80)) << 184));
   }
 
   function _mockRegisterSpaceId(
