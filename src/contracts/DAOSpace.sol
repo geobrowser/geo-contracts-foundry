@@ -122,7 +122,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_action == ActionsConstants.PROPOSAL_CREATED) {
       _createProposal(_fromSpaceId, _data);
     } else if (_action == ActionsConstants.PROPOSAL_VOTED) {
-      _vote(_fromSpaceId, _data);
+      _voteProposal(_fromSpaceId, _data);
     } else if (_action == ActionsConstants.PROPOSAL_UPDATED) {
       _updateProposal(_fromSpaceId, _data);
     } else if (_action == ActionsConstants.PROPOSAL_EXECUTED) {
@@ -443,7 +443,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
    * Fast path can execute immediately if threshold met; slow path requires voting period to end.
    */
-  function _vote(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
+  function _voteProposal(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct vote
     (bytes16 _proposalId, VoteOption _voteOption) = abi.decode(_data, (bytes16, VoteOption));
     // Ensure _fromSpaceId can vote
