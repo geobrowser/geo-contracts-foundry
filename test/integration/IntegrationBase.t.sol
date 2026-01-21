@@ -73,6 +73,7 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
     _initialSpaceEditors[0] = _eoaSpaceId;
     _initialSpaceMembers = new bytes16[](1);
     _initialSpaceMembers[0] = _eoaSpaceId;
+    _initialTopicId = '_initialTopicId';
 
     daoSpaceProxy = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(

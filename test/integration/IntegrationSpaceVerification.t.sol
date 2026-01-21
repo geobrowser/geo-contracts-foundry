@@ -8,7 +8,6 @@ import {IVerifierSpace} from 'interfaces/IVerifierSpace.sol';
 import 'src/ActionsConstants.sol' as ActionsConstants;
 
 contract IntegrationSpaceVerification is IntegrationBase {
-  bytes32 internal _topic = '_topic';
   bytes internal _comment = '_comment';
 
   function setUp() public override {
@@ -25,53 +24,50 @@ contract IntegrationSpaceVerification is IntegrationBase {
     _commentTopic({_fromSpaceId: _eoaSpaceId, _toSpaceId: _verifierSpaceProxyId});
 
     vm.expectRevert(IVerifierSpace.InvalidWriter.selector);
-    // TOPIC_DECLARED (permissioned action)
-    _declareTopic({_fromSpaceId: _eoaSpaceId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
+    // TOPIC_UNSET (permissioned action)
+    _unsetTopic({_fromSpaceId: _eoaSpaceId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
 
     // Valid writer: verifierSpaceProxy
     assertTrue(verifierSpaceProxy.validWriters(_verifierSpaceProxyId));
 
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
-    // TOPIC_DECLARED (permissioned action)
-    _declareTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
+    // TOPIC_UNSET (permissioned action)
+    _unsetTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
 
-    // Sign: TOPIC_DECLARED (permissioned action)
+    // Sign: TOPIC_UNSET (permissioned action)
     uint256 _replayNonce = verifierSpaceProxy.replayNonce();
-    bytes memory _signature = _signDeclareTopicMessage({_toSpaceId: _verifierSpaceProxyId, _replayNonce: _replayNonce});
+    bytes memory _signature = _signUnsetTopicMessage({_toSpaceId: _verifierSpaceProxyId, _replayNonce: _replayNonce});
 
-    // TOPIC_DECLARED (permissioned action)
-    _declareTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: _signature});
+    // TOPIC_UNSET (permissioned action)
+    _unsetTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: _signature});
 
     assertEq(verifierSpaceProxy.replayNonce(), _replayNonce + 1);
 
     vm.expectRevert(IVerifierSpace.InvalidSignature.selector);
-    // TOPIC_DECLARED (permissioned action)
-    _declareTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: ''});
+    // TOPIC_UNSET (permissioned action)
+    _unsetTopic({_fromSpaceId: _verifierSpaceProxyId, _toSpaceId: _verifierSpaceProxyId, _signature: _signature});
   }
 
-  function _declareTopic(bytes16 _fromSpaceId, bytes16 _toSpaceId, bytes memory _signature) internal {
+  function _unsetTopic(bytes16 _fromSpaceId, bytes16 _toSpaceId, bytes memory _signature) internal {
     vm.prank(eoaSpace);
-    // TOPIC_DECLARED
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.TOPIC_DECLARED, _topic, '', _signature);
+    // TOPIC_UNSET
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.TOPIC_UNSET, _initialTopicId, '', _signature);
   }
 
   function _commentTopic(bytes16 _fromSpaceId, bytes16 _toSpaceId) internal {
     vm.prank(eoaSpace);
     // COMMENTED
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.COMMENTED, _topic, _comment, '');
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.COMMENTED, _initialTopicId, _comment, '');
   }
 
-  function _signDeclareTopicMessage(
-    bytes16 _toSpaceId,
-    uint256 _replayNonce
-  ) internal returns (bytes memory _signature) {
+  function _signUnsetTopicMessage(bytes16 _toSpaceId, uint256 _replayNonce) internal returns (bytes memory _signature) {
     // struct hash
     bytes32 _structHash = keccak256(
       abi.encode(
         verifierSpaceImplementation.MESSAGE_TYPEHASH(),
         _toSpaceId,
-        ActionsConstants.TOPIC_DECLARED,
-        _topic,
+        ActionsConstants.TOPIC_UNSET,
+        _initialTopicId,
         _replayNonce,
         keccak256('')
       )
