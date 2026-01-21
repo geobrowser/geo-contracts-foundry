@@ -108,9 +108,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Set the initial fast path actions
     $.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
     $.actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
-    $.actionIsFastPathValid[IDAOSpace.publish.selector] = true;
-    $.actionIsFastPathValid[IDAOSpace.flag.selector] = true;
-    $.actionIsFastPathValid[IDAOSpace.unflag.selector] = true;
+    $.actionIsFastPathValid[IDAOSpace.ping.selector] = true;
   }
 
   /// @inheritdoc ISpace
@@ -174,25 +172,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
   function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) public virtual onlyRole(DAO) {
     _ping(_action, _subject, _data);
-  }
-
-  /// @inheritdoc IDAOSpace
-  function publish(
-    bytes32 _subject,
-    bytes memory _editsContentUri,
-    bytes memory _editsMetadata
-  ) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.EDITS_PUBLISHED, _subject, abi.encode(_editsContentUri, _editsMetadata));
-  }
-
-  /// @inheritdoc IDAOSpace
-  function flag(bytes32 _subject, bytes calldata _flaggedId) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.FLAGGED, _subject, _flaggedId);
-  }
-
-  /// @inheritdoc IDAOSpace
-  function unflag(bytes32 _subject, bytes calldata _unflaggedId) public virtual onlyRole(DAO) {
-    _ping(ActionsConstants.UNFLAGGED, _subject, _unflaggedId);
   }
 
   /// @inheritdoc IDAOSpace

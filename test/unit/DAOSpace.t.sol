@@ -269,14 +269,8 @@ contract UnitDAOSpace is TestHelper {
     // it sets removeMember as a valid fast path action
     assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector));
 
-    // it sets publish as a valid fast path action
-    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.publish.selector));
-
-    // it sets flag as a valid fast path action
-    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.flag.selector));
-
-    // it sets unflag as a valid fast path action
-    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.unflag.selector));
+    // it sets ping as a valid fast path action
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.ping.selector));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
@@ -2011,95 +2005,6 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
     daoSpaceProxy.ping(_action, _subject, _data);
-  }
-
-  /// PUBLISH ///
-
-  function test_Publish_WhenCalledByDAO(
-    bytes32 _subject,
-    bytes memory _editsContentUri,
-    bytes memory _editsMetadata
-  ) external whenCalledByDAO {
-    // it fetches the daoSpaceId from the spaceRegistry
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
-
-    // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
-    _mockEnter(
-      _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
-      ActionsConstants.EDITS_PUBLISHED,
-      _subject,
-      abi.encode(_editsContentUri, _editsMetadata)
-    );
-    daoSpaceProxy.publish(_subject, _editsContentUri, _editsMetadata);
-  }
-
-  function test_Publish_WhenCalledByNon_DAO(
-    address _caller,
-    bytes32 _subject,
-    bytes memory _editsContentUri,
-    bytes memory _editsMetadata
-  ) external {
-    vm.assume(_caller != address(daoSpaceProxy));
-    vm.prank(_caller);
-
-    _mockAddressToSpaceId(_spaceRegistry, _caller, _getSpaceId(_caller));
-
-    // it reverts with InvalidCaller
-    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.publish(_subject, _editsContentUri, _editsMetadata);
-  }
-
-  /// FLAG ///
-
-  function test_Flag_WhenCalledByDAO(bytes32 _subject, bytes calldata _flaggedId) external whenCalledByDAO {
-    // it fetches the daoSpaceId from the spaceRegistry
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
-
-    // it calls enter on the spaceRegistry with the FLAGGED action
-    _mockEnter(
-      _spaceRegistry, daoSpaceProxySpaceId, daoSpaceProxySpaceId, ActionsConstants.FLAGGED, _subject, _flaggedId
-    );
-    daoSpaceProxy.flag(_subject, _flaggedId);
-  }
-
-  function test_Flag_WhenCalledByNon_DAO(address _caller, bytes32 _subject, bytes calldata _flaggedId) external {
-    vm.assume(_caller != address(daoSpaceProxy));
-    vm.prank(_caller);
-
-    _mockAddressToSpaceId(_spaceRegistry, _caller, _getSpaceId(_caller));
-
-    // it reverts with InvalidCaller
-    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.flag(_subject, _flaggedId);
-  }
-
-  /// UNFLAG ///
-
-  function test_Unflag_WhenCalledByDAO(bytes32 _subject, bytes calldata _unflaggedId) external whenCalledByDAO {
-    // it fetches the daoSpaceId from the spaceRegistry
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
-
-    // it calls enter on the spaceRegistry with the UNFLAGGED action
-    _mockEnter(
-      _spaceRegistry, daoSpaceProxySpaceId, daoSpaceProxySpaceId, ActionsConstants.UNFLAGGED, _subject, _unflaggedId
-    );
-    daoSpaceProxy.unflag(_subject, _unflaggedId);
-  }
-
-  function test_Unflag_WhenCalledByNon_DAO(address _caller, bytes32 _subject, bytes calldata _unflaggedId) external {
-    vm.assume(_caller != address(daoSpaceProxy));
-    vm.prank(_caller);
-
-    _mockAddressToSpaceId(_spaceRegistry, _caller, _getSpaceId(_caller));
-
-    // it reverts with InvalidCaller
-    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.unflag(_subject, _unflaggedId);
   }
 
   /// UPDATE VOTING SETTINGS ///
