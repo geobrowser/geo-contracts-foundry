@@ -16,9 +16,12 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   uint256 internal _geoTestnetForkId;
 
   // Spaces
-  address public eoaSpace = makeAddr('eoaSpace');
+  address public eoaSpace;
   DAOSpace public daoSpaceProxy;
   VerifierSpace public verifierSpaceProxy;
+
+  // Space private keys
+  uint256 internal _eoaSpacePrivateKey;
 
   // Space IDs
   bytes16 internal _eoaSpaceId;
@@ -36,6 +39,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   function setUp() public virtual override {
     _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);
     _geoTestnetForkId = vm.createFork(vm.rpcUrl('geo_testnet'), _GEO_TESTNET_FORK_BLOCK);
+
+    (eoaSpace, _eoaSpacePrivateKey) = makeAddrAndKey('eoaSpace');
 
     vm.selectFork(_arbitrumTestnetForkId);
     // Deploy GEO incentives contracts
@@ -68,6 +73,7 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
     _initialSpaceEditors[0] = _eoaSpaceId;
     _initialSpaceMembers = new bytes16[](1);
     _initialSpaceMembers[0] = _eoaSpaceId;
+    _initialTopicId = '_initialTopicId';
 
     daoSpaceProxy = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
