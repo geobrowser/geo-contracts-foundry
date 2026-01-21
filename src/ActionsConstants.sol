@@ -67,11 +67,11 @@ bytes32 constant FLAGGED = keccak256('GOVERNANCE.FLAGGED');
 /// @dev The ID of the action to unflag something (e.g. content, topic, proposal)
 bytes32 constant UNFLAGGED = keccak256('GOVERNANCE.UNFLAGGED');
 
-/// @dev The ID of the action to declare a new topic for a space
-bytes32 constant TOPIC_DECLARED = keccak256('GOVERNANCE.TOPIC_DECLARED');
+/// @dev The ID of the action to set a new topic for a space
+bytes32 constant TOPIC_SET = keccak256('GOVERNANCE.TOPIC_SET');
 
-/// @dev The ID of the action to remove a topic for a space
-bytes32 constant TOPIC_REMOVED = keccak256('GOVERNANCE.TOPIC_REMOVED');
+/// @dev The ID of the action to unset a topic for a space
+bytes32 constant TOPIC_UNSET = keccak256('GOVERNANCE.TOPIC_UNSET');
 
 /// @dev The ID of the action to publish content edits
 bytes32 constant EDITS_PUBLISHED = keccak256('GOVERNANCE.EDITS_PUBLISHED');
@@ -100,11 +100,11 @@ bytes32 constant SUBSPACE_RELATED = keccak256('GOVERNANCE.SUBSPACE_RELATED');
 /// @dev The ID of the action to break a subspace relation (e.g. linked subspaces)
 bytes32 constant SUBSPACE_UNRELATED = keccak256('GOVERNANCE.SUBSPACE_UNRELATED');
 
-/// @dev The ID of the action to declare a new topic for a subspace
-bytes32 constant SUBSPACE_TOPIC_DECLARED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_DECLARED');
+/// @dev The ID of the action to set a new topic for a subspace
+bytes32 constant SUBSPACE_TOPIC_SET = keccak256('GOVERNANCE.SUBSPACE_TOPIC_SET');
 
-/// @dev The ID of the action to remove a topic for in a subspace
-bytes32 constant SUBSPACE_TOPIC_REMOVED = keccak256('GOVERNANCE.SUBSPACE_TOPIC_REMOVED');
+/// @dev The ID of the action to unset a topic for in a subspace
+bytes32 constant SUBSPACE_TOPIC_UNSET = keccak256('GOVERNANCE.SUBSPACE_TOPIC_UNSET');
 
 /// @dev The ID of the action to upvote something (e.g. content, topic, proposal)
 bytes32 constant UPVOTED = keccak256('PERMISSIONLESS.UPVOTED');

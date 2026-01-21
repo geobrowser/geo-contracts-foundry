@@ -83,8 +83,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
 
-    // Ping the registry again to declare an initial topic
-    if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_DECLARED, bytes32(_initialTopicId), '');
+    // Ping the registry again to set an initial topic
+    if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_SET, bytes32(_initialTopicId), '');
 
     // Add initial editors
     uint256 length = _initialEditors.length;
