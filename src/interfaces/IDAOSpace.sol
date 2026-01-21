@@ -206,6 +206,8 @@ interface IDAOSpace is ISpace {
    *        _votingSettings The voting settings to use for proposals
    *        _initialEditors The initial list of editor space IDs
    *        _initialMembers The initial list of member space IDs
+   *        _publishEditsData The optional encoded initial edit publish data (content uri and metadata)
+   *        _initialTopicId The optional initial topic ID to declare
    */
   function initialize(bytes calldata _initializerData) external;
 

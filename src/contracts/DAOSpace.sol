@@ -71,8 +71,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       VotingSettings memory _votingSettings,
       bytes16[] memory _initialEditors,
       bytes16[] memory _initialMembers,
-      bytes memory _publishEditsData
-    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, bytes16[], bytes16[], bytes));
+      bytes memory _publishEditsData,
+      bytes16 _initialTopicId
+    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, bytes16[], bytes16[], bytes, bytes16));
 
     // Set Space Registry and register new DAO Space
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
@@ -81,6 +82,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
+
+    // Ping the registry again to set an initial topic
+    if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_SET, bytes32(_initialTopicId), '');
 
     // Add initial editors
     uint256 length = _initialEditors.length;

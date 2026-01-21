@@ -34,6 +34,7 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   bytes16[] internal _initialSpaceMembers;
   bytes internal _initialEditsContentUri;
   bytes internal _initialEditsMetadata;
+  bytes16 internal _initialTopicId;
 
   function setUp() public virtual override {
     _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);
@@ -75,7 +76,12 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
 
     daoSpaceProxy = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        _votingSettings, _initialSpaceEditors, _initialSpaceMembers, _initialEditsContentUri, _initialEditsMetadata
+        _votingSettings,
+        _initialSpaceEditors,
+        _initialSpaceMembers,
+        _initialEditsContentUri,
+        _initialEditsMetadata,
+        _initialTopicId
       )
     );
     _daoSpaceProxyId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxy));

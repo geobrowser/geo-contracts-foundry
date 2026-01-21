@@ -32,6 +32,7 @@ contract UnitDAOSpaceFactory is TestHelper {
   bytes internal _initialEditsContentUri = 'Down the Rabbit-Hole';
   bytes internal _initialEditsMetadata =
     'Alice was beginning to get very tired of sitting by her sister on the bank...';
+  bytes16 internal _initialTopicId = bytes16(keccak256('_initialTopicId'));
 
   ISpaceRegistry internal _spaceRegistry = ISpaceRegistry(makeAddr('_spaceRegistry'));
 
@@ -185,15 +186,23 @@ contract UnitDAOSpaceFactory is TestHelper {
         __votingSettings,
         _initialEditors,
         _initialMembers,
-        abi.encode(__initialEditsContentUri, __initialEditsMetadata)
+        abi.encode(__initialEditsContentUri, __initialEditsMetadata),
+        _initialTopicId
       )
-      : abi.encode(daoSpaceFactoryProxy.spaceRegistry(), __votingSettings, _initialEditors, _initialMembers, '');
+      : abi.encode(
+        daoSpaceFactoryProxy.spaceRegistry(), __votingSettings, _initialEditors, _initialMembers, '', _initialTopicId
+      );
     _mockAndExpect(_daoSpaceImplementation, abi.encodeCall(IDAOSpace.initialize, (_initializerData)), abi.encode());
 
     // it returns new DAO space proxy
     assertEq(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
-        __votingSettings, _initialEditors, _initialMembers, __initialEditsContentUri, __initialEditsMetadata
+        __votingSettings,
+        _initialEditors,
+        _initialMembers,
+        __initialEditsContentUri,
+        __initialEditsMetadata,
+        _initialTopicId
       ),
       _daoSpaceProxy
     );
