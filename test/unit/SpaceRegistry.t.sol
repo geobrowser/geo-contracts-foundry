@@ -312,7 +312,6 @@ contract UnitSpaceRegistry is TestHelper {
 
   function test_ClearSpaceId_WhenSpaceIdIsNotRegistered() external {
     // when space is not registered
-    vm.startPrank(_randomCaller);
 
     // it reverts with SpaceNotRegistered
     vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);

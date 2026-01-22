@@ -257,6 +257,16 @@ interface IDAOSpace is ISpace {
   function updateVotingSettings(VotingSettings calldata _votingSettings) external;
 
   /**
+   * @notice Checks if an editor has cleared their space and removes them if so, adjusting voting settings to maintain DAO functionality
+   * @dev If the editor's space ID no longer maps to an address (cleared), this function:
+   *      - Decrements quorum if it equals the total editor count
+   *      - Decrements fastPathFlatThreshold if it equals the total editor count
+   *      - Removes the editor from the DAO
+   * @param _spaceId The space ID of the editor to check and potentially remove
+   */
+  function sync(bytes16 _spaceId) external;
+
+  /**
    * @notice Total editors
    * @return _totalEditors The total number of editors
    */

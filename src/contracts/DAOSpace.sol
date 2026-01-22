@@ -179,6 +179,21 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     _updateVotingSettings(_votingSettings);
   }
 
+  /// @inheritdoc IDAOSpace
+  function sync(bytes16 _spaceId) public virtual {
+    // Open to anyone
+    // The space must first be an editor
+    if (!hasRole(EDITOR, _spaceId)) revert InvalidTarget();
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    // And must have been cleared
+    if ($.spaceRegistry.spaceIdToAddress(_spaceId) != address(0)) revert InvalidTarget();
+    // Then reduce either the quorum or fastPathFlatThreshold if necessary to ensure the dao can function
+    if ($.votingSettings.quorum == $.totalEditors) $.votingSettings.quorum--;
+    if ($.votingSettings.fastPathFlatThreshold == $.totalEditors) $.votingSettings.fastPathFlatThreshold--;
+    // And remove the editor
+    _removeEditor(_spaceId);
+  }
+
   /// @inheritdoc ISpace
   function fetch(
     bytes32 _action,
