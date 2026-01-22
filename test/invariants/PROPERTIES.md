@@ -7,6 +7,7 @@ The SpaceRegistry maintains bidirectional mappings between addresses and spaceId
 | SR-INV-1 | For any registered spaceId: `addressToSpaceId[spaceIdToAddress[spaceId]] == spaceId` |
 | SR-INV-2 | For any registered address: `spaceIdToAddress[addressToSpaceId[addr]] == addr` |
 | SR-INV-3 | After migration completes: old address has no spaceId AND new address has the migrated spaceId |
+| SR-INV-4 | For any spaceId: `activeSpaceIds(spaceId) == (registeredSpaceIds(spaceId) && !archivedSpaceIds(spaceId))` |
 
 ---
 

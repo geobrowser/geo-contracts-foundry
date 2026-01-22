@@ -60,6 +60,21 @@ contract Invariants is Setup {
     }
   }
 
+  /// @notice SR-INV-4: activeSpaceIds(spaceId) == (registeredSpaceIds(spaceId) && !archivedSpaceIds(spaceId))
+  function invariant_SR_INV_4_active_space_definition() public view {
+    uint256 length = handlerSpaceRegistry.ghost_registeredSpaceIdsLength();
+
+    for (uint256 i = 0; i < length; i++) {
+      bytes16 spaceId = handlerSpaceRegistry.ghost_registeredSpaceIds(i);
+      bool isRegistered = spaceRegistryProxy.registeredSpaceIds(spaceId);
+      bool isArchived = spaceRegistryProxy.archivedSpaceIds(spaceId);
+      bool isActive = spaceRegistryProxy.activeSpaceIds(spaceId);
+
+      bool expectedActive = isRegistered && !isArchived;
+      assertEq(isActive, expectedActive, 'SR-INV-4: activeSpaceIds does not match definition');
+    }
+  }
+
   /// @notice FACT-INV-1: Every factory-created Space has a registered spaceId
   /// @dev DAOSpace could clear via governance proposal, but handlers don't create such proposals
   function invariant_FACT_INV_1_no_orphan_spaces() public view {

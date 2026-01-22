@@ -55,10 +55,11 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
+    if (!activeSpaceIds(_fromSpaceId) || !activeSpaceIds(_toSpaceId)) revert SpaceNotActive();
+
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
     address _fromSpace = $.spaceIdToAddress[_fromSpaceId];
     address _toSpace = $.spaceIdToAddress[_toSpaceId];
-    if (_fromSpace == address(0) || _toSpace == address(0)) revert SpaceNotRegistered();
 
     // If msg.sender is not the from space
     // Then pass the msg.sender, to space ID, action, subject, data, and signature to the from space
@@ -87,16 +88,45 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function clearSpaceId() external virtual {
+  function archiveSpaceId() external virtual {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
 
     // Space must first be registered
     bytes16 _spaceId = $.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
+    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
+    $.archivedSpaceIds[_spaceId] = true;
+
+    emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_ARCHIVED, bytes32(bytes20(msg.sender)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function recoverSpaceId() external virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
+    if (!$.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
+
+    $.archivedSpaceIds[_spaceId] = false;
+
+    emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_RECOVERED, bytes32(bytes20(msg.sender)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function clearSpaceId() external virtual {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
+    if (!$.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
+
+    // Clear all mappings
     $.addressToSpaceId[msg.sender] = bytes16(0);
     $.spaceIdToAddress[_spaceId] = address(0);
     $.spaceIdToProposedAddress[_spaceId] = address(0);
+    $.archivedSpaceIds[_spaceId] = false;
 
     emit Action(_spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
   }
@@ -108,6 +138,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // Must be called by the space itself
     bytes16 _spaceId = $.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert InvalidCaller();
+
+    // Must not be archived
+    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
     $.spaceIdToProposedAddress[_spaceId] = _newAccount;
 
@@ -123,6 +156,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
     // New address must not be registered
     if ($.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
+
+    // Space must not be archived
+    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
     address _oldAccount = $.spaceIdToAddress[_spaceId];
 
@@ -170,6 +206,24 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function permissionlessActions(bytes32 _action) public view returns (bool _isPermissionless) {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
     _isPermissionless = $.permissionlessActions[_action];
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function registeredSpaceIds(bytes16 _spaceId) public view returns (bool _isRegistered) {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    _isRegistered = $.spaceIdToAddress[_spaceId] != address(0);
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function archivedSpaceIds(bytes16 _spaceId) public view returns (bool _isArchived) {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    _isArchived = $.archivedSpaceIds[_spaceId];
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function activeSpaceIds(bytes16 _spaceId) public view returns (bool _isActive) {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    _isActive = $.spaceIdToAddress[_spaceId] != address(0) && !$.archivedSpaceIds[_spaceId];
   }
 
   /// @inheritdoc ISemver

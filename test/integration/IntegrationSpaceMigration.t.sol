@@ -89,15 +89,17 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
   function test_SpaceMigration_EOASpace_DAOSpaceMultiVote() external {
     // daoSpaceProxy
-    // Proposal 0 (slow path): clearSpaceId();
+    // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId();
     bytes16 _proposalId = 0;
-    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
     _actions[0] = IDAOSpace.Action({
+      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
+    });
+    _actions[1] = IDAOSpace.Action({
       to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
     bytes memory _voteProposalData = abi.encode(_proposalId, IDAOSpace.VoteOption.Yes);
-    bytes memory _executeProposalData = abi.encode(_proposalId);
 
     vm.startPrank(eoaSpace);
     // PROPOSAL_CREATED
@@ -113,6 +115,11 @@ contract IntegrationSpaceMigration is IntegrationBase {
     (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(_tally.yes, 1);
 
+    // Before migration, eoaSpace should be active
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_eoaSpaceId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_eoaSpaceId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_eoaSpaceId));
+
     vm.startPrank(eoaSpaceTer);
     // MIGRATION_ACCEPTED
     spaceRegistryProxy.acceptSpaceMigration(_eoaSpaceId, keccak256('EOA_SPACE'), '1.0.0');
@@ -122,6 +129,11 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
     (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(_tally.yes, 1);
+
+    // After migration, eoaSpaceTer should be active
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_eoaSpaceId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_eoaSpaceId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_eoaSpaceId));
   }
 
   function test_SpaceMigration_DAOSpace() external {
@@ -161,14 +173,22 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_daoSpaceProxyId), address(daoSpaceProxyBis));
 
+    // Before migration, daoSpaceProxyBis should be active
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_daoSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_daoSpaceProxyBisId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_daoSpaceProxyBisId));
+
     // daoSpaceProxyBis
-    // Proposal 0 (slow path): clearSpaceId(); acceptSpaceMigration();
+    // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId(); acceptSpaceMigration();
     _proposalId = 0;
-    _actions = new IDAOSpace.Action[](2);
+    _actions = new IDAOSpace.Action[](3);
     _actions[0] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
+      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
     });
     _actions[1] = IDAOSpace.Action({
+      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
+    });
+    _actions[2] = IDAOSpace.Action({
       to: address(spaceRegistryProxy),
       value: 0,
       data: abi.encodeCall(ISpaceRegistry.acceptSpaceMigration, (_daoSpaceProxyId, 'DAO_SPACE', '1.0.0'))
@@ -198,6 +218,16 @@ contract IntegrationSpaceMigration is IntegrationBase {
     assertEq(spaceRegistryProxy.spaceIdToAddress(_daoSpaceProxyId), address(daoSpaceProxyBis));
     assertEq(spaceRegistryProxy.spaceIdToAddress(_daoSpaceProxyBisId), address(0));
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_daoSpaceProxyId), address(0));
+
+    // After migration, _daoSpaceProxyId (migrated spaceId) should be active with daoSpaceProxyBis
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_daoSpaceProxyId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_daoSpaceProxyId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_daoSpaceProxyId));
+
+    // daoSpaceProxyBisId should be cleared (daoSpaceProxyBis cleared itself before accepting migration)
+    assertFalse(spaceRegistryProxy.registeredSpaceIds(_daoSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_daoSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_daoSpaceProxyBisId));
   }
 
   function test_SpaceMigration_VerifierSpace() external {
@@ -217,8 +247,24 @@ contract IntegrationSpaceMigration is IntegrationBase {
     vm.prank(eoaSpaceBis);
     MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).acceptMigration(_verifierSpaceProxyId);
 
+    // Before archiving, verifierSpaceProxyBis should be active
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_verifierSpaceProxyBisId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_verifierSpaceProxyBisId));
+
     vm.startPrank(eoaSpaceBis);
+    MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).archive();
+    // After archiving, verifierSpaceProxyBis should be archived
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_verifierSpaceProxyBisId));
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_verifierSpaceProxyBisId));
+
     MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).clear();
+    // After clearing, verifierSpaceProxyBis should be cleared
+    assertFalse(spaceRegistryProxy.registeredSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_verifierSpaceProxyBisId));
+
     MockMigratableVerifierSpace(address(verifierSpaceProxyBis)).acceptMigration(_verifierSpaceProxyId);
     vm.stopPrank();
 
@@ -227,5 +273,15 @@ contract IntegrationSpaceMigration is IntegrationBase {
     assertEq(spaceRegistryProxy.spaceIdToAddress(_verifierSpaceProxyId), address(verifierSpaceProxyBis));
     assertEq(spaceRegistryProxy.spaceIdToAddress(_verifierSpaceProxyBisId), address(0));
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_verifierSpaceProxyId), address(0));
+
+    // After migration, _verifierSpaceProxyId (migrated spaceId) should be active with verifierSpaceProxyBis
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_verifierSpaceProxyId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_verifierSpaceProxyId));
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_verifierSpaceProxyId));
+
+    // verifierSpaceProxyBisId should be cleared (verifierSpaceProxyBis cleared itself before accepting migration)
+    assertFalse(spaceRegistryProxy.registeredSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_verifierSpaceProxyBisId));
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_verifierSpaceProxyBisId));
   }
 }

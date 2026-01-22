@@ -21,9 +21,12 @@ abstract contract GhostState {
   mapping(address => bool) public ghost_isAddressRegistered;
   mapping(address => bool) public ghost_addressEverRegistered;
   mapping(bytes16 => bool) public ghost_isSpaceIdRegistered;
+  mapping(bytes16 => bool) public ghost_isSpaceIdArchived;
   mapping(address => address) public ghost_migrations;
   uint256 public ghost_acceptedMigrations;
   uint256 public ghost_totalRegistrations;
+  uint256 public ghost_totalArchives;
+  uint256 public ghost_totalRecoveries;
   uint256 public ghost_totalClears;
 
   // ==================== Factory State ====================

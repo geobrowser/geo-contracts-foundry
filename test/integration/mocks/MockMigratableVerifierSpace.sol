@@ -32,6 +32,15 @@ contract MockMigratableVerifierSpace is VerifierSpace {
   }
 
   /**
+   * @notice Archives its space ID from the registry
+   * @dev Must be called by the owner
+   */
+  function archive() external virtual onlyOwner {
+    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
+    $.spaceRegistry.archiveSpaceId();
+  }
+
+  /**
    * @notice Clears its space ID from the registry and disconnects it from any address
    * @dev Must be called by the owner
    */

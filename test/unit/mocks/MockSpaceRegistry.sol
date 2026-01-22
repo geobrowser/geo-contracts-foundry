@@ -23,6 +23,11 @@ contract MockSpaceRegistry is SpaceRegistry {
     $.addressToSpaceId[_account] = _spaceId;
   }
 
+  function workaround_setArchivedSpaceIds(bytes16 _spaceId, bool _isArchived) external {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    $.archivedSpaceIds[_spaceId] = _isArchived;
+  }
+
   function exposed__authorizeUpgrade(address _newImplementation) external {
     _authorizeUpgrade(_newImplementation);
   }

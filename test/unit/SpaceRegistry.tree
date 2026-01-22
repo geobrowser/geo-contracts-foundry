@@ -20,7 +20,7 @@ UnitSpaceRegistry::initialize
     └── it reverts with InvalidInitialization
 
 UnitSpaceRegistry::enter
-├── when spaces are registered
+├── when spaces are active
 │   ├── when caller is not fromSpace
 │   │   └── it calls fromSpace to verify
 │   └── when caller is not toSpace
@@ -30,8 +30,8 @@ UnitSpaceRegistry::enter
 │       │   └── it calls toSpace to write
 │       └── when _action is permissionless
 │           └── it emits Action
-└── when space is not registered
-    └── it reverts with SpaceNotRegistered
+└── when space is not active
+    └── it reverts with SpaceNotActive
 
 UnitSpaceRegistry::registerSpaceId
 ├── when space is not registered
@@ -45,31 +45,61 @@ UnitSpaceRegistry::registerSpaceId
 └── when space is registered
     └── it reverts with SpaceAlreadyRegistered
 
+UnitSpaceRegistry::archiveSpaceId
+├── when space is not registered
+│   └── it reverts with SpaceNotRegistered
+└── when space is registered
+    ├── when space is not archived
+    │   ├── it sets archivedSpaceIds to true
+    │   └── it emits Action with SPACE_ID_ARCHIVED
+    └── when space is archived
+        └── it reverts with SpaceAlreadyArchived
+
+UnitSpaceRegistry::recoverSpaceId
+├── when space is not registered
+│   └── it reverts with SpaceNotRegistered
+└── when space is registered
+    ├── when space is archived
+    │   ├── it sets archivedSpaceIds to false
+    │   └── it emits Action with SPACE_ID_RECOVERED
+    └── when space is not archived
+        └── it reverts with SpaceNotArchived
+
 UnitSpaceRegistry::clearSpaceId
 ├── when spaceId is not registered
 │   └── it reverts with SpaceNotRegistered
 └── when spaceId is registered
-    ├── it resets addressToSpaceId
-    ├── it resets spaceIdToAddress
-    ├── it resets spaceIdToProposedAddress
-    └── it emits Action with SPACE_ID_CLEARED
+    ├── when space is archived
+    │   ├── it resets addressToSpaceId
+    │   ├── it resets spaceIdToAddress
+    │   ├── it resets spaceIdToProposedAddress
+    │   ├── it resets archivedSpaceIds
+    │   └── it emits Action with SPACE_ID_CLEARED
+    └── when space is not archived
+        └── it reverts with SpaceNotArchived
 
 UnitSpaceRegistry::proposeSpaceMigration
 ├── when caller is space
-│   ├── it updates spaceIdToProposedAddress 
-│   └── it emits Action with SPACE_ID_MIGRATION_PROPOSED
+│   ├── when space is not archived
+│   │   ├── it updates spaceIdToProposedAddress 
+│   │   └── it emits Action with SPACE_ID_MIGRATION_PROPOSED
+│   └── when space is archived
+│       └── it reverts with SpaceAlreadyArchived
 └── when caller is not space
     └── it reverts with InvalidCaller
 
 UnitSpaceRegistry::acceptSpaceMigration
 ├── when caller is proposed space
 │   ├── when proposed space is not registered
-│   │   ├── it updates spaceIdToProposedAddress
-│   │   ├── it updates spaceIdToAddress
-│   │   ├── it updates addressToSpaceId
-│   │   ├── it emits Action with SPACE_ID_MIGRATED
-│   │   └── when _type exists
-│   │       └── it emits Action with SPACE_TYPE_DECLARED
+│   │   ├── when space is not archived
+│   │   │   ├── it updates spaceIdToProposedAddress
+│   │   │   ├── it updates spaceIdToAddress
+│   │   │   ├── it updates addressToSpaceId
+│   │   │   ├── it emits Action with SPACE_ID_MIGRATED
+│   │   │   └── when _type exists
+│   │   │       └── it emits Action with SPACE_TYPE_DECLARED
+│   │   └── when space is archived
+│   │       └── it reverts with SpaceAlreadyArchived
 │   └── when proposed space is registered
 │       └── it reverts with SpaceAlreadyRegistered
 └── when caller is not proposed space
@@ -85,6 +115,10 @@ UnitSpaceRegistry::setPermissionlessAction
 │       └── it emits Action with PERMISSIONLESS_ACTION_REMOVED
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
+
+UnitSpaceRegistry::activeSpaceIds
+└── when called
+    └── it returns whether the space ID is active (registered and not archived)
 
 UnitSpaceRegistry::generateSpaceId
 └── when called

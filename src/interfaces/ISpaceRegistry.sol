@@ -12,6 +12,7 @@ interface ISpaceRegistry is ISemver {
    * @notice The storage struct of the space registry contract
    * @param spaceIdToAddress Maps each unique space ID to its current address
    * @param spaceIdToProposedAddress Maps each unique space ID to its proposed address
+   * @param archivedSpaceIds Maps each space ID to whether it has been archived
    * @param addressToSpaceId Reverse mapping: address to its space ID
    * @param permissionlessActions Records each permissionless action
    * @param _spaceIdNonce The nonce used to generate a space ID for registration
@@ -20,6 +21,7 @@ interface ISpaceRegistry is ISemver {
   struct SpaceRegistryStorage {
     mapping(bytes16 _spaceId => address _account) spaceIdToAddress;
     mapping(bytes16 _spaceId => address _account) spaceIdToProposedAddress;
+    mapping(bytes16 _spaceId => bool _isArchived) archivedSpaceIds;
     mapping(address _account => bytes16 _spaceId) addressToSpaceId;
     mapping(bytes32 _action => bool _isPermissionless) permissionlessActions;
     uint256 _spaceIdNonce;
@@ -45,6 +47,15 @@ interface ISpaceRegistry is ISemver {
 
   /// @notice Thrown when trying to register or migrate a space with an address that's already assigned to another space
   error SpaceAlreadyRegistered();
+
+  /// @notice Thrown when trying to recover a space ID that is not archived
+  error SpaceNotArchived();
+
+  /// @notice Thrown when trying to archive a space ID that is already archived
+  error SpaceAlreadyArchived();
+
+  /// @notice Thrown when trying to enter with a space that is not active (not registered or archived)
+  error SpaceNotActive();
 
   /**
    * @notice Initializes the contract
@@ -80,7 +91,19 @@ interface ISpaceRegistry is ISemver {
   function registerSpaceId(bytes32 _type, bytes calldata _version) external returns (bytes16 _spaceId);
 
   /**
-   * @notice Clears a space ID from the registry and disconnects it from any address
+   * @notice Archives a space ID in the registry, marking it as archived
+   */
+  function archiveSpaceId() external;
+
+  /**
+   * @notice Recovers an archived space ID, removing it's archived status
+   * @dev Can only be called by the address that was associated with the archived space ID
+   */
+  function recoverSpaceId() external;
+
+  /**
+   * @notice Clears a space ID from the registry, completely unregistering it
+   * @dev Removes all mappings for the space, allowing the address to accept migrations
    */
   function clearSpaceId() external;
 
@@ -135,6 +158,27 @@ interface ISpaceRegistry is ISemver {
    * @return _isPermissionless The boolean of whether or not the action is permissionless
    */
   function permissionlessActions(bytes32 _action) external view returns (bool _isPermissionless);
+
+  /**
+   * @notice Checks if a space ID is registered (has an address mapping)
+   * @param _spaceId The ID of the space to check
+   * @return _isRegistered True if the space ID has an address mapping, false otherwise
+   */
+  function registeredSpaceIds(bytes16 _spaceId) external view returns (bool _isRegistered);
+
+  /**
+   * @notice Maps each space ID to whether it has been archived
+   * @param _spaceId The ID of the space
+   * @return _isArchived True if the space ID is archived, false otherwise
+   */
+  function archivedSpaceIds(bytes16 _spaceId) external view returns (bool _isArchived);
+
+  /**
+   * @notice Checks if a space ID is active (registered and not archived)
+   * @param _spaceId The ID of the space to check
+   * @return _isActive True if the space ID is registered and not archived, false otherwise
+   */
+  function activeSpaceIds(bytes16 _spaceId) external view returns (bool _isActive);
 
   /**
    * @notice Generates a UUID v4 compliant space ID for a given address and nonce

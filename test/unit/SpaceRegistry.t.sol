@@ -152,10 +152,12 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryImplementation.initialize(abi.encode(__owner));
   }
 
-  modifier whenSpacesAreRegistered() {
-    // when spaces are registered
+  modifier whenSpacesAreActive() {
+    // when spaces are active
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
     _mockAddressToSpaceId(_toSpace, _toSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
     _;
   }
 
@@ -164,10 +166,8 @@ contract UnitSpaceRegistry is TestHelper {
     bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpacesAreRegistered {
+  ) external whenSpacesAreActive {
     // when caller is not fromSpace
-    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
-    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
     vm.startPrank(_toSpace);
 
     // it calls fromSpace to verify
@@ -189,11 +189,9 @@ contract UnitSpaceRegistry is TestHelper {
     bytes32 _subjectOutput,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
+  ) external whenSpacesAreActive whenCallerIsNotToSpace {
     // when _action is not permissionless
     _whenActionIsNotPermissionless(_action);
-    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
-    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
 
     // it calls toSpace to fetch _subjectOutput
     _mockFetch(_toSpace, _action, _subjectInput, _data, _subjectOutput);
@@ -212,27 +210,34 @@ contract UnitSpaceRegistry is TestHelper {
     bytes32 _subjectInput,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpacesAreRegistered whenCallerIsNotToSpace {
-    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
-    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
+  ) external whenSpacesAreActive whenCallerIsNotToSpace {
     // it emits Action
     vm.expectEmit();
     emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data);
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data, _signature);
   }
 
-  function test_Enter_WhenSpaceIsNotRegistered(
+  function test_Enter_WhenSpaceIsNotActive(
     bytes16 __fromSpaceId,
     bytes16 __toSpaceId,
     bytes32 _action,
     bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpaceIsNotRegistered {
+  ) external {
     // when space is not registered
 
-    // it reverts with SpaceNotRegistered
-    vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
+    // it reverts with SpaceNotActive
+    vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
+
+    spaceRegistryProxy.enter(__fromSpaceId, __toSpaceId, _action, _subject, _data, _signature);
+
+    // when space is registered but archived
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
+
+    // it reverts with SpaceNotActive
+    vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
 
     spaceRegistryProxy.enter(__fromSpaceId, __toSpaceId, _action, _subject, _data, _signature);
   }
@@ -243,10 +248,12 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_RegisterSpaceId_WhenSpaceIsNotRegistered(address _account) external whenSpaceIsNotRegistered {
+    vm.assume(_account != address(0));
     vm.assume(_account != address(spaceRegistryProxy));
 
     uint256 _spaceIdNonce = spaceRegistryProxy.exposed__spaceIdNonce();
     bytes16 _spaceId = _getSpaceId(_account, _spaceIdNonce);
+    assertFalse(spaceRegistryProxy.registeredSpaceIds(_spaceId));
 
     // it emits Action with SPACE_ID_REGISTERED
     vm.expectEmit();
@@ -265,6 +272,8 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.addressToSpaceId(_account), _spaceId);
     // it sets spaceIdToAddress
     assertEq(spaceRegistryProxy.spaceIdToAddress(_spaceId), _account);
+    // it registers the space
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(_spaceId));
   }
 
   function test_RegisterSpaceId_When_typeExists(
@@ -298,7 +307,7 @@ contract UnitSpaceRegistry is TestHelper {
     bytes16 _spaceId,
     bytes32 _type,
     bytes calldata _version
-  ) external {
+  ) external whenSpaceIsRegistered {
     // when space is registered
     vm.assume(_spaceId != bytes16(0));
     _mockAddressToSpaceId(_account, _spaceId);
@@ -308,6 +317,95 @@ contract UnitSpaceRegistry is TestHelper {
 
     vm.startPrank(_account);
     spaceRegistryProxy.registerSpaceId(_type, _version);
+  }
+
+  function test_ArchiveSpaceId_WhenSpaceIsNotRegistered() external whenSpaceIsNotRegistered {
+    // when space is not registered
+    vm.startPrank(_randomCaller);
+
+    // it reverts with SpaceNotRegistered
+    vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
+    spaceRegistryProxy.archiveSpaceId();
+  }
+
+  modifier whenSpaceIsRegistered() {
+    // when space is registered
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _;
+  }
+
+  function test_ArchiveSpaceId_WhenSpaceIsNotArchived() external whenSpaceIsRegistered {
+    // when space is registered
+    vm.startPrank(_fromSpace);
+
+    // when space is not archived
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it emits Action with SPACE_ID_ARCHIVED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_ARCHIVED, bytes32(bytes20(_fromSpace)), ''
+    );
+
+    spaceRegistryProxy.archiveSpaceId();
+
+    // it sets archivedSpaceIds to true
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+  }
+
+  function test_ArchiveSpaceId_WhenSpaceIsArchived() external whenSpaceIsRegistered {
+    // when space is registered
+    _mockArchivedSpaceIds(_fromSpaceId, true);
+    vm.startPrank(_fromSpace);
+
+    // when space is archived
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it reverts with SpaceAlreadyArchived
+    vm.expectRevert(ISpaceRegistry.SpaceAlreadyArchived.selector);
+    spaceRegistryProxy.archiveSpaceId();
+  }
+
+  function test_RecoverSpaceId_WhenSpaceIsNotRegistered() external whenSpaceIsNotRegistered {
+    // when space is not registered
+    vm.startPrank(_randomCaller);
+
+    // it reverts with SpaceNotRegistered
+    vm.expectRevert(ISpaceRegistry.SpaceNotRegistered.selector);
+    spaceRegistryProxy.recoverSpaceId();
+  }
+
+  function test_RecoverSpaceId_WhenSpaceIsArchived() external whenSpaceIsRegistered {
+    // when space is registered
+    _mockArchivedSpaceIds(_fromSpaceId, true);
+    vm.startPrank(_fromSpace);
+
+    // when space is archived
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it emits Action with SPACE_ID_RECOVERED
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_RECOVERED, bytes32(bytes20(_fromSpace)), ''
+    );
+
+    spaceRegistryProxy.recoverSpaceId();
+
+    // it sets archivedSpaceIds to false
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+  }
+
+  function test_RecoverSpaceId_WhenSpaceIsNotArchived() external whenSpaceIsRegistered {
+    // when space is registered
+    vm.startPrank(_fromSpace);
+
+    // when space is not archived
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it reverts with SpaceNotArchived
+    vm.expectRevert(ISpaceRegistry.SpaceNotArchived.selector);
+    spaceRegistryProxy.recoverSpaceId();
   }
 
   function test_ClearSpaceId_WhenSpaceIdIsNotRegistered() external {
@@ -320,12 +418,21 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.clearSpaceId();
   }
 
-  function test_ClearSpaceId_WhenSpaceIdIsRegistered() external {
-    // set caller up as proposer from space
+  modifier whenSpaceIdIsRegistered() {
+    // when spaceId is registered
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
     _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _;
+  }
+
+  function test_ClearSpaceId_WhenSpaceIsArchived() external whenSpaceIdIsRegistered {
+    // when spaceId is registered
     _mockSpaceIdToProposedAddress(_fromSpaceId, _toSpace);
+    _mockArchivedSpaceIds(_fromSpaceId, true);
     vm.startPrank(_fromSpace);
+
+    // when space is archived
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
 
     // it emits Action with SPACE_ID_CLEARED
     vm.expectEmit();
@@ -343,12 +450,36 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it resets spaceIdToProposedAddress
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
+
+    // it resets archivedSpaceIds
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
   }
 
-  function test_ProposeSpaceMigration_WhenCallerIsSpace(address _newAccount) external {
+  function test_ClearSpaceId_WhenSpaceIsNotArchived() external whenSpaceIdIsRegistered {
+    // when spaceId is registered
+    vm.startPrank(_fromSpace);
+
+    // when space is not archived
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it reverts with SpaceNotArchived
+    vm.expectRevert(ISpaceRegistry.SpaceNotArchived.selector);
+
+    spaceRegistryProxy.clearSpaceId();
+  }
+
+  modifier whenCallerIsSpace() {
+    // when caller is space
+    _;
+  }
+
+  function test_ProposeSpaceMigration_WhenSpaceIsNotArchived(address _newAccount) external whenCallerIsSpace {
     // when caller is space
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
     vm.startPrank(_fromSpace);
+
+    // when space is not archived
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
 
     // it emits Action with SPACE_ID_MIGRATION_PROPOSED
     vm.expectEmit();
@@ -360,6 +491,22 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it updates spaceIdToProposedAddress
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), _newAccount);
+  }
+
+  function test_ProposeSpaceMigration_WhenSpaceIsArchived(address _newAccount) external whenCallerIsSpace {
+    // when caller is space
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockArchivedSpaceIds(_fromSpaceId, true);
+    vm.startPrank(_fromSpace);
+
+    // when space is archived
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it reverts with SpaceAlreadyArchived
+    vm.expectRevert(ISpaceRegistry.SpaceAlreadyArchived.selector);
+
+    spaceRegistryProxy.proposeSpaceMigration(_newAccount);
   }
 
   function test_ProposeSpaceMigration_WhenCallerIsNotSpace(address _newAccount) external {
@@ -386,10 +533,16 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  function test_AcceptSpaceMigration_WhenProposedSpaceIsNotRegistered()
+  modifier whenSpaceIsNotArchived() {
+    // when space is not archived
+    _;
+  }
+
+  function test_AcceptSpaceMigration_WhenSpaceIsNotArchived()
     external
     whenCallerIsProposedSpace
     whenProposedSpaceIsNotRegistered
+    whenSpaceIsNotArchived
   {
     // it emits Action with SPACE_ID_MIGRATED
     vm.expectEmit();
@@ -411,7 +564,7 @@ contract UnitSpaceRegistry is TestHelper {
   function test_AcceptSpaceMigration_When_typeExists(
     bytes32 _type,
     bytes calldata _version
-  ) external whenCallerIsProposedSpace whenProposedSpaceIsNotRegistered {
+  ) external whenCallerIsProposedSpace whenProposedSpaceIsNotRegistered whenSpaceIsNotArchived {
     vm.assume(_type != bytes32(0));
 
     // it emits Action with SPACE_ID_MIGRATED
@@ -423,6 +576,20 @@ contract UnitSpaceRegistry is TestHelper {
     // it emits Action with SPACE_TYPE_DECLARED
     vm.expectEmit();
     emit ISpaceRegistry.Action(_fromSpaceId, _fromSpaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
+
+    spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId, _type, _version);
+  }
+
+  function test_AcceptSpaceMigration_WhenSpaceIsArchived(
+    bytes32 _type,
+    bytes calldata _version
+  ) external whenCallerIsProposedSpace whenProposedSpaceIsNotRegistered {
+    // when space is archived
+    _mockArchivedSpaceIds(_fromSpaceId, true);
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+
+    // it reverts with SpaceAlreadyArchived
+    vm.expectRevert(ISpaceRegistry.SpaceAlreadyArchived.selector);
 
     spaceRegistryProxy.acceptSpaceMigration(_fromSpaceId, _type, _version);
   }
@@ -497,6 +664,26 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.setPermissionlessAction(_action, _set);
   }
 
+  function test_ActiveSpaceIds_WhenCalled(bytes16 _spaceId, address _account) external {
+    vm.assume(_spaceId != bytes16(0));
+    vm.assume(_account != address(0));
+
+    // when called
+    // it returns whether the space ID is active (registered and not archived)
+
+    // Test when space is not registered
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_spaceId));
+
+    // Test when space is registered but not archived
+    _mockAddressToSpaceId(_account, _spaceId);
+    _mockSpaceIdToAddress(_spaceId, _account);
+    assertTrue(spaceRegistryProxy.activeSpaceIds(_spaceId));
+
+    // Test when space is registered and archived
+    _mockArchivedSpaceIds(_spaceId, true);
+    assertFalse(spaceRegistryProxy.activeSpaceIds(_spaceId));
+  }
+
   function test_GenerateSpaceId_WhenCalled(address _account, uint256 _nonce) external view {
     bytes16 _id = spaceRegistryProxy.generateSpaceId(_account, _nonce);
 
@@ -559,6 +746,10 @@ contract UnitSpaceRegistry is TestHelper {
 
   function _mockAddressToSpaceId(address _account, bytes16 _spaceId) internal {
     spaceRegistryProxy.workaround_setAddressToSpaceId(_account, _spaceId);
+  }
+
+  function _mockArchivedSpaceIds(bytes16 _spaceId, bool _isArchived) internal {
+    spaceRegistryProxy.workaround_setArchivedSpaceIds(_spaceId, _isArchived);
   }
 
   function _mockFetch(

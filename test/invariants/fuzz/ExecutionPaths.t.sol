@@ -85,7 +85,27 @@ contract ExecutionPaths is Setup {
     assertEq(handlerSpaceRegistry.ghost_totalRegistrations(), 1);
   }
 
-  function test_handler_clearSpaceId_eoa() public {
+  function test_handler_archiveSpaceId_eoa() public {
+    address actor = eoaActors[0];
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+    bytes16 spaceId = spaceRegistryProxy.addressToSpaceId(actor);
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(spaceId), 'Should not be archived initially');
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_archiveSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'archiveSpaceId should succeed');
+
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(spaceId), 'Should be archived');
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(spaceId), 'Should still be registered');
+    assertFalse(spaceRegistryProxy.activeSpaceIds(spaceId), 'Should not be active');
+    assertTrue(handlerSpaceRegistry.ghost_isSpaceIdArchived(spaceId), 'Ghost state should be archived');
+    assertEq(handlerSpaceRegistry.ghost_totalArchives(), 1);
+  }
+
+  function test_handler_recoverSpaceId_eoa() public {
     address actor = eoaActors[0];
 
     vm.prank(actor);
@@ -94,13 +114,46 @@ contract ExecutionPaths is Setup {
     bytes16 spaceId = spaceRegistryProxy.addressToSpaceId(actor);
 
     vm.prank(actor);
+    handlerSpaceRegistry.handler_archiveSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(spaceId), 'Should be archived');
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_recoverSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'recoverSpaceId should succeed');
+
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(spaceId), 'Should not be archived');
+    assertTrue(spaceRegistryProxy.registeredSpaceIds(spaceId), 'Should still be registered');
+    assertTrue(spaceRegistryProxy.activeSpaceIds(spaceId), 'Should be active');
+    assertFalse(handlerSpaceRegistry.ghost_isSpaceIdArchived(spaceId), 'Ghost state should not be archived');
+    assertEq(handlerSpaceRegistry.ghost_totalRecoveries(), 1);
+  }
+
+  function test_handler_clearSpaceId_eoa() public {
+    address actor = eoaActors[0];
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+    bytes16 spaceId = spaceRegistryProxy.addressToSpaceId(actor);
+
+    // Must archive before clearing
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_archiveSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+    assertTrue(spaceRegistryProxy.archivedSpaceIds(spaceId), 'Should be archived');
+
+    vm.prank(actor);
     handlerSpaceRegistry.handler_clearSpaceId();
     assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'clearSpaceId should succeed');
 
     assertEq(spaceRegistryProxy.addressToSpaceId(actor), bytes16(0));
     assertEq(spaceRegistryProxy.spaceIdToAddress(spaceId), address(0));
+    assertFalse(spaceRegistryProxy.registeredSpaceIds(spaceId));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(spaceId));
     assertFalse(handlerSpaceRegistry.ghost_isAddressRegistered(actor));
     assertFalse(handlerSpaceRegistry.ghost_isSpaceIdRegistered(spaceId));
+    assertFalse(handlerSpaceRegistry.ghost_isSpaceIdArchived(spaceId), 'Ghost state should not be archived after clear');
     assertEq(handlerSpaceRegistry.ghost_totalClears(), 1);
   }
 
@@ -137,6 +190,11 @@ contract ExecutionPaths is Setup {
     }
     assertEq(handlerSpaceRegistry.ghost_totalRegistrations(), eoaActors.length);
 
+    // Archive before clearing
+    vm.prank(eoaActors[1]);
+    handlerSpaceRegistry.handler_archiveSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+
     vm.prank(eoaActors[1]);
     handlerSpaceRegistry.handler_clearSpaceId();
     assertTrue(handlerSpaceRegistry.lastTxSucceeded());
@@ -161,10 +219,46 @@ contract ExecutionPaths is Setup {
     assertEq(handlerSpaceRegistry.ghost_totalRegistrations(), 1);
   }
 
+  function test_handler_archive_unregistered_skipped() public {
+    vm.prank(eoaActors[0]);
+    handlerSpaceRegistry.handler_archiveSpaceId();
+    assertFalse(handlerSpaceRegistry.lastTxSucceeded(), 'Archive unregistered should be skipped');
+  }
+
+  function test_handler_recover_unregistered_skipped() public {
+    vm.prank(eoaActors[0]);
+    handlerSpaceRegistry.handler_recoverSpaceId();
+    assertFalse(handlerSpaceRegistry.lastTxSucceeded(), 'Recover unregistered should be skipped');
+  }
+
+  function test_handler_recover_not_archived_skipped() public {
+    address actor = eoaActors[0];
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_recoverSpaceId();
+    assertFalse(handlerSpaceRegistry.lastTxSucceeded(), 'Recover not archived should be skipped');
+  }
+
   function test_handler_clear_unregistered_skipped() public {
     vm.prank(eoaActors[0]);
     handlerSpaceRegistry.handler_clearSpaceId();
     assertFalse(handlerSpaceRegistry.lastTxSucceeded(), 'Clear unregistered should be skipped');
+  }
+
+  function test_handler_clear_not_archived_skipped() public {
+    address actor = eoaActors[0];
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+
+    vm.prank(actor);
+    handlerSpaceRegistry.handler_clearSpaceId();
+    assertFalse(handlerSpaceRegistry.lastTxSucceeded(), 'Clear not archived should be skipped');
   }
 
   function test_actor_type_detection() public view {
