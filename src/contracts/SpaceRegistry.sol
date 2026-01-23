@@ -137,7 +137,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
     // Must be called by the space itself
     bytes16 _spaceId = $.addressToSpaceId[msg.sender];
-    if (_spaceId == bytes16(0)) revert InvalidCaller();
+    if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
 
     // Must not be archived
     if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
@@ -212,6 +212,12 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   function registeredSpaceIds(bytes16 _spaceId) public view returns (bool _isRegistered) {
     SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
     _isRegistered = $.spaceIdToAddress[_spaceId] != address(0);
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function registeredSpaceAddresses(address _account) public view returns (bool _isRegistered) {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    _isRegistered = $.addressToSpaceId[_account] != bytes16(0);
   }
 
   /// @inheritdoc ISpaceRegistry

@@ -167,8 +167,15 @@ interface ISpaceRegistry is ISemver {
   function registeredSpaceIds(bytes16 _spaceId) external view returns (bool _isRegistered);
 
   /**
+   * @notice Checks if an address is registered (has a space ID mapping)
+   * @param _account The address of the space to check
+   * @return _isRegistered True if the address has a space ID mapping, false otherwise
+   */
+  function registeredSpaceAddresses(address _account) external view returns (bool _isRegistered);
+
+  /**
    * @notice Maps each space ID to whether it has been archived
-   * @param _spaceId The ID of the space
+   * @param _spaceId The ID of the space to check
    * @return _isArchived True if the space ID is archived, false otherwise
    */
   function archivedSpaceIds(bytes16 _spaceId) external view returns (bool _isArchived);

@@ -194,6 +194,7 @@ contract ExecutionPaths is Setup {
     vm.prank(eoaActors[1]);
     handlerSpaceRegistry.handler_archiveSpaceId();
     assertTrue(handlerSpaceRegistry.lastTxSucceeded());
+    assertEq(handlerSpaceRegistry.ghost_totalArchives(), 1);
 
     vm.prank(eoaActors[1]);
     handlerSpaceRegistry.handler_clearSpaceId();

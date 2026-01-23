@@ -66,8 +66,8 @@ contract Invariants is Setup {
 
     for (uint256 i = 0; i < length; i++) {
       bytes16 spaceId = handlerSpaceRegistry.ghost_registeredSpaceIds(i);
-      bool isRegistered = spaceRegistryProxy.registeredSpaceIds(spaceId);
-      bool isArchived = spaceRegistryProxy.archivedSpaceIds(spaceId);
+      bool isRegistered = handlerSpaceRegistry.ghost_isSpaceIdRegistered(spaceId);
+      bool isArchived = handlerSpaceRegistry.ghost_isSpaceIdArchived(spaceId);
       bool isActive = spaceRegistryProxy.activeSpaceIds(spaceId);
 
       bool expectedActive = isRegistered && !isArchived;
