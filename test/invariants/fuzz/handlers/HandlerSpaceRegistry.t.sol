@@ -34,6 +34,56 @@ contract HandlerSpaceRegistry is BaseHandler {
     }
   }
 
+  function handler_archiveSpaceId() external {
+    address actor = msg.sender;
+    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
+    if (spaceId == bytes16(0)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
+    // Check if already archived
+    if (spaceRegistry.archivedSpaceIds(spaceId)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
+    vm.prank(actor);
+    try spaceRegistry.archiveSpaceId() {
+      // Space is still registered, just archived
+      ghost_isSpaceIdArchived[spaceId] = true;
+      ghost_totalArchives++;
+      lastTxSucceeded = true;
+    } catch {
+      lastTxSucceeded = false;
+    }
+  }
+
+  function handler_recoverSpaceId() external {
+    address actor = msg.sender;
+    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
+    if (spaceId == bytes16(0)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
+    // Check if archived
+    if (!spaceRegistry.archivedSpaceIds(spaceId)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
+    vm.prank(actor);
+    try spaceRegistry.recoverSpaceId() {
+      // Space is still registered, just un-archived
+      ghost_isSpaceIdArchived[spaceId] = false;
+      ghost_totalRecoveries++;
+      lastTxSucceeded = true;
+    } catch {
+      lastTxSucceeded = false;
+    }
+  }
+
   function handler_clearSpaceId() external {
     address actor = msg.sender;
     bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
@@ -42,10 +92,17 @@ contract HandlerSpaceRegistry is BaseHandler {
       return;
     }
 
+    // Must be archived before clearing
+    if (!spaceRegistry.archivedSpaceIds(spaceId)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
     vm.prank(actor);
     try spaceRegistry.clearSpaceId() {
       ghost_isAddressRegistered[actor] = false;
       ghost_isSpaceIdRegistered[spaceId] = false;
+      ghost_isSpaceIdArchived[spaceId] = false;
       ghost_totalClears++;
       lastTxSucceeded = true;
     } catch {
@@ -55,7 +112,14 @@ contract HandlerSpaceRegistry is BaseHandler {
 
   function handler_proposeSpaceMigration(uint256 _actorSeed) external {
     address actor = msg.sender;
-    if (spaceRegistry.addressToSpaceId(actor) == bytes16(0)) {
+    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
+    if (spaceId == bytes16(0)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
+    // Cannot propose migration if archived
+    if (spaceRegistry.archivedSpaceIds(spaceId)) {
       lastTxSucceeded = false;
       return;
     }
@@ -87,10 +151,18 @@ contract HandlerSpaceRegistry is BaseHandler {
       return;
     }
 
+    // Cannot accept migration if source space is archived
+    if (spaceRegistry.archivedSpaceIds(targetSpaceId)) {
+      lastTxSucceeded = false;
+      return;
+    }
+
     vm.prank(actor);
     try spaceRegistry.acceptSpaceMigration(targetSpaceId, bytes32(0), '') {
       ghost_isAddressRegistered[oldAddress] = false;
       _trackNewRegistration(actor, targetSpaceId);
+      // Space is not archived after migration (check prevents archived spaces from migrating)
+      ghost_isSpaceIdArchived[targetSpaceId] = false;
       ghost_migrations[oldAddress] = actor;
       ghost_acceptedMigrations++;
       lastTxSucceeded = true;
@@ -107,6 +179,7 @@ contract HandlerSpaceRegistry is BaseHandler {
     ghost_isAddressRegistered[_addr] = true;
     ghost_registeredSpaceIds.push(_spaceId);
     ghost_isSpaceIdRegistered[_spaceId] = true;
+    ghost_isSpaceIdArchived[_spaceId] = false;
   }
 
   function _findUnregisteredEOA(uint256 _seed, address _exclude) internal view returns (address _unregisteredEOA) {

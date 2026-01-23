@@ -4,7 +4,13 @@ pragma solidity 0.8.30;
 /// @dev The ID of the action to register a space
 bytes32 constant SPACE_ID_REGISTERED = keccak256('GOVERNANCE.SPACE_ID_REGISTERED');
 
-/// @dev The ID of the action to clear a space from the registry
+/// @dev The ID of the action to archive a space ID
+bytes32 constant SPACE_ID_ARCHIVED = keccak256('GOVERNANCE.SPACE_ID_ARCHIVED');
+
+/// @dev The ID of the action to recover an archived space ID
+bytes32 constant SPACE_ID_RECOVERED = keccak256('GOVERNANCE.SPACE_ID_RECOVERED');
+
+/// @dev The ID of the action to clear a space ID from the registry
 bytes32 constant SPACE_ID_CLEARED = keccak256('GOVERNANCE.SPACE_ID_CLEARED');
 
 /// @dev The ID of the action to propose a space migration

@@ -56,6 +56,7 @@ abstract contract BaseHandler is Test, GhostState {
     ghost_isAddressRegistered[_space] = true;
     ghost_registeredSpaceIds.push(spaceId);
     ghost_isSpaceIdRegistered[spaceId] = true;
+    ghost_isSpaceIdArchived[spaceId] = false;
     ghost_factoryCreatedSpaces++;
     ghost_factoryCreatedSpaceAddresses.push(_space);
   }

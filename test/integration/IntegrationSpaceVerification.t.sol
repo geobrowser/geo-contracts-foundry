@@ -60,7 +60,10 @@ contract IntegrationSpaceVerification is IntegrationBase {
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.COMMENTED, _initialTopicId, _comment, '');
   }
 
-  function _signUnsetTopicMessage(bytes16 _toSpaceId, uint256 _replayNonce) internal returns (bytes memory _signature) {
+  function _signUnsetTopicMessage(
+    bytes16 _toSpaceId,
+    uint256 _replayNonce
+  ) internal view returns (bytes memory _signature) {
     // struct hash
     bytes32 _structHash = keccak256(
       abi.encode(
