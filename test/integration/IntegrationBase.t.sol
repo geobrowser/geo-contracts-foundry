@@ -36,7 +36,7 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   bytes internal _initialEditsMetadata;
   bytes16 internal _initialTopicId;
 
-  function setUp() public virtual override {
+  function setUp() public virtual {
     _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);
     _geoTestnetForkId = vm.createFork(vm.rpcUrl('geo_testnet'), _GEO_TESTNET_FORK_BLOCK);
 
@@ -56,8 +56,7 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   function _deployGEOIncentives() internal {}
 
   function _deployGEOBrowser() internal {
-    // Set up and run deployment script
-    DeployGEOBrowser.setUp();
+    // Run deployment script
     DeployGEOBrowser.run();
   }
 

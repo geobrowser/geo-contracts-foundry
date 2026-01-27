@@ -28,7 +28,7 @@ contract Setup is Test, DeployGEOBrowser {
 
   IDAOSpace.VotingSettings internal _defaultVotingSettings;
 
-  function setUp() public virtual override {
+  function setUp() public virtual {
     DeployGEOBrowser.run();
 
     _initializeVotingSettings();

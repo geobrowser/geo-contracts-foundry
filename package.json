@@ -12,7 +12,7 @@
   "scripts": {
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
-    "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*' --no-match-coverage '(script|test)'",
+    "coverage": "yarn recompile && forge coverage --report summary --report lcov --ffi --match-path 'test/unit/*' --no-match-coverage 'test'",
     "deploy:geo-browser": "bash -c 'source .env && forge script DeployGEOBrowser --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain geo_testnet -vvvvv'",
     "lint:bulloak": "find test/unit -name '*.tree' | xargs bulloak check",
     "lint:check": "forge fmt --check && yarn lint:sol",
@@ -20,12 +20,13 @@
     "lint:natspec": "lintspec",
     "lint:sol": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky",
-    "test": "forge clean && forge build && forge test --ffi -vvv",
+    "recompile": "forge clean && forge build",
+    "test": "yarn recompile && forge test --ffi -vvv",
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",
-    "test:integration": "forge clean && forge build && forge test --ffi --match-contract Integration -vvv",
-    "test:invariant": "forge clean && forge build && forge test --ffi --match-contract Invariants -vvv",
-    "test:unit": "forge test --match-contract Unit -vvv",
+    "test:integration": "yarn recompile && forge test --ffi --match-contract Integration -vvv",
+    "test:invariant": "yarn recompile && forge test --ffi --match-contract Invariants -vvv",
+    "test:unit": "yarn recompile && forge test --ffi --match-contract Unit -vvv",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit"
   },
   "lint-staged": {
