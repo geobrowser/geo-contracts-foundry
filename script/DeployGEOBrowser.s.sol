@@ -13,11 +13,8 @@ import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {VerifierSpaceFactory} from 'contracts/VerifierSpaceFactory.sol';
 
 import 'script/Constants.s.sol' as Constants;
-import 'src/ActionsConstants.sol' as ActionsConstants;
 
 contract DeployGEOBrowser is Script {
-  error DeploymentFailed(string _reason);
-
   SpaceRegistry public spaceRegistryImplementation;
   SpaceRegistry public spaceRegistryProxy;
 
@@ -32,8 +29,6 @@ contract DeployGEOBrowser is Script {
 
   VerifierSpace public verifierSpaceImplementation;
   UpgradeableBeacon public verifierSpaceBeacon;
-
-  function setUp() public virtual {}
 
   function run() public {
     vm.startBroadcast();
@@ -81,20 +76,5 @@ contract DeployGEOBrowser is Script {
     verifierSpaceBeacon = UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon());
 
     vm.stopBroadcast();
-
-    // Final sanity check on deployments
-    _verifyBeaconImplementations();
-  }
-
-  function _verifyBeaconImplementations() internal view {
-    if (UpgradeableBeacon(daoSpaceFactoryProxy.daoSpaceBeacon()).implementation() != address(daoSpaceImplementation)) {
-      revert DeploymentFailed('DAOSpaceFactory: DAO space beacon implementation is incorrect');
-    }
-    if (
-      UpgradeableBeacon(verifierSpaceFactoryProxy.verifierSpaceBeacon()).implementation()
-        != address(verifierSpaceImplementation)
-    ) {
-      revert DeploymentFailed('VerifierSpaceFactory: Verifier space beacon implementation is incorrect');
-    }
   }
 }

@@ -1,0 +1,12 @@
+UnitDeployGEOBrowser::run
+└── when called
+    ├── it deploys DAOSpace implementation
+    ├── it deploys VerifierSpace implementation
+    ├── it deploys SpaceRegistry implementation
+    ├── it deploys and initializes SpaceRegistry proxy
+    ├── it deploys DAOSpaceFactory implementation
+    ├── it deploys and initializes DAOSpaceFactory proxy
+    ├── it deploys DAOSpace beacon
+    ├── it deploys VerifierSpaceFactory implementation
+    ├── it deploys and initializes VerifierSpaceFactory proxy
+    └── it deploys VerifierSpace beacon
