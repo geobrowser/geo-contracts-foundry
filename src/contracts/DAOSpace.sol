@@ -360,7 +360,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /**
-   * @notice Decodes input data and then creates a new proposal
+   * @notice Creates a new governance proposal
    * @param _fromSpaceId The space ID creating the proposal
    * @param _data The encoded proposal data containing the voting mode and actions
    */
@@ -371,38 +371,30 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
     // Update proposal storage
-    _createProposal(_fromSpaceId, _proposalId, _votingMode, _actions);
+    uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
   }
 
   /**
-   * @notice Creates a new governance proposal
+   * @notice Checks the path of a new governance proposal
    * @param _fromSpaceId The space ID creating the proposal
-   * @param _proposalId The proposal identifier
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
+   * @return _supportThreshold The support threshold (slow or fast) of the proposal
    * @dev Fast path: only editors can create, creator must not be restricted, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
-  function _createProposal(
+  function _checkProposalPath(
     bytes16 _fromSpaceId,
-    bytes16 _proposalId,
     VotingMode _votingMode,
     Action[] memory _actions
-  ) internal virtual {
+  ) internal virtual returns (uint256 _supportThreshold) {
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.latestProposalVersion[_proposalId]++;
-    // Update proposal storage
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    proposal_.creator = _fromSpaceId;
-    proposal_.parameters.startDate = block.timestamp;
-    proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
-    proposal_.parameters.votingMode = _votingMode;
-    proposal_.parameters.quorum = $.votingSettings.quorum;
     if (_votingMode == VotingMode.Slow) {
       // Slow path
       // Only members or editors can create slow path proposals
       if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
-      proposal_.parameters.supportThreshold = $.votingSettings.slowPathPercentageThreshold;
+      _supportThreshold = $.votingSettings.slowPathPercentageThreshold;
     } else {
       // Fast path
       // Only editors can create fast path proposals
@@ -417,8 +409,35 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_actions[0].to != address(this)) revert InvalidTarget();
       // limit the transfer of funds
       if (_actions[0].value != 0) revert InvalidFundsTransfer();
-      proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
+      _supportThreshold = $.votingSettings.fastPathFlatThreshold;
     }
+  }
+
+  /**
+   * @notice Creates or updates a governance proposal
+   * @param _fromSpaceId The space ID setting the proposal
+   * @param _proposalId The proposal identifier
+   * @param _votingMode The voting mode (slow or fast) of the proposal
+   * @param _supportThreshold The support threshold (slow or fast) of the proposal
+   * @param _actions The actions to be undertaken if the proposal is successful
+   */
+  function _setProposal(
+    bytes16 _fromSpaceId,
+    bytes16 _proposalId,
+    VotingMode _votingMode,
+    uint256 _supportThreshold,
+    Action[] memory _actions
+  ) internal virtual {
+    // Update proposal storage
+    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    $.latestProposalVersion[_proposalId]++;
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    proposal_.creator = _fromSpaceId;
+    proposal_.parameters.startDate = block.timestamp;
+    proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
+    proposal_.parameters.votingMode = _votingMode;
+    proposal_.parameters.quorum = $.votingSettings.quorum;
+    proposal_.parameters.supportThreshold = _supportThreshold;
     for (uint256 i; i < _actions.length; i++) {
       proposal_.actions.push(_actions[i]);
     }
@@ -514,7 +533,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // May not update an already executed proposal
     if (proposal_.executed) revert InvalidProposalId();
     // Update proposal storage
-    _createProposal(_fromSpaceId, _proposalId, _votingMode, _actions);
+    uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
   }
 
   /**
@@ -566,7 +586,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /**
-   * @notice Decodes input data and then creates a new fast path proposal for a space to become a member
+   * @notice Creates a new fast path proposal for a space to become a member
    * @param _fromSpaceId The space ID creating the proposal
    * @param _data The encoded proposal data containing the space ID requesting to become a member
    */
@@ -574,42 +594,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
     DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    // Ensure proposal id is valid
+    // Ensure proposal ID is valid
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
-    // Update storage
-    $.latestProposalVersion[_proposalId]++;
-    /// @dev must fetch the new proposal given update to version
-    proposal_ = _getLatestProposalStorage(_proposalId);
-    proposal_.creator = _fromSpaceId;
-    proposal_.parameters.startDate = block.timestamp;
-    proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
-    proposal_.parameters.votingMode = IDAOSpace.VotingMode.Fast;
-    proposal_.parameters.quorum = $.votingSettings.quorum;
-    proposal_.parameters.supportThreshold = $.votingSettings.fastPathFlatThreshold;
-    proposal_.actions
-      .push(
-        IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))})
-      );
-    // Ping the registry to emit the proposal creation and settings
-    _ping(
-      ActionsConstants.PROPOSAL_CREATED,
-      bytes32(_proposalId),
-      abi.encode(_proposalId, proposal_.parameters.votingMode, proposal_.actions)
-    );
-    _ping(
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(
-        proposal_.parameters.startDate,
-        proposal_.parameters.lastDate,
-        proposal_.parameters.votingMode,
-        proposal_.parameters.quorum,
-        proposal_.parameters.supportThreshold
-      )
-    );
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    uint256 _supportThreshold = $.votingSettings.fastPathFlatThreshold;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] =
+      IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
+    // Ping the registry to emit the proposal creation
+    _ping(ActionsConstants.PROPOSAL_CREATED, bytes32(_proposalId), abi.encode(_proposalId, _votingMode, _actions));
+    // Update proposal storage
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
   }
 
   /**
