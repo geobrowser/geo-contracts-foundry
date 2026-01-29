@@ -1,11 +1,3 @@
 {
-  "rules": {
-    "ordering": "warn",
-    "style-guide-casing": [
-      "warn",
-      {
-        "ignoreExternalFunctions": true
-      }
-    ]
-  }
+  "extends": "wonderland/interfaces"
 }

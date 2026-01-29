@@ -1,3 +1,13 @@
 {
-  "extends": "wonderland/tests"
+  "extends": "wonderland/tests",
+  "rules": {
+    "named-parameters-mapping": "off",
+    "style-guide-casing": [
+      "warn",
+      {
+        "ignoreModifiers": true,
+        "ignoreVariables": true
+      }
+    ]
+  }
 }
