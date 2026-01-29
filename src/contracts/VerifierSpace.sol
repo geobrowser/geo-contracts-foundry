@@ -69,21 +69,19 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     bytes calldata _signature
   ) external virtual {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-
     // Only space registry can call
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
-    bytes32 digest = _hashTypedDataV4(
+    bytes32 _digest = _hashTypedDataV4(
       keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _subject, $.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
-    if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
+    if (!SignatureChecker.isValidSignatureNow(owner(), _digest, _signature)) revert InvalidSignature();
   }
 
   /// @inheritdoc ISpace
   function write(bytes16 _fromSpaceId, bytes32, bytes32, bytes calldata) external view virtual {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-
     // Only space registry can call
     if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
     // From space must be valid writer

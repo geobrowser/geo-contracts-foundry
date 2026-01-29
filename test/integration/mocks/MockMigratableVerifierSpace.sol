@@ -18,8 +18,9 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    */
   function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) external virtual onlyOwner {
     VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    bytes16 verifierSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
-    $.spaceRegistry.enter(verifierSpaceId, verifierSpaceId, _action, _subject, _data, '');
+    bytes16 _verifierSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
+
+    $.spaceRegistry.enter(_verifierSpaceId, _verifierSpaceId, _action, _subject, _data, '');
   }
 
   /**

@@ -52,24 +52,24 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceBeacon = UnsafeUpgrades.deployBeacon(address(daoSpaceImplementation), _owner);
 
     // get predicted DAO Space address for external calls and event emissions
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-    bytes16 predictedDAOSpaceProxySpaceId = _getSpaceId(predictedDAOSpaceProxy);
+    address _predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedDAOSpaceProxySpaceId = _getSpaceId(_predictedDAOSpaceProxy);
 
     // And the space type and version
     _spaceType = keccak256(bytes(daoSpaceImplementation.name()));
     _spaceVersion = abi.encode(daoSpaceImplementation.version());
 
     // when delegate called
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
-    _mockAddressToSpaceId(_spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
+    _mockAddressToSpaceId(_spaceRegistry, _predictedDAOSpaceProxy, _predictedDAOSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     _mockEnter(
       _spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.EDITS_PUBLISHED,
       '',
       _publishEditsData
@@ -78,8 +78,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the TOPIC_SET action
     _mockEnter(
       _spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.TOPIC_SET,
       bytes32(_initialTopicId),
       ''
@@ -88,8 +88,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       _spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_initialEditorSpaceId),
       ''
@@ -98,8 +98,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
       _spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.MEMBER_ADDED,
       bytes32(_initialMemberSpaceId),
       ''
@@ -179,21 +179,21 @@ contract UnitDAOSpace is TestHelper {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    address _predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    bytes16 predictedDAOSpaceProxySpaceId = _getSpaceId(predictedDAOSpaceProxy);
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
+    bytes16 _predictedDAOSpaceProxySpaceId = _getSpaceId(_predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
-    _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
+    _mockAddressToSpaceId(__spaceRegistry, _predictedDAOSpaceProxy, _predictedDAOSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     if (__publishEditsData.length != 0) {
       _mockEnter(
         __spaceRegistry,
-        predictedDAOSpaceProxySpaceId,
-        predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
         ActionsConstants.EDITS_PUBLISHED,
         '',
         __publishEditsData
@@ -204,8 +204,8 @@ contract UnitDAOSpace is TestHelper {
     if (__initialTopicId != bytes16(0)) {
       _mockEnter(
         __spaceRegistry,
-        predictedDAOSpaceProxySpaceId,
-        predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
         ActionsConstants.TOPIC_SET,
         bytes32(__initialTopicId),
         ''
@@ -215,8 +215,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_initialEditorSpaceId),
       ''
@@ -225,8 +225,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
       __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.MEMBER_ADDED,
       bytes32(_initialMemberSpaceId),
       ''
@@ -281,21 +281,21 @@ contract UnitDAOSpace is TestHelper {
     _assumeFuzzable(__spaceRegistry);
 
     // get predicted DAO Space address for external calls and event emissions
-    address predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    address _predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
 
     // it calls spaceRegistry to register space ID
-    bytes16 predictedDAOSpaceProxySpaceId = _getSpaceId(predictedDAOSpaceProxy);
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedDAOSpaceProxySpaceId);
+    bytes16 _predictedDAOSpaceProxySpaceId = _getSpaceId(_predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
-    _mockAddressToSpaceId(__spaceRegistry, predictedDAOSpaceProxy, predictedDAOSpaceProxySpaceId);
+    _mockAddressToSpaceId(__spaceRegistry, _predictedDAOSpaceProxy, _predictedDAOSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
     if (__publishEditsData.length != 0) {
       _mockEnter(
         __spaceRegistry,
-        predictedDAOSpaceProxySpaceId,
-        predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
         ActionsConstants.EDITS_PUBLISHED,
         '',
         __publishEditsData
@@ -306,8 +306,8 @@ contract UnitDAOSpace is TestHelper {
     if (__initialTopicId != bytes16(0)) {
       _mockEnter(
         __spaceRegistry,
-        predictedDAOSpaceProxySpaceId,
-        predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
+        _predictedDAOSpaceProxySpaceId,
         ActionsConstants.TOPIC_SET,
         bytes32(__initialTopicId),
         ''
@@ -317,8 +317,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
     _mockEnter(
       __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_initialEditorSpaceId),
       ''
@@ -327,8 +327,8 @@ contract UnitDAOSpace is TestHelper {
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
       __spaceRegistry,
-      predictedDAOSpaceProxySpaceId,
-      predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
       ActionsConstants.MEMBER_ADDED,
       bytes32(_initialMemberSpaceId),
       ''
@@ -398,8 +398,8 @@ contract UnitDAOSpace is TestHelper {
 
     _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
 
-    bytes memory proposalData = _createSlowPathProposalToAddEditor();
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_When_proposalIdHasAlreadyBeenUsed(bytes32 _subject)
@@ -424,8 +424,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidProposalId
     vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
 
-    bytes memory proposalData = _createSlowPathProposalToAddEditor();
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_When_createProposalParamsAreValid(bytes32 _subject)
@@ -435,55 +435,55 @@ contract UnitDAOSpace is TestHelper {
     whenTheVotingModeIsSlow
   {
     // get voting settings
-    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + votingSettings.duration,
+        vm.getBlockTimestamp() + _votingSettings.duration,
         IDAOSpace.VotingMode.Slow,
-        votingSettings.quorum,
-        votingSettings.slowPathPercentageThreshold
+        _votingSettings.quorum,
+        _votingSettings.slowPathPercentageThreshold
       )
     );
 
     // when called
-    bytes memory proposalData = _createSlowPathProposalToAddEditor();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createSlowPathProposalToAddEditor();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
 
-    (, bytes16 creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,, IDAOSpace.Action[] memory _actions) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
     assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
 
     // it sets the proposal creator to _fromSpaceId
-    assertEq(creator, _initialEditorSpaceId);
+    assertEq(_creator, _initialEditorSpaceId);
 
     // it sets the proposal start date to block.timestamp
-    assertEq(parameters.startDate, vm.getBlockTimestamp());
+    assertEq(_parameters.startDate, vm.getBlockTimestamp());
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
 
     // it sets the proposal voting mode
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
     // it sets the proposal support threshold to the slow path percentage threshold
-    assertEq(parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
+    assertEq(_parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
 
     // it stores the decoded proposal actions
-    assertEq(actions.length, 1);
-    assertEq(actions[0].to, address(daoSpaceProxy));
-    assertEq(actions[0].value, 0);
-    assertEq(actions[0].data, abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller))));
+    assertEq(_actions.length, 1);
+    assertEq(_actions[0].to, address(daoSpaceProxy));
+    assertEq(_actions[0].value, 0);
+    assertEq(_actions[0].data, abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller))));
   }
 
   modifier whenTheVotingModeIsFast() {
@@ -499,8 +499,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidFromSpace
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_When_proposalIdHasAlreadyBeenUsed_WhenTheVotingModeIsFast(bytes32 _subject)
@@ -525,8 +525,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidProposalId
     vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_When_fromSpaceIdIsRestricted(bytes32 _subject)
@@ -540,8 +540,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with FastPathRestricted
     vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheDecodedProposalActionIsNotLimitedToOneCall(bytes32 _subject)
@@ -553,8 +553,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with OneActionForFastPath
     vm.expectRevert(IDAOSpace.OneActionForFastPath.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddTwoMembers();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddTwoMembers();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheFunctionSelectorOfTheDecodedProposalActionIsNotFastPathValid(bytes32 _subject)
@@ -566,8 +566,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidAction
     vm.expectRevert(IDAOSpace.InvalidAction.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddEditor();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddEditor();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheTargetAddressIsNotTheDAOContractItself(bytes32 _subject)
@@ -579,8 +579,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidTarget
     vm.expectRevert(IDAOSpace.InvalidTarget.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMemberOnAnotherContract();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMemberOnAnotherContract();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheProposalAttemptsToTransferValue(bytes32 _subject)
@@ -592,8 +592,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidFundsTransfer
     vm.expectRevert(IDAOSpace.InvalidFundsTransfer.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMemberAndMoveValue();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMemberAndMoveValue();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
   }
 
   function test_Write_When_createProposalParamsAreValid_WhenTheVotingModeIsFast(bytes32 _subject)
@@ -603,55 +603,55 @@ contract UnitDAOSpace is TestHelper {
     whenTheVotingModeIsFast
   {
     // get voting settings
-    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + votingSettings.duration,
+        vm.getBlockTimestamp() + _votingSettings.duration,
         IDAOSpace.VotingMode.Fast,
-        votingSettings.quorum,
-        votingSettings.fastPathFlatThreshold
+        _votingSettings.quorum,
+        _votingSettings.fastPathFlatThreshold
       )
     );
 
     // when called
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
 
-    (, bytes16 creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actions) =
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,, IDAOSpace.Action[] memory _actions) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
     assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
 
     // it sets the proposal creator to _fromSpaceId
-    assertEq(creator, _initialEditorSpaceId);
+    assertEq(_creator, _initialEditorSpaceId);
 
     // it sets the proposal start date to block.timestamp
-    assertEq(parameters.startDate, vm.getBlockTimestamp());
+    assertEq(_parameters.startDate, vm.getBlockTimestamp());
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
 
     // it sets the proposal voting mode
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
+    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
 
     // it sets the proposal support threshold to the fast path flat threshold
-    assertEq(parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
+    assertEq(_parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
 
     // it stores the decoded proposal actions
-    assertEq(actions.length, 1);
-    assertEq(actions[0].to, address(daoSpaceProxy));
-    assertEq(actions[0].value, 0);
-    assertEq(actions[0].data, abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller))));
+    assertEq(_actions.length, 1);
+    assertEq(_actions[0].to, address(daoSpaceProxy));
+    assertEq(_actions[0].value, 0);
+    assertEq(_actions[0].data, abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller))));
   }
 
   /// WRITE - PROPOSAL_VOTED ///
@@ -669,8 +669,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
   }
 
   function test_Write_WhenTheBlockTimestampIsGreaterThanTheLastDate(
@@ -696,8 +696,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
   }
 
   function test_Write_WhenTheProposalHasBeenExecuted(
@@ -723,8 +723,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
   }
 
   function test_Write_WhenTheVoteOptionEqualsNone(bytes32 _subject)
@@ -749,8 +749,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.None);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.None);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
   }
 
   function test_Write_WhenThe_fromSpaceIdIsNotAnEditor(
@@ -778,8 +778,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotVote
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
 
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
   }
 
   modifier when_voteParamsAreValid() {
@@ -807,12 +807,12 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it stores the current _fromSpaceId vote
-    IDAOSpace.VoteOption storedVoteOption = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditorSpaceId);
-    assertEq(uint256(storedVoteOption), _voteOption);
+    IDAOSpace.VoteOption _storedVoteOption = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditorSpaceId);
+    assertEq(uint256(_storedVoteOption), _voteOption);
   }
 
   function test_Write_WhenTheFormer_fromSpaceIdVoteEqualsYes(bytes32 _subject)
@@ -836,16 +836,16 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to yes and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Yes);
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.yes, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.yes, 1);
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it decreases the yes vote tally by one
-    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.yes, 0);
+    (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.yes, 0);
   }
 
   function test_Write_WhenTheFormer_fromSpaceIdVoteEqualsNo(bytes32 _subject)
@@ -869,16 +869,16 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to no and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.No);
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.no, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.no, 1);
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it decreases the no vote tally by one
-    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.no, 0);
+    (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.no, 0);
   }
 
   function test_Write_WhenTheFormer_fromSpaceIdVoteEqualsAbstain(bytes32 _subject)
@@ -902,16 +902,16 @@ contract UnitDAOSpace is TestHelper {
     );
     // set inital vote to abstain and tally
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption.Abstain);
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.abstain, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.abstain, 1);
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it decreases the abstain vote tally by one
-    (,,, tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.abstain, 0);
+    (,,, _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.abstain, 0);
   }
 
   function test_Write_WhenTheCurrent_fromSpaceIdVoteEqualsYes(bytes32 _subject)
@@ -935,12 +935,12 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it increases the yes vote tally by one
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.yes, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.yes, 1);
   }
 
   function test_Write_WhenTheCurrent_fromSpaceIdVoteEqualsNo(bytes32 _subject)
@@ -964,12 +964,12 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it increases the no vote tally by one
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.no, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.no, 1);
   }
 
   function test_Write_WhenTheCurrent_fromSpaceIdVoteEqualsAbstain(bytes32 _subject)
@@ -993,12 +993,12 @@ contract UnitDAOSpace is TestHelper {
     );
 
     // vote abstain
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Abstain);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.Abstain);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it increases the abstain vote tally by one
-    (,,, IDAOSpace.Tally memory tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(tally.abstain, 1);
+    (,,, IDAOSpace.Tally memory _tally,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_tally.abstain, 1);
   }
 
   modifier whenTheProposalVotingModeIsUsingTheFastPath() {
@@ -1026,52 +1026,52 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
 
-    (, bytes16 creator, IDAOSpace.ProposalParameters memory parameters,,) =
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,,) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
-    assertEq(parameters.supportThreshold, 1);
-    assertEq(parameters.startDate, block.timestamp);
-    assertEq(parameters.lastDate, block.timestamp + 1e5);
+    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
+    assertEq(_parameters.supportThreshold, 1);
+    assertEq(_parameters.startDate, block.timestamp);
+    assertEq(_parameters.lastDate, block.timestamp + 1e5);
 
     // warp forwards to ensure start date is reset
     vm.warp(block.timestamp + 100);
 
-    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         block.timestamp,
-        block.timestamp + votingSettings.duration,
+        block.timestamp + _votingSettings.duration,
         IDAOSpace.VotingMode.Slow,
-        votingSettings.quorum,
-        votingSettings.slowPathPercentageThreshold
+        _votingSettings.quorum,
+        _votingSettings.slowPathPercentageThreshold
       )
     );
 
     // vote no
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.No);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
-    (, creator, parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (, _creator, _parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it updates the proposal voting mode to the slow path
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
     // it updates the proposal support threshold to the slow path percentage threshold
-    assertEq(parameters.supportThreshold, daoSpaceProxy.votingSettings().slowPathPercentageThreshold);
+    assertEq(_parameters.supportThreshold, daoSpaceProxy.votingSettings().slowPathPercentageThreshold);
 
     // it updates the proposal start date to block.timestamp
-    assertEq(parameters.startDate, block.timestamp);
+    assertEq(_parameters.startDate, block.timestamp);
 
     // it updates the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(parameters.lastDate, block.timestamp + daoSpaceProxy.votingSettings().duration);
+    assertEq(_parameters.lastDate, block.timestamp + daoSpaceProxy.votingSettings().duration);
   }
 
   modifier whenTheCurrent_fromSpaceIdVoteEqualsYes() {
@@ -1087,8 +1087,8 @@ contract UnitDAOSpace is TestHelper {
     whenTheCurrent_fromSpaceIdVoteEqualsYes
   {
     // proposal set up to add randomCaller as an editor
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
     });
     daoSpaceProxy.workaround_createProposal(
@@ -1101,25 +1101,25 @@ contract UnitDAOSpace is TestHelper {
       IDAOSpace.VotingMode.Fast,
       0,
       1,
-      actions
+      _actions
     );
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_getSpaceId(_randomCaller)),
       ''
     );
 
     // vote yes
-    bytes memory voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, voteData);
+    bytes memory _voteData = _createVoteForProposal(IDAOSpace.VoteOption.Yes);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteData);
 
     // it loops over the stored proposal actions and performs the external callsc
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
@@ -1152,8 +1152,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_UPDATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_getSpaceId(_randomCaller), ActionsConstants.PROPOSAL_UPDATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheProposalHasAlreadyBeenExecuted(bytes32 _subject)
@@ -1177,8 +1177,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidProposalId
     vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_UPDATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_UPDATED, _subject, _proposalData);
   }
 
   function test_Write_WhenTheProposalCanBeUpdated(
@@ -1203,51 +1203,51 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorSpaceId, IDAOSpace.VoteOption(_voteOption));
     daoSpaceProxy.workaround_setTally(_proposalId, 1, 1, 1);
 
-    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         block.timestamp,
-        block.timestamp + votingSettings.duration,
+        block.timestamp + _votingSettings.duration,
         IDAOSpace.VotingMode.Fast,
-        votingSettings.quorum,
-        votingSettings.fastPathFlatThreshold
+        _votingSettings.quorum,
+        _votingSettings.fastPathFlatThreshold
       )
     );
 
-    bytes memory proposalData = _createFastPathProposalToAddMember();
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_UPDATED, _subject, proposalData);
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_UPDATED, _subject, _proposalData);
 
-    (,,, IDAOSpace.Tally memory tally, IDAOSpace.Action[] memory actions) =
+    (,,, IDAOSpace.Tally memory _tally, IDAOSpace.Action[] memory _actions) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     IDAOSpace.VoteOption _vote = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditorSpaceId);
 
     // it resets the voting state
-    assertEq(tally.abstain, 0);
-    assertEq(tally.yes, 0);
-    assertEq(tally.no, 0);
+    assertEq(_tally.abstain, 0);
+    assertEq(_tally.yes, 0);
+    assertEq(_tally.no, 0);
     assertEq(uint256(_vote), 0);
 
     // it updates the proposal with a new version
     assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
-    assertEq(actions.length, 1);
+    assertEq(_actions.length, 1);
 
-    (,,, tally, actions) = daoSpaceProxy.getProposalInformation(_proposalId, 0);
+    (,,, _tally, _actions) = daoSpaceProxy.getProposalInformation(_proposalId, 0);
     _vote = daoSpaceProxy.getProposalVote(_proposalId, 0, _initialEditorSpaceId);
 
     // it also retains the previous version data
-    assertEq(tally.abstain, 1);
-    assertEq(tally.yes, 1);
-    assertEq(tally.no, 1);
+    assertEq(_tally.abstain, 1);
+    assertEq(_tally.yes, 1);
+    assertEq(_tally.no, 1);
     assertEq(uint256(_vote), _voteOption);
-    assertEq(actions.length, 0);
+    assertEq(_actions.length, 0);
   }
 
   /// WRITE - EXECUTE PROPOSAL ///
@@ -1278,8 +1278,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
 
-    bytes memory executeData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, executeData);
+    bytes memory _executeData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
   }
 
   function test_Write_WhenTheProposalStartDateEqualsZero_When_actionEqualsPROPOSAL_EXECUTED(bytes32 _subject)
@@ -1290,8 +1290,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
 
-    bytes memory executeData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, executeData);
+    bytes memory _executeData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
   }
 
   function test_Write_WhenTheSupportThresholdHasNotBeenReached(bytes32 _subject)
@@ -1318,8 +1318,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
 
-    bytes memory executeData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, executeData);
+    bytes memory _executeData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
   }
 
   modifier whenTheProposalCanBeExecuted() {
@@ -1333,8 +1333,8 @@ contract UnitDAOSpace is TestHelper {
     whenTheProposalCanBeExecuted
   {
     // proposal set up to add randomCaller as an editor
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
     });
     daoSpaceProxy.workaround_createProposal(
@@ -1347,7 +1347,7 @@ contract UnitDAOSpace is TestHelper {
       IDAOSpace.VotingMode.Slow,
       0,
       1,
-      actions
+      _actions
     );
 
     // set vote to yes
@@ -1359,18 +1359,18 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_getSpaceId(_randomCaller)),
       ''
     );
 
-    bytes memory executeData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, executeData);
+    bytes memory _executeData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
 
     // it loops over the stored proposal actions and performs the external calls
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
@@ -1383,8 +1383,8 @@ contract UnitDAOSpace is TestHelper {
     whenTheProposalCanBeExecuted
   {
     // proposal set up to with a deliberately faulty call
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.registerSpaceId, (bytes32(0), ''))
     });
     daoSpaceProxy.workaround_createProposal(
@@ -1397,7 +1397,7 @@ contract UnitDAOSpace is TestHelper {
       IDAOSpace.VotingMode.Slow,
       0,
       1,
-      actions
+      _actions
     );
 
     // set vote to yes
@@ -1409,8 +1409,8 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with ActionReverted
     vm.expectRevert(IDAOSpace.ActionReverted.selector);
 
-    bytes memory executeData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, executeData);
+    bytes memory _executeData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
   }
 
   /// WRITE - SPACE_LEFT ///
@@ -1427,18 +1427,18 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_REMOVED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.MEMBER_REMOVED,
       bytes32(_initialMemberSpaceId),
       ''
     );
 
-    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
-    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _subject, leaveSpaceData);
+    bytes memory _leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
+    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _subject, _leaveSpaceData);
 
     // it revokes the role of MEMBER from the _fromSpaceId
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
@@ -1462,18 +1462,18 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
     // it calls enter on the spaceRegistry with the EDITOR_REMOVED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_REMOVED,
       bytes32(_initialEditorSpaceId),
       ''
     );
 
-    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _subject, leaveSpaceData);
+    bytes memory _leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _subject, _leaveSpaceData);
 
     // it revokes the role of EDITOR from the _fromSpaceId
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
@@ -1488,19 +1488,19 @@ contract UnitDAOSpace is TestHelper {
 
     // it reverts with InvalidFromSpace
     // role is neither MEMBER or EDITOR
-    bytes memory leaveSpaceData = abi.encode(daoSpaceProxy.DAO());
+    bytes memory _leaveSpaceData = abi.encode(daoSpaceProxy.DAO());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_callerSpaceId, ActionsConstants.SPACE_LEFT, _subject, leaveSpaceData);
+    daoSpaceProxy.write(_callerSpaceId, ActionsConstants.SPACE_LEFT, _subject, _leaveSpaceData);
 
     // _fromSpaceId doesn't have role
-    leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
+    _leaveSpaceData = abi.encode(daoSpaceProxy.MEMBER());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _subject, leaveSpaceData);
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_LEFT, _subject, _leaveSpaceData);
 
     // _fromSpaceId doesn't have role
-    leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
+    _leaveSpaceData = abi.encode(daoSpaceProxy.EDITOR());
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _subject, leaveSpaceData);
+    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_LEFT, _subject, _leaveSpaceData);
   }
 
   /// WRITE - REQUEST MEMBERSHIP ///
@@ -1514,19 +1514,19 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsMEMBERSHIP_REQUESTED
   {
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
     daoSpaceProxy.workaround_createProposal(
-      _proposalId, false, 0, randomCallerSpaceId, 1, 1, IDAOSpace.VotingMode.Fast, 1, 1, new IDAOSpace.Action[](0)
+      _proposalId, false, 0, _randomCallerSpaceId, 1, 1, IDAOSpace.VotingMode.Fast, 1, 1, new IDAOSpace.Action[](0)
     );
 
     // it reverts with InvalidProposalId
     vm.expectRevert(IDAOSpace.InvalidProposalId.selector);
 
     daoSpaceProxy.write(
-      randomCallerSpaceId,
+      _randomCallerSpaceId,
       ActionsConstants.MEMBERSHIP_REQUESTED,
       bytes32(0),
-      abi.encode(_proposalId, randomCallerSpaceId)
+      abi.encode(_proposalId, _randomCallerSpaceId)
     );
   }
 
@@ -1535,17 +1535,17 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsMEMBERSHIP_REQUESTED
   {
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
-    daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), randomCallerSpaceId);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
+    daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _randomCallerSpaceId);
 
     // it reverts with FastPathRestricted
     vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
 
     daoSpaceProxy.write(
-      randomCallerSpaceId,
+      _randomCallerSpaceId,
       ActionsConstants.MEMBERSHIP_REQUESTED,
       bytes32(0),
-      abi.encode(_proposalId, randomCallerSpaceId)
+      abi.encode(_proposalId, _randomCallerSpaceId)
     );
   }
 
@@ -1555,82 +1555,82 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsMEMBERSHIP_REQUESTED
   {
     // get voting settings
-    IDAOSpace.VotingSettings memory votingSettings = daoSpaceProxy.votingSettings();
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
 
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
 
     // it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
     });
 
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
 
     // Mock addressToSpaceId for _ping calls (called twice: once for PROPOSAL_CREATED, once for PROPOSAL_SETTINGS_SELECTED)
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_CREATED,
       bytes32(_proposalId),
-      abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, actions)
+      abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, _actions)
     );
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
         vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + votingSettings.duration,
+        vm.getBlockTimestamp() + _votingSettings.duration,
         IDAOSpace.VotingMode.Fast,
-        votingSettings.quorum,
-        votingSettings.fastPathFlatThreshold
+        _votingSettings.quorum,
+        _votingSettings.fastPathFlatThreshold
       )
     );
 
     daoSpaceProxy.write(
-      randomCallerSpaceId,
+      _randomCallerSpaceId,
       ActionsConstants.MEMBERSHIP_REQUESTED,
       bytes32(0),
-      abi.encode(_proposalId, randomCallerSpaceId)
+      abi.encode(_proposalId, _randomCallerSpaceId)
     );
 
     // it creates a fast path proposal to add the new member
-    (, bytes16 creator, IDAOSpace.ProposalParameters memory parameters,, IDAOSpace.Action[] memory actionsA) =
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,, IDAOSpace.Action[] memory _actionsA) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
 
     // it increments the proposal version
     assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
 
     // it sets the proposal creator to _fromSpaceId
-    assertEq(creator, randomCallerSpaceId);
+    assertEq(_creator, _randomCallerSpaceId);
 
     // it sets the proposal start date to block.timestamp
-    assertEq(parameters.startDate, vm.getBlockTimestamp());
+    assertEq(_parameters.startDate, vm.getBlockTimestamp());
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
 
     // it sets the proposal voting mode
-    assertEq(uint256(parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
+    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
 
     // it sets the proposal support threshold to the slow path percentage threshold
-    assertEq(parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
+    assertEq(_parameters.supportThreshold, _votingSettings.fastPathFlatThreshold);
 
     // it stores the decoded proposal actions
-    assertEq(actionsA.length, 1);
-    assertEq(actionsA[0].to, address(daoSpaceProxy));
-    assertEq(actionsA[0].value, 0);
-    assertEq(actionsA[0].data, abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId)));
+    assertEq(_actionsA.length, 1);
+    assertEq(_actionsA[0].to, address(daoSpaceProxy));
+    assertEq(_actionsA[0].value, 0);
+    assertEq(_actionsA[0].data, abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId)));
   }
 
   /// WRITE - SPACE FAST PATH RESTRICTED ///
@@ -1644,11 +1644,11 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsSPACE_FAST_PATH_RESTRICTED
   {
-    bytes memory flagData = abi.encode(_getSpaceId(_randomCaller));
+    bytes memory _flagData = abi.encode(_getSpaceId(_randomCaller));
 
     // it reverts with InvalidFromSpace
     vm.expectRevert(IDAOSpace.InvalidFromSpace.selector);
-    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _subject, flagData);
+    daoSpaceProxy.write(_initialMemberSpaceId, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _subject, _flagData);
   }
 
   function test_Write_When_restrictSpaceParamsAreValid(bytes32 _subject)
@@ -1659,8 +1659,8 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
 
     // initial editor flags themselves
-    bytes memory flagData = abi.encode(_getSpaceId(_randomCaller));
-    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _subject, flagData);
+    bytes memory _flagData = abi.encode(_getSpaceId(_randomCaller));
+    daoSpaceProxy.write(_initialEditorSpaceId, ActionsConstants.SPACE_FAST_PATH_RESTRICTED, _subject, _flagData);
 
     // it flags the editor from using the fast path
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
@@ -1717,8 +1717,8 @@ contract UnitDAOSpace is TestHelper {
 
     // it reverts with VerifyDisabled
     vm.expectRevert(IDAOSpace.VerifyDisabled.selector);
-    bytes16 toSpaceId = _getSpaceId(_to);
-    daoSpaceProxy.verify(_sender, toSpaceId, _action, _subject, _data, _signature);
+    bytes16 _toSpaceId = _getSpaceId(_to);
+    daoSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
   }
 
   /// ADD EDITOR ///
@@ -1740,17 +1740,17 @@ contract UnitDAOSpace is TestHelper {
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId));
 
-    uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
-    assertEq(totalEditorsBefore, 1);
+    uint256 _totalEditorsBefore = daoSpaceProxy.totalEditors();
+    assertEq(_totalEditorsBefore, 1);
 
     _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _getSpaceId(address(daoSpaceProxy)));
 
     // it calls enter on the spaceRegistry with the EDITOR_ADDED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
       bytes32(_newEditorSpaceId),
       ''
@@ -1758,7 +1758,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.addEditor(_newEditorSpaceId);
 
     // it increments totalEditors
-    assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore + 1);
+    assertEq(daoSpaceProxy.totalEditors(), _totalEditorsBefore + 1);
 
     // it grants _newEditor the EDITOR role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newEditorSpaceId));
@@ -1832,15 +1832,15 @@ contract UnitDAOSpace is TestHelper {
 
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
-    uint256 totalEditorsBefore = daoSpaceProxy.totalEditors();
-    assertEq(totalEditorsBefore, 1);
+    uint256 _totalEditorsBefore = daoSpaceProxy.totalEditors();
+    assertEq(_totalEditorsBefore, 1);
 
     // it calls enter on the spaceRegistry with the EDITOR_REMOVED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_REMOVED,
       bytes32(_initialEditorSpaceId),
       ''
@@ -1848,7 +1848,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.removeEditor(_initialEditorSpaceId);
 
     // it decrements totalEditors
-    assertEq(daoSpaceProxy.totalEditors(), totalEditorsBefore - 1);
+    assertEq(daoSpaceProxy.totalEditors(), _totalEditorsBefore - 1);
 
     // it removes the EDITOR role from _oldEditor
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
@@ -1878,11 +1878,11 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.MEMBER_ADDED,
       bytes32(_newMemberSpaceId),
       ''
@@ -1918,11 +1918,11 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
     // it calls enter on the spaceRegistry with the MEMBER_REMOVED action
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.MEMBER_REMOVED,
       bytes32(_initialMemberSpaceId),
       ''
@@ -1950,14 +1950,14 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller));
 
     // it fetches the daoSpaceId from the spaceRegistry
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
     _mockEnter(
       _spaceRegistry,
-      daoSpaceProxySpaceId,
-      daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
       ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED,
       bytes32(_getSpaceId(_randomCaller)),
       ''
@@ -1983,11 +1983,11 @@ contract UnitDAOSpace is TestHelper {
 
   function test_Ping_WhenCalledByDAO(bytes32 _action, bytes32 _subject, bytes calldata _data) external whenCalledByDAO {
     // it fetches the daoSpaceId from the spaceRegistry
-    bytes16 daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), daoSpaceProxySpaceId);
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
 
     // it calls enter on the spaceRegistry with the input variables passed
-    _mockEnter(_spaceRegistry, daoSpaceProxySpaceId, daoSpaceProxySpaceId, _action, _subject, _data);
+    _mockEnter(_spaceRegistry, _daoSpaceProxySpaceId, _daoSpaceProxySpaceId, _action, _subject, _data);
     daoSpaceProxy.ping(_action, _subject, _data);
   }
 
@@ -2399,72 +2399,72 @@ contract UnitDAOSpace is TestHelper {
     );
   }
 
-  function _createSlowPathProposalToAddEditor() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Slow;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
-    actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (randomCallerSpaceId))
+  function _createSlowPathProposalToAddEditor() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Slow;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
+    _actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCallerSpaceId))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
   /// @dev valid proposal because action is fast path valid
-  function _createFastPathProposalToAddMember() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
-    actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
+  function _createFastPathProposalToAddMember() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
+    _actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
   /// @dev invalid proposal because it attempts to perform two actions
-  function _createFastPathProposalToAddTwoMembers() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](2);
-    bytes16 randomCallerSpaceId = _getSpaceId(_randomCaller);
-    actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
+  function _createFastPathProposalToAddTwoMembers() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
+    bytes16 _randomCallerSpaceId = _getSpaceId(_randomCaller);
+    _actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
     });
-    actions[1] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (randomCallerSpaceId))
+    _actions[1] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
   /// @dev invalid proposal because the action is not fast path valid
-  function _createFastPathProposalToAddEditor() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+  function _createFastPathProposalToAddEditor() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
   /// @dev invalid target because the action attempts to write in another contract
-  function _createFastPathProposalToAddMemberOnAnotherContract() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+  function _createFastPathProposalToAddMemberOnAnotherContract() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller)))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
   /// @dev invalid funds transfer because the action entails a funds transfer
-  function _createFastPathProposalToAddMemberAndMoveValue() internal view returns (bytes memory) {
-    IDAOSpace.VotingMode votingMode = IDAOSpace.VotingMode.Fast;
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
+  function _createFastPathProposalToAddMemberAndMoveValue() internal view returns (bytes memory _proposalData) {
+    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 1, data: abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller)))
     });
-    return abi.encode(_proposalId, votingMode, actions);
+    return abi.encode(_proposalId, _votingMode, _actions);
   }
 
-  function _createVoteForProposal(IDAOSpace.VoteOption _votingOption) internal view returns (bytes memory) {
+  function _createVoteForProposal(IDAOSpace.VoteOption _votingOption) internal view returns (bytes memory _voteData) {
     return abi.encode(_proposalId, _votingOption);
   }
 

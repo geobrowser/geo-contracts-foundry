@@ -22,16 +22,16 @@ contract HandlerDAOSpace is BaseHandler {
   function handler_daoSpace_addEditor(uint256 _daoSpaceSeed, uint256 _editorSeed) external {
     if (!_hasActors()) return;
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    address newEditor = eoaActors[bound(_editorSeed, 0, eoaActors.length - 1)];
-    bytes16 newEditorSpaceId = spaceRegistry.addressToSpaceId(newEditor);
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    address _newEditor = eoaActors[bound(_editorSeed, 0, eoaActors.length - 1)];
+    bytes16 _newEditorSpaceId = spaceRegistry.addressToSpaceId(_newEditor);
 
-    vm.prank(daoSpace);
-    try DAOSpace(daoSpace).addEditor(newEditorSpaceId) {
-      ghost_editorsAdded[daoSpace]++;
-      if (!ghost_isEditor[daoSpace][newEditor]) {
-        ghost_daoEditors[daoSpace].push(newEditor);
-        ghost_isEditor[daoSpace][newEditor] = true;
+    vm.prank(_daoSpace);
+    try DAOSpace(_daoSpace).addEditor(_newEditorSpaceId) {
+      ghost_editorsAdded[_daoSpace]++;
+      if (!ghost_isEditor[_daoSpace][_newEditor]) {
+        ghost_daoEditors[_daoSpace].push(_newEditor);
+        ghost_isEditor[_daoSpace][_newEditor] = true;
       }
       lastTxSucceeded = true;
     } catch {
@@ -42,17 +42,17 @@ contract HandlerDAOSpace is BaseHandler {
   function handler_daoSpace_removeEditor(uint256 _daoSpaceSeed, uint256 _editorSeed) external {
     if (!_hasActors()) return;
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    address editorToRemove = eoaActors[bound(_editorSeed, 0, eoaActors.length - 1)];
-    bytes16 editorSpaceId = spaceRegistry.addressToSpaceId(editorToRemove);
-    DAOSpace dao = DAOSpace(daoSpace);
-    bool wasEditor = dao.hasRole(dao.EDITOR(), editorSpaceId);
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    address _editorToRemove = eoaActors[bound(_editorSeed, 0, eoaActors.length - 1)];
+    bytes16 _editorSpaceId = spaceRegistry.addressToSpaceId(_editorToRemove);
+    DAOSpace _dao = DAOSpace(_daoSpace);
+    bool _wasEditor = _dao.hasRole(_dao.EDITOR(), _editorSpaceId);
 
-    vm.prank(daoSpace);
-    try dao.removeEditor(editorSpaceId) {
-      if (wasEditor) {
-        ghost_editorsRemoved[daoSpace]++;
-        ghost_isEditor[daoSpace][editorToRemove] = false;
+    vm.prank(_daoSpace);
+    try _dao.removeEditor(_editorSpaceId) {
+      if (_wasEditor) {
+        ghost_editorsRemoved[_daoSpace]++;
+        ghost_isEditor[_daoSpace][_editorToRemove] = false;
       }
       lastTxSucceeded = true;
     } catch {
@@ -63,13 +63,13 @@ contract HandlerDAOSpace is BaseHandler {
   function handler_daoSpace_addMember(uint256 _daoSpaceSeed, uint256 _memberSeed) external {
     if (!_hasActors()) return;
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    address newMember = eoaActors[bound(_memberSeed, 0, eoaActors.length - 1)];
-    bytes16 newMemberSpaceId = spaceRegistry.addressToSpaceId(newMember);
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    address _newMember = eoaActors[bound(_memberSeed, 0, eoaActors.length - 1)];
+    bytes16 _newMemberSpaceId = spaceRegistry.addressToSpaceId(_newMember);
 
-    vm.prank(daoSpace);
-    try DAOSpace(daoSpace).addMember(newMemberSpaceId) {
-      ghost_membersAdded[daoSpace]++;
+    vm.prank(_daoSpace);
+    try DAOSpace(_daoSpace).addMember(_newMemberSpaceId) {
+      ghost_membersAdded[_daoSpace]++;
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;
@@ -79,16 +79,16 @@ contract HandlerDAOSpace is BaseHandler {
   function handler_daoSpace_removeMember(uint256 _daoSpaceSeed, uint256 _memberSeed) external {
     if (!_hasActors()) return;
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    address memberToRemove = eoaActors[bound(_memberSeed, 0, eoaActors.length - 1)];
-    bytes16 memberSpaceId = spaceRegistry.addressToSpaceId(memberToRemove);
-    DAOSpace dao = DAOSpace(daoSpace);
-    bool wasMember = dao.hasRole(dao.MEMBER(), memberSpaceId);
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    address _memberToRemove = eoaActors[bound(_memberSeed, 0, eoaActors.length - 1)];
+    bytes16 _memberSpaceId = spaceRegistry.addressToSpaceId(_memberToRemove);
+    DAOSpace _dao = DAOSpace(_daoSpace);
+    bool _wasMember = _dao.hasRole(_dao.MEMBER(), _memberSpaceId);
 
-    vm.prank(daoSpace);
-    try dao.removeMember(memberSpaceId) {
-      if (wasMember) {
-        ghost_membersRemoved[daoSpace]++;
+    vm.prank(_daoSpace);
+    try _dao.removeMember(_memberSpaceId) {
+      if (_wasMember) {
+        ghost_membersRemoved[_daoSpace]++;
       }
       lastTxSucceeded = true;
     } catch {
@@ -107,16 +107,16 @@ contract HandlerDAOSpace is BaseHandler {
       return;
     }
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    IDAOSpace.VotingSettings memory newSettings = IDAOSpace.VotingSettings({
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    IDAOSpace.VotingSettings memory _newSettings = IDAOSpace.VotingSettings({
       slowPathPercentageThreshold: bound(_thresholdSeed, 0, 2e6),
       fastPathFlatThreshold: bound(_flatThresholdSeed, 0, 100),
       quorum: bound(_quorumSeed, 0, 100),
       duration: bound(_quorumSeed, 0, 30 days)
     });
 
-    vm.prank(daoSpace);
-    try DAOSpace(daoSpace).updateVotingSettings(newSettings) {
+    vm.prank(_daoSpace);
+    try DAOSpace(_daoSpace).updateVotingSettings(_newSettings) {
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;
@@ -129,27 +129,28 @@ contract HandlerDAOSpace is BaseHandler {
       return;
     }
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    bytes16 daoSpaceId = spaceRegistry.addressToSpaceId(daoSpace);
-    bytes16 senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
-    bytes16 proposalId = bytes16(keccak256(abi.encodePacked(daoSpace, ghost_proposalCounter++)));
-    IDAOSpace.VotingMode votingMode = (_votingModeSeed % 2 == 0) ? IDAOSpace.VotingMode.Slow : IDAOSpace.VotingMode.Fast;
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    bytes16 _daoSpaceId = spaceRegistry.addressToSpaceId(_daoSpace);
+    bytes16 _senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
+    bytes16 _proposalId = bytes16(keccak256(abi.encodePacked(_daoSpace, ghost_proposalCounter++)));
+    IDAOSpace.VotingMode _votingMode =
+      (_votingModeSeed % 2 == 0) ? IDAOSpace.VotingMode.Slow : IDAOSpace.VotingMode.Fast;
 
-    IDAOSpace.Action[] memory actions = new IDAOSpace.Action[](1);
-    actions[0] = IDAOSpace.Action({
-      to: daoSpace, value: 0, data: abi.encodeCall(IDAOSpace.addMember, (bytes16(0x12340000000000000000000000000000)))
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: _daoSpace, value: 0, data: abi.encodeCall(IDAOSpace.addMember, (bytes16(0x12340000000000000000000000000000)))
     });
 
     vm.prank(msg.sender);
     try spaceRegistry.enter(
-      senderSpaceId,
-      daoSpaceId,
+      _senderSpaceId,
+      _daoSpaceId,
       ActionsConstants.PROPOSAL_CREATED,
       bytes32(0),
-      abi.encode(proposalId, votingMode, actions),
+      abi.encode(_proposalId, _votingMode, _actions),
       ''
     ) {
-      ghost_activeProposals[daoSpace].push(proposalId);
+      ghost_activeProposals[_daoSpace].push(_proposalId);
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;
@@ -162,30 +163,30 @@ contract HandlerDAOSpace is BaseHandler {
       return;
     }
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    if (ghost_activeProposals[daoSpace].length == 0) {
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    if (ghost_activeProposals[_daoSpace].length == 0) {
       lastTxSucceeded = false;
       return;
     }
 
-    bytes16 daoSpaceId = spaceRegistry.addressToSpaceId(daoSpace);
-    bytes16 senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
-    bytes16 proposalId =
-      ghost_activeProposals[daoSpace][bound(_proposalSeed, 0, ghost_activeProposals[daoSpace].length - 1)];
-    IDAOSpace.VoteOption voteOption = IDAOSpace.VoteOption(bound(_voteOptionSeed, 1, 3));
-    IDAOSpace.VoteOption previousVote = DAOSpace(daoSpace).getLatestProposalVote(proposalId, senderSpaceId);
+    bytes16 _daoSpaceId = spaceRegistry.addressToSpaceId(_daoSpace);
+    bytes16 _senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
+    bytes16 _proposalId =
+      ghost_activeProposals[_daoSpace][bound(_proposalSeed, 0, ghost_activeProposals[_daoSpace].length - 1)];
+    IDAOSpace.VoteOption _voteOption = IDAOSpace.VoteOption(bound(_voteOptionSeed, 1, 3));
+    IDAOSpace.VoteOption _previousVote = DAOSpace(_daoSpace).getLatestProposalVote(_proposalId, _senderSpaceId);
 
     vm.prank(msg.sender);
     try spaceRegistry.enter(
-      senderSpaceId,
-      daoSpaceId,
+      _senderSpaceId,
+      _daoSpaceId,
       ActionsConstants.PROPOSAL_VOTED,
-      bytes32(proposalId),
-      abi.encode(proposalId, voteOption),
+      bytes32(_proposalId),
+      abi.encode(_proposalId, _voteOption),
       ''
     ) {
-      _updateVoteTally(proposalId, previousVote, voteOption);
-      ghost_hasVoted[proposalId][msg.sender] = true;
+      _updateVoteTally(_proposalId, _previousVote, _voteOption);
+      ghost_hasVoted[_proposalId][msg.sender] = true;
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;
@@ -198,22 +199,22 @@ contract HandlerDAOSpace is BaseHandler {
       return;
     }
 
-    address daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
-    if (ghost_activeProposals[daoSpace].length == 0) {
+    address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
+    if (ghost_activeProposals[_daoSpace].length == 0) {
       lastTxSucceeded = false;
       return;
     }
 
-    bytes16 daoSpaceId = spaceRegistry.addressToSpaceId(daoSpace);
-    bytes16 senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
-    bytes16 proposalId =
-      ghost_activeProposals[daoSpace][bound(_proposalSeed, 0, ghost_activeProposals[daoSpace].length - 1)];
+    bytes16 _daoSpaceId = spaceRegistry.addressToSpaceId(_daoSpace);
+    bytes16 _senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
+    bytes16 _proposalId =
+      ghost_activeProposals[_daoSpace][bound(_proposalSeed, 0, ghost_activeProposals[_daoSpace].length - 1)];
 
     vm.prank(msg.sender);
     try spaceRegistry.enter(
-      senderSpaceId, daoSpaceId, ActionsConstants.PROPOSAL_EXECUTED, bytes32(proposalId), abi.encode(proposalId), ''
+      _senderSpaceId, _daoSpaceId, ActionsConstants.PROPOSAL_EXECUTED, bytes32(_proposalId), abi.encode(_proposalId), ''
     ) {
-      ghost_proposalExecuted[proposalId] = true;
+      ghost_proposalExecuted[_proposalId] = true;
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;

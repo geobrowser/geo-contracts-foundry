@@ -12,9 +12,9 @@ import {HandlerSpaceRegistry} from 'test/invariants/fuzz/handlers/HandlerSpaceRe
 import {HandlerVerifierSpace} from 'test/invariants/fuzz/handlers/HandlerVerifierSpace.t.sol';
 
 contract Setup is Test, DeployGEOBrowser {
-  uint256 internal constant NUM_EOA_ACTORS = 3;
-  uint256 internal constant NUM_DAO_SPACE_ACTORS = 2;
-  uint256 internal constant NUM_VERIFIER_SPACE_ACTORS = 2;
+  uint256 internal constant _NUM_EOA_ACTORS = 3;
+  uint256 internal constant _NUM_DAO_SPACE_ACTORS = 2;
+  uint256 internal constant _NUM_VERIFIER_SPACE_ACTORS = 2;
 
   HandlerBlockchain public handlerBlockchain;
   HandlerSpaceRegistry public handlerSpaceRegistry;
@@ -50,35 +50,35 @@ contract Setup is Test, DeployGEOBrowser {
   }
 
   function _createEOAActors() internal {
-    eoaActors = new address[](NUM_EOA_ACTORS);
-    for (uint256 i = 0; i < NUM_EOA_ACTORS; i++) {
-      eoaActors[i] = makeAddr(string.concat('eoa', vm.toString(i)));
+    eoaActors = new address[](_NUM_EOA_ACTORS);
+    for (uint256 _i = 0; _i < _NUM_EOA_ACTORS; _i++) {
+      eoaActors[_i] = makeAddr(string.concat('eoa', vm.toString(_i)));
     }
   }
 
   function _createDAOSpaceActors() internal {
     // Initial editors must already be registered spaces, so we pass empty arrays
-    daoSpaceActors = new address[](NUM_DAO_SPACE_ACTORS);
-    for (uint256 i = 0; i < NUM_DAO_SPACE_ACTORS; i++) {
-      daoSpaceActors[i] = daoSpaceFactoryProxy.createDAOSpaceProxy(
+    daoSpaceActors = new address[](_NUM_DAO_SPACE_ACTORS);
+    for (uint256 _i = 0; _i < _NUM_DAO_SPACE_ACTORS; _i++) {
+      daoSpaceActors[_i] = daoSpaceFactoryProxy.createDAOSpaceProxy(
         _defaultVotingSettings, new bytes16[](0), new bytes16[](0), '', '', bytes16(0)
       );
     }
   }
 
   function _createVerifierSpaceActors() internal {
-    verifierSpaceActors = new address[](NUM_VERIFIER_SPACE_ACTORS);
-    verifierSpaceOwnerKeys = new uint256[](NUM_VERIFIER_SPACE_ACTORS);
-    for (uint256 i = 0; i < NUM_VERIFIER_SPACE_ACTORS; i++) {
-      (address spaceOwner, uint256 ownerKey) = makeAddrAndKey(string.concat('verifierSpaceOwner', vm.toString(i)));
-      verifierSpaceOwnerKeys[i] = ownerKey;
-      verifierSpaceActors[i] = verifierSpaceFactoryProxy.createVerifierSpaceProxy(spaceOwner);
+    verifierSpaceActors = new address[](_NUM_VERIFIER_SPACE_ACTORS);
+    verifierSpaceOwnerKeys = new uint256[](_NUM_VERIFIER_SPACE_ACTORS);
+    for (uint256 _i = 0; _i < _NUM_VERIFIER_SPACE_ACTORS; _i++) {
+      (address _spaceOwner, uint256 _ownerKey) = makeAddrAndKey(string.concat('verifierSpaceOwner', vm.toString(_i)));
+      verifierSpaceOwnerKeys[_i] = _ownerKey;
+      verifierSpaceActors[_i] = verifierSpaceFactoryProxy.createVerifierSpaceProxy(_spaceOwner);
     }
   }
 
   function _configureTargets() internal {
-    for (uint256 i = 0; i < eoaActors.length; i++) {
-      targetSender(eoaActors[i]);
+    for (uint256 _i = 0; _i < eoaActors.length; _i++) {
+      targetSender(eoaActors[_i]);
     }
 
     handlerBlockchain = new HandlerBlockchain();

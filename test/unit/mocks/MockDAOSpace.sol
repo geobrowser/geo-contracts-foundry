@@ -30,8 +30,8 @@ contract MockDAOSpace is DAOSpace {
     proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.supportThreshold = _supportThreshold;
     proposal_.parameters.quorum = _quorum;
-    for (uint256 i; i < _actions.length; i++) {
-      proposal_.actions.push(_actions[i]);
+    for (uint256 _i; _i < _actions.length; _i++) {
+      proposal_.actions.push(_actions[_i]);
     }
   }
 

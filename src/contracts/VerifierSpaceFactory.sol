@@ -35,6 +35,7 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
 
   /// @inheritdoc IVerifierSpaceFactory
   function initialize(bytes calldata _initializerData) external virtual initializer {
+    // Decode initializer data
     (ISpaceRegistry _spaceRegistry, address _owner, address _verifierSpaceImplementation) =
       abi.decode(_initializerData, (ISpaceRegistry, address, address));
 
@@ -48,11 +49,9 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   /// @inheritdoc IVerifierSpaceFactory
   function createVerifierSpaceProxy(address _owner) external virtual returns (address _newVerifierSpaceProxy) {
     VerifierSpaceFactoryStorage storage $ = _getVerifierSpaceFactoryStorage();
-
     bytes memory _initializerData = abi.encode($.spaceRegistry, _owner);
     _newVerifierSpaceProxy =
       address(new BeaconProxy($.verifierSpaceBeacon, abi.encodeCall(IVerifierSpace.initialize, (_initializerData))));
-
     $.proxyIsChildOfFactory[_newVerifierSpaceProxy] = true;
   }
 
@@ -90,7 +89,7 @@ contract VerifierSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IVerifierS
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+  function _authorizeUpgrade(address _newImplementation) internal virtual override onlyOwner {}
 
   /**
    * @notice Returns the verifier space factory contract storage
