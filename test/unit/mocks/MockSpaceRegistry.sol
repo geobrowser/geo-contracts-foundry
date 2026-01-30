@@ -9,23 +9,23 @@ import {SpaceRegistry} from 'contracts/SpaceRegistry.sol';
  */
 contract MockSpaceRegistry is SpaceRegistry {
   function workaround_setSpaceIdToAddress(bytes16 _spaceId, address _account) external {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.spaceIdToAddress[_spaceId] = _account;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.spaceIdToAddress[_spaceId] = _account;
   }
 
   function workaround_setSpaceIdToProposedAddress(bytes16 _spaceId, address _account) external {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.spaceIdToProposedAddress[_spaceId] = _account;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.spaceIdToProposedAddress[_spaceId] = _account;
   }
 
   function workaround_setAddressToSpaceId(address _account, bytes16 _spaceId) external {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.addressToSpaceId[_account] = _spaceId;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.addressToSpaceId[_account] = _spaceId;
   }
 
   function workaround_setArchivedSpaceIds(bytes16 _spaceId, bool _isArchived) external {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.archivedSpaceIds[_spaceId] = _isArchived;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.archivedSpaceIds[_spaceId] = _isArchived;
   }
 
   function exposed__authorizeUpgrade(address _newImplementation) external {
@@ -37,7 +37,7 @@ contract MockSpaceRegistry is SpaceRegistry {
   }
 
   function exposed__spaceIdNonce() external view returns (uint256 __spaceIdNonce) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    __spaceIdNonce = $._spaceIdNonce;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    __spaceIdNonce = $_._spaceIdNonce;
   }
 }

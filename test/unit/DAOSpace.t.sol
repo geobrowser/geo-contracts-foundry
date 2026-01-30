@@ -434,9 +434,6 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsPROPOSAL_CREATED
     whenTheVotingModeIsSlow
   {
-    // get voting settings
-    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
-
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
@@ -1705,19 +1702,17 @@ contract UnitDAOSpace is TestHelper {
   /// VERIFY ///
 
   function test_Verify_WhenCalled(
+    address _caller,
     address _sender,
-    address _from,
-    address _to,
     bytes32 _action,
     bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
   ) external {
-    vm.prank(_from);
+    vm.prank(_caller);
 
     // it reverts with VerifyDisabled
     vm.expectRevert(IDAOSpace.VerifyDisabled.selector);
-    bytes16 _toSpaceId = _getSpaceId(_to);
     daoSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
   }
 

@@ -41,9 +41,9 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
 
     __Ownable_init(_owner);
 
-    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
-    $.daoSpaceBeacon = address(new UpgradeableBeacon(_daoSpaceImplementation, _owner));
-    $.spaceRegistry = _spaceRegistry;
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
+    $_.daoSpaceBeacon = address(new UpgradeableBeacon(_daoSpaceImplementation, _owner));
+    $_.spaceRegistry = _spaceRegistry;
   }
 
   /// @inheritdoc IDAOSpaceFactory
@@ -55,34 +55,34 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
     bytes calldata _initialEditsMetadata,
     bytes16 _initialTopicId
   ) external virtual returns (address _newDAOSpaceProxy) {
-    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
     bytes memory _publishEditsData = (_initialEditsContentUri.length != 0 || _initialEditsMetadata.length != 0)
       ? abi.encode(_initialEditsContentUri, _initialEditsMetadata)
       : bytes('');
     bytes memory _initializerData = abi.encode(
-      $.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId
+      $_.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId
     );
     _newDAOSpaceProxy =
-      address(new BeaconProxy($.daoSpaceBeacon, abi.encodeCall(IDAOSpace.initialize, (_initializerData))));
-    $.proxyIsChildOfFactory[_newDAOSpaceProxy] = true;
+      address(new BeaconProxy($_.daoSpaceBeacon, abi.encodeCall(IDAOSpace.initialize, (_initializerData))));
+    $_.proxyIsChildOfFactory[_newDAOSpaceProxy] = true;
   }
 
   /// @inheritdoc IDAOSpaceFactory
   function daoSpaceBeacon() public view returns (address _daoSpaceBeacon) {
-    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
-    _daoSpaceBeacon = $.daoSpaceBeacon;
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
+    _daoSpaceBeacon = $_.daoSpaceBeacon;
   }
 
   /// @inheritdoc IDAOSpaceFactory
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
-    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
-    _spaceRegistry = $.spaceRegistry;
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
+    _spaceRegistry = $_.spaceRegistry;
   }
 
   /// @inheritdoc IDAOSpaceFactory
   function proxyIsChildOfFactory(address _proxy) public view returns (bool _isChild) {
-    DAOSpaceFactoryStorage storage $ = _getDAOSpaceFactoryStorage();
-    _isChild = $.proxyIsChildOfFactory[_proxy];
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
+    _isChild = $_.proxyIsChildOfFactory[_proxy];
   }
 
   /// @inheritdoc ISemver
@@ -105,12 +105,12 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
 
   /**
    * @notice Returns the DAO space factory contract storage
-   * @return $ The storage of the DAO space factory contract
+   * @return $_ The storage of the DAO space factory contract
    * @custom:storage-location erc7201:geo.storage.DAOSpaceFactory
    */
-  function _getDAOSpaceFactoryStorage() internal pure returns (DAOSpaceFactoryStorage storage $) {
+  function _getDAOSpaceFactoryStorage() internal pure returns (DAOSpaceFactoryStorage storage $_) {
     assembly {
-      $.slot := _DAO_SPACE_FACTORY_STORAGE_LOCATION
+      $_.slot := _DAO_SPACE_FACTORY_STORAGE_LOCATION
     }
   }
 }

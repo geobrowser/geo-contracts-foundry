@@ -37,15 +37,15 @@ contract MockDAOSpaceV2 is DAOSpace {
     uint256 _initialTotalMembers = abi.decode(_initializerData, (uint256));
 
     // Set the initial total members
-    DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
-    $2.totalMembers = _initialTotalMembers;
+    DAOSpaceV2Storage storage $2_ = _getDAOSpaceV2Storage();
+    $2_.totalMembers = _initialTotalMembers;
 
     // Set the initial fast path actions
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.actionIsFastPathValid[DAOSpace.addMember.selector] = false;
-    $.actionIsFastPathValid[DAOSpace.removeMember.selector] = false;
-    $.actionIsFastPathValid[DAOSpace.addEditor.selector] = true;
-    $.actionIsFastPathValid[DAOSpace.removeEditor.selector] = true;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.actionIsFastPathValid[DAOSpace.addMember.selector] = false;
+    $_.actionIsFastPathValid[DAOSpace.removeMember.selector] = false;
+    $_.actionIsFastPathValid[DAOSpace.addEditor.selector] = true;
+    $_.actionIsFastPathValid[DAOSpace.removeEditor.selector] = true;
 
     // Ping the registry with the updated type
     _ping(ActionsConstants.SPACE_TYPE_DECLARED, keccak256(bytes(name())), abi.encode(version()));
@@ -56,8 +56,8 @@ contract MockDAOSpaceV2 is DAOSpace {
    * @return _totalMembers The total number of members
    */
   function totalMembers() public view returns (uint256 _totalMembers) {
-    DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
-    _totalMembers = $2.totalMembers;
+    DAOSpaceV2Storage storage $2_ = _getDAOSpaceV2Storage();
+    _totalMembers = $2_.totalMembers;
   }
 
   /// @inheritdoc ISemver
@@ -69,26 +69,26 @@ contract MockDAOSpaceV2 is DAOSpace {
   function _addMember(bytes16 _newMemberSpaceId) internal virtual override {
     DAOSpace._addMember(_newMemberSpaceId);
     // Update counter
-    DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
-    $2.totalMembers++;
+    DAOSpaceV2Storage storage $2_ = _getDAOSpaceV2Storage();
+    $2_.totalMembers++;
   }
 
   /// @inheritdoc DAOSpace
   function _removeMember(bytes16 _oldMemberSpaceId) internal virtual override {
     DAOSpace._removeMember(_oldMemberSpaceId);
     // Update counter
-    DAOSpaceV2Storage storage $2 = _getDAOSpaceV2Storage();
-    $2.totalMembers--;
+    DAOSpaceV2Storage storage $2_ = _getDAOSpaceV2Storage();
+    $2_.totalMembers--;
   }
 
   /**
    * @notice Returns the DAO space v2 contract storage
-   * @return $2 The storage of the DAO space v2 contract
+   * @return $2_ The storage of the DAO space v2 contract
    * @custom:storage-location erc7201:geo.storage.DAOSpaceV2
    */
-  function _getDAOSpaceV2Storage() internal pure returns (DAOSpaceV2Storage storage $2) {
+  function _getDAOSpaceV2Storage() internal pure returns (DAOSpaceV2Storage storage $2_) {
     assembly {
-      $2.slot := _DAO_SPACE_V2_STORAGE_LOCATION
+      $2_.slot := _DAO_SPACE_V2_STORAGE_LOCATION
     }
   }
 }

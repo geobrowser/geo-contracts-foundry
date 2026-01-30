@@ -9,8 +9,8 @@ import {VerifierSpace} from 'contracts/VerifierSpace.sol';
  */
 contract MockVerifierSpace is VerifierSpace {
   function workaround_setValidWriters(bytes16 _spaceId, bool _valid) external {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.validWriters[_spaceId] = _valid;
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.validWriters[_spaceId] = _valid;
   }
 
   function exposed__EIP712NameHash() external view returns (bytes32 _nameHash) {

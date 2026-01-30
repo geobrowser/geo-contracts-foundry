@@ -23,8 +23,8 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
 
   /// @inheritdoc ISpaceAccessControl
   function hasRole(bytes32 _role, bytes16 _spaceId) public view virtual returns (bool _hasRole) {
-    SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    return $.hasRole[_role][_spaceId];
+    SpaceAccessControlStorage storage $_ = _getSpaceAccessControlStorage();
+    return $_.hasRole[_role][_spaceId];
   }
 
   /**
@@ -33,8 +33,8 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    * @param _spaceId The space id to receive the new role
    */
   function _grantRole(bytes32 _role, bytes16 _spaceId) internal virtual {
-    SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    $.hasRole[_role][_spaceId] = true;
+    SpaceAccessControlStorage storage $_ = _getSpaceAccessControlStorage();
+    $_.hasRole[_role][_spaceId] = true;
   }
 
   /**
@@ -43,18 +43,18 @@ abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
    * @param _spaceId The space id to have their role revoked
    */
   function _revokeRole(bytes32 _role, bytes16 _spaceId) internal virtual {
-    SpaceAccessControlStorage storage $ = _getSpaceAccessControlStorage();
-    $.hasRole[_role][_spaceId] = false;
+    SpaceAccessControlStorage storage $_ = _getSpaceAccessControlStorage();
+    $_.hasRole[_role][_spaceId] = false;
   }
 
   /**
    * @notice Returns the Space Access Control contract storage
-   * @return $ The storage of the Space Access Control contract
+   * @return $_ The storage of the Space Access Control contract
    * @custom:storage-location erc7201:geo.storage.SpaceAccessControl
    */
-  function _getSpaceAccessControlStorage() internal pure returns (SpaceAccessControlStorage storage $) {
+  function _getSpaceAccessControlStorage() internal pure returns (SpaceAccessControlStorage storage $_) {
     assembly {
-      $.slot := _SPACE_ACCESS_CONTROL_STORAGE_LOCATION
+      $_.slot := _SPACE_ACCESS_CONTROL_STORAGE_LOCATION
     }
   }
 }
