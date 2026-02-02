@@ -7,8 +7,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ARBITRUM_TESTNET_RPC: ${{ secrets.ARBITRUM_TESTNET_RPC }}
-  GEO_TESTNET_RPC: ${{ secrets.GEO_TESTNET_RPC }}
+  BASE_RPC: ${{ secrets.BASE_RPC }}
+  GEO_RPC: ${{ secrets.GEO_RPC }}
 
 jobs:
   unit-tests:

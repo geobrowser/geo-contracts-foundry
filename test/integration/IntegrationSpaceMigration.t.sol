@@ -31,7 +31,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
   function setUp() public override {
     IntegrationBase.setUp();
-    vm.selectFork(_geoTestnetForkId);
+    vm.selectFork(_geoForkId);
 
     vm.prank(eoaSpaceBis);
     spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
@@ -58,7 +58,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
     _verifierSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyBis));
 
     migratableVerifierSpaceImplementation = new MockMigratableVerifierSpace();
-    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_MULTISIG_COUNCIL);
     verifierSpaceBeacon.upgradeTo(address(migratableVerifierSpaceImplementation));
   }
 

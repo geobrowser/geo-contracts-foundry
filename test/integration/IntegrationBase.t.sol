@@ -9,11 +9,11 @@ import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {DeployGEOBrowser} from 'script/DeployGEOBrowser.s.sol';
 
 abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
-  uint256 internal constant _ARBITRUM_TESTNET_FORK_BLOCK = 200_000_000;
-  uint256 internal constant _GEO_TESTNET_FORK_BLOCK = 500;
+  uint256 internal constant _BASE_FORK_BLOCK = 41_000_000;
+  uint256 internal constant _GEO_FORK_BLOCK = 500;
 
-  uint256 internal _arbitrumTestnetForkId;
-  uint256 internal _geoTestnetForkId;
+  uint256 internal _baseForkId;
+  uint256 internal _geoForkId;
 
   // Spaces
   address public eoaSpace;
@@ -37,16 +37,16 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   bytes16 internal _initialTopicId;
 
   function setUp() public virtual {
-    _arbitrumTestnetForkId = vm.createFork(vm.rpcUrl('arbitrum_testnet'), _ARBITRUM_TESTNET_FORK_BLOCK);
-    _geoTestnetForkId = vm.createFork(vm.rpcUrl('geo_testnet'), _GEO_TESTNET_FORK_BLOCK);
+    _baseForkId = vm.createFork(vm.rpcUrl('base'), _BASE_FORK_BLOCK);
+    _geoForkId = vm.createFork(vm.rpcUrl('geo'), _GEO_FORK_BLOCK);
 
     (eoaSpace, _eoaSpacePrivateKey) = makeAddrAndKey('eoaSpace');
 
-    vm.selectFork(_arbitrumTestnetForkId);
+    vm.selectFork(_baseForkId);
     // Deploy GEO incentives contracts
     _deployGEOIncentives();
 
-    vm.selectFork(_geoTestnetForkId);
+    vm.selectFork(_geoForkId);
     // Deploy GEO browser contracts
     _deployGEOBrowser();
     // Register EOA, DAO, and verifier spaces
