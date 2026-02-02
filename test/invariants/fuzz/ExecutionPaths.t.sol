@@ -14,7 +14,7 @@ import {Setup} from 'test/invariants/fuzz/Setup.t.sol';
 contract ExecutionPaths is Setup {
   function test_setup() public view {
     assertGt(address(spaceRegistryProxy).code.length, 0);
-    assertEq(spaceRegistryProxy.owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(spaceRegistryProxy.owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
     assertGt(address(handlerSpaceRegistry).code.length, 0);
 
     bytes16 registrySpaceId = spaceRegistryProxy.addressToSpaceId(address(spaceRegistryProxy));

@@ -34,7 +34,7 @@ contract IntegrationUpgradeUUPSImplementation is IntegrationBase {
     assertEq(spaceRegistryImplementation.version(), '1.0.0');
     assertEq(spaceRegistryProxy.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     spaceRegistryProxy.upgradeToAndCall(address(spaceRegistryImplementationBis), '');
 
     assertEq(
@@ -53,7 +53,7 @@ contract IntegrationUpgradeUUPSImplementation is IntegrationBase {
     assertEq(daoSpaceFactoryImplementation.version(), '1.0.0');
     assertEq(daoSpaceFactoryProxy.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     daoSpaceFactoryProxy.upgradeToAndCall(address(daoSpaceFactoryImplementationBis), '');
 
     assertEq(
@@ -72,7 +72,7 @@ contract IntegrationUpgradeUUPSImplementation is IntegrationBase {
     assertEq(verifierSpaceFactoryImplementation.version(), '1.0.0');
     assertEq(verifierSpaceFactoryProxy.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     verifierSpaceFactoryProxy.upgradeToAndCall(address(verifierSpaceFactoryImplementationBis), '');
 
     assertEq(

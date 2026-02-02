@@ -37,7 +37,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
       ),
       address(deployGEOBrowser.spaceRegistryImplementation())
     );
-    assertEq(deployGEOBrowser.spaceRegistryProxy().owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(deployGEOBrowser.spaceRegistryProxy().owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
 
     // it deploys DAOSpaceFactory implementation
     assertEq(deployGEOBrowser.daoSpaceFactoryImplementation().proxiableUUID(), ERC1967Utils.IMPLEMENTATION_SLOT);
@@ -48,14 +48,14 @@ contract UnitDeployGEOBrowserrun is TestHelper {
       ),
       address(deployGEOBrowser.daoSpaceFactoryImplementation())
     );
-    assertEq(deployGEOBrowser.daoSpaceFactoryProxy().owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(deployGEOBrowser.daoSpaceFactoryProxy().owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
     assertEq(deployGEOBrowser.daoSpaceFactoryProxy().daoSpaceBeacon(), address(deployGEOBrowser.daoSpaceBeacon()));
     assertEq(
       address(deployGEOBrowser.daoSpaceFactoryProxy().spaceRegistry()), address(deployGEOBrowser.spaceRegistryProxy())
     );
     // it deploys DAOSpace beacon
     assertEq(address(deployGEOBrowser.daoSpaceBeacon()).code, type(UpgradeableBeacon).runtimeCode);
-    assertEq(deployGEOBrowser.daoSpaceBeacon().owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(deployGEOBrowser.daoSpaceBeacon().owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
     assertEq(deployGEOBrowser.daoSpaceBeacon().implementation(), address(deployGEOBrowser.daoSpaceImplementation()));
 
     // it deploys VerifierSpaceFactory implementation
@@ -69,7 +69,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
       ),
       address(deployGEOBrowser.verifierSpaceFactoryImplementation())
     );
-    assertEq(deployGEOBrowser.verifierSpaceFactoryProxy().owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(deployGEOBrowser.verifierSpaceFactoryProxy().owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
     assertEq(
       deployGEOBrowser.verifierSpaceFactoryProxy().verifierSpaceBeacon(),
       address(deployGEOBrowser.verifierSpaceBeacon())
@@ -80,7 +80,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
     );
     // it deploys VerifierSpace beacon
     assertEq(address(deployGEOBrowser.verifierSpaceBeacon()).code, type(UpgradeableBeacon).runtimeCode);
-    assertEq(deployGEOBrowser.verifierSpaceBeacon().owner(), Constants.GEO_MULTISIG_COUNCIL);
+    assertEq(deployGEOBrowser.verifierSpaceBeacon().owner(), Constants.GEO_GEO_MULTISIG_COUNCIL);
     assertEq(
       deployGEOBrowser.verifierSpaceBeacon().implementation(), address(deployGEOBrowser.verifierSpaceImplementation())
     );

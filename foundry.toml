@@ -48,4 +48,5 @@ geo = "${GEO_RPC}"
 
 [etherscan]
 base = { key = "${BASESCAN_API_KEY}" }
-geo = { key = "${GEO_API_KEY}" }
+# GEO chain ID; --chain uses this to select the block explorer API key for verification
+80451 = { key = "${GEOSCAN_API_KEY}" }

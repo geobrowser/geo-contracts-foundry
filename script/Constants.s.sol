@@ -2,7 +2,7 @@
 pragma solidity 0.8.30;
 
 // Base
-address constant BASE_MULTISIG_COUNCIL = address(0x100);
+address constant BASE_GEO_MULTISIG_COUNCIL = address(0x100);
 
 // GEO
-address constant GEO_MULTISIG_COUNCIL = address(0x200);
+address constant GEO_GEO_MULTISIG_COUNCIL = address(0x200);

@@ -58,7 +58,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
     _verifierSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyBis));
 
     migratableVerifierSpaceImplementation = new MockMigratableVerifierSpace();
-    vm.prank(Constants.GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     verifierSpaceBeacon.upgradeTo(address(migratableVerifierSpaceImplementation));
   }
 

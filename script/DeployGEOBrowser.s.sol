@@ -41,7 +41,7 @@ contract DeployGEOBrowser is Script {
     spaceRegistryProxy = SpaceRegistry(
       payable(Upgrades.deployUUPSProxy(
           'SpaceRegistry.sol:SpaceRegistry',
-          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_MULTISIG_COUNCIL)))
+          abi.encodeCall(SpaceRegistry.initialize, (abi.encode(Constants.GEO_GEO_MULTISIG_COUNCIL)))
         ))
     );
     spaceRegistryImplementation = SpaceRegistry(Upgrades.getImplementationAddress(address(spaceRegistryProxy)));
@@ -51,7 +51,7 @@ contract DeployGEOBrowser is Script {
           'DAOSpaceFactory.sol:DAOSpaceFactory',
           abi.encodeCall(
             DAOSpaceFactory.initialize,
-            (abi.encode(spaceRegistryProxy, Constants.GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)))
+            (abi.encode(spaceRegistryProxy, Constants.GEO_GEO_MULTISIG_COUNCIL, address(daoSpaceImplementation)))
           )
         ))
     );
@@ -63,7 +63,7 @@ contract DeployGEOBrowser is Script {
           'VerifierSpaceFactory.sol:VerifierSpaceFactory',
           abi.encodeCall(
             VerifierSpaceFactory.initialize,
-            (abi.encode(spaceRegistryProxy, Constants.GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)))
+            (abi.encode(spaceRegistryProxy, Constants.GEO_GEO_MULTISIG_COUNCIL, address(verifierSpaceImplementation)))
           )
         ))
     );
