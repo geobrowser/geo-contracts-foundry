@@ -439,8 +439,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     proposal_.creator = _fromSpaceId;
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
-    proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.quorum = $_.votingSettings.quorum;
+    proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.supportThreshold = _supportThreshold;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
@@ -504,6 +504,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         proposal_.parameters.votingMode = VotingMode.Slow;
         // Update threshold
         proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
+        // Update quorum
+        proposal_.parameters.quorum = $_.votingSettings.quorum;
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;

@@ -105,6 +105,7 @@ UnitDAOSpace::write
 │   │           ├── when the current _fromSpaceId vote equals no
 │   │           │   ├── it updates the proposal voting mode to the slow path
 │   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
+│   │           │   ├── it updates the proposal quorum to votingSettings.quorum
 │   │           │   ├── it updates the proposal start date to block.timestamp
 │   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
 │   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action

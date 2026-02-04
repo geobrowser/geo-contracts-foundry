@@ -1053,6 +1053,7 @@ contract UnitDAOSpace is TestHelper {
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
     assertEq(_parameters.supportThreshold, 1);
+    assertEq(_parameters.quorum, 1);
     assertEq(_parameters.startDate, block.timestamp);
     assertEq(_parameters.lastDate, block.timestamp + 1e5);
 
@@ -1087,6 +1088,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it updates the proposal support threshold to the slow path percentage threshold
     assertEq(_parameters.supportThreshold, _votingSettings.slowPathPercentageThreshold);
+
+    // it updates the proposal quorum to votingSettings.quorum
+    assertEq(_parameters.quorum, _votingSettings.quorum);
 
     // it updates the proposal start date to block.timestamp
     assertEq(_parameters.startDate, block.timestamp);
