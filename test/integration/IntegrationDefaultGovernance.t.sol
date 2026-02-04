@@ -18,7 +18,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
 
   function setUp() public override {
     IntegrationBase.setUp();
-    vm.selectFork(_geoTestnetForkId);
+    vm.selectFork(_geoForkId);
   }
 
   function test_DefaultGovernance_CreateProposals() external {
