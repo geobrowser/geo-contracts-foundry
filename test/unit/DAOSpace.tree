@@ -77,6 +77,8 @@ UnitDAOSpace::write
 │   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal start date equals zero
 │   │   │   └── it reverts with CanNotVote
+│   │   ├── when _proposalVersion is not latestProposalVersion
+│   │   │   └── it reverts with CanNotVote
 │   │   ├── when the block timestamp is greater than the last date 
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the proposal has been executed
