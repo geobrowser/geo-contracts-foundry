@@ -215,7 +215,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     virtual
     returns (bool _isSupportThresholdReached)
   {
-    // REVIEW: Should `isSupportThresholdReached()` support older proposal versions?
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     uint256 _supportThreshold =
       (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
@@ -368,11 +367,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
+    // REVIEW: Why is the spaceId auto-generated but not the proposalId?
 
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
-    // REVIEW: Proposal existence check is not standardized: it uses `startDate` or `creator`
-    //         Also, it could be asserted more directly with `latestProposalVersion`, because versioning always starts with 1
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    uint8 _latestProposalVersion = $_.latestProposalVersion[_proposalId];
+    if (_latestProposalVersion != 0) revert InvalidProposalId();
 
     // Update proposal storage
     uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
@@ -544,7 +543,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Check proposal exists and that only the creator can update it
     if (proposal_.creator != _fromSpaceId) revert InvalidCaller();
-    // REVIEW: Should a proposal be updateable if the support threshold had been reached?
     // May not update an already executed proposal
     if (proposal_.executed) revert InvalidProposalId();
 
@@ -616,13 +614,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
 
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     // Ensure proposal ID is valid
-    if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
+    uint8 _latestProposalVersion = $_.latestProposalVersion[_proposalId];
+    if (_latestProposalVersion != 0) revert InvalidProposalId();
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
 
-    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
     uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
@@ -754,7 +752,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getProposalStorage(_proposalId, _latestProposalVersion);
 
     // Proposal does not exist
-    if (proposal_.parameters.startDate == 0) return false;
+    if (_latestProposalVersion == 0) return false;
     // Vote is not for the current proposal version
     if (_proposalVersion != _latestProposalVersion) return false;
     // The proposal voting period has already ended
@@ -778,10 +776,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool __canExecuteProposal) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
 
-    // Verify that the proposal has not been executed already
-    if (proposal_.executed) return false;
     // Proposal does not exist
-    if (proposal_.parameters.startDate == 0) return false;
+    if (proposal_.creator == bytes16(0)) return false;
+    // The proposal has not been executed already
+    if (proposal_.executed) return false;
     // Support threshold not reached
     if (!isSupportThresholdReached(_proposalId)) return false;
     return true;
