@@ -499,29 +499,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     // Extra fast path logic
     if (proposal_.parameters.votingMode == VotingMode.Fast) {
-      // REVIEW: Should this proposal update increment the proposal version?
       // Fast path to slow path if rejection occurs
       if (_voteOption == VoteOption.No) {
-        // Update voting mode
-        proposal_.parameters.votingMode = VotingMode.Slow;
-        // Update threshold
-        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
-        // Reset duration and block times
-        proposal_.parameters.startDate = block.timestamp;
-        proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
+        // REVIEW: Should the vote for the fast path proposal version be replicated for the slow path proposal version?
+        VotingMode _votingMode = VotingMode.Slow;
+        uint256 _supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
 
-        // Ping the registry to emit the updated proposal settings
-        _ping(
-          ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-          bytes32(_proposalId),
-          abi.encode(
-            proposal_.parameters.startDate,
-            proposal_.parameters.lastDate,
-            proposal_.parameters.votingMode,
-            proposal_.parameters.quorum,
-            proposal_.parameters.supportThreshold
-          )
-        );
+        // Update proposal storage
+        _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, proposal_.actions);
       } else if (_voteOption == VoteOption.Yes) {
         // Immediate execution if possible
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
@@ -621,11 +606,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
 
-    IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
+    VotingMode _votingMode = VotingMode.Fast;
     uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
-    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
-    _actions[0] =
-      IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
+    Action[] memory _actions = new Action[](1);
+    _actions[0] = Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
 
     // Ping the registry to emit the proposal creation
     _ping(ActionsConstants.PROPOSAL_CREATED, bytes32(_proposalId), abi.encode(_proposalId, _votingMode, _actions));

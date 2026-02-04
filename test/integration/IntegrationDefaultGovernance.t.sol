@@ -72,7 +72,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     // Vote: None
     _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.None});
 
-    // // Vote: No
+    // Vote: No
     _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.No});
 
     (_fastPathProposal.executed,, _fastPathProposal.parameters, _fastPathProposal.tally,) =
