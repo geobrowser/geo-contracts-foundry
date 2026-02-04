@@ -367,7 +367,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
-    // REVIEW: Why is the spaceId auto-generated but not the proposalId?
 
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     uint8 _latestProposalVersion = $_.latestProposalVersion[_proposalId];
@@ -501,12 +500,26 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (proposal_.parameters.votingMode == VotingMode.Fast) {
       // Fast path to slow path if rejection occurs
       if (_voteOption == VoteOption.No) {
-        // REVIEW: Should the vote for the fast path proposal version be replicated for the slow path proposal version?
-        VotingMode _votingMode = VotingMode.Slow;
-        uint256 _supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
+        // Update voting mode
+        proposal_.parameters.votingMode = VotingMode.Slow;
+        // Update threshold
+        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
+        // Reset duration and block times
+        proposal_.parameters.startDate = block.timestamp;
+        proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
 
-        // Update proposal storage
-        _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, proposal_.actions);
+        // Ping the registry to emit the updated proposal settings
+        _ping(
+          ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+          bytes32(_proposalId),
+          abi.encode(
+            proposal_.parameters.startDate,
+            proposal_.parameters.lastDate,
+            proposal_.parameters.votingMode,
+            proposal_.parameters.quorum,
+            proposal_.parameters.supportThreshold
+          )
+        );
       } else if (_voteOption == VoteOption.Yes) {
         // Immediate execution if possible
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
