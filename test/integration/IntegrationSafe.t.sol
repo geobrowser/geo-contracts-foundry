@@ -33,7 +33,7 @@ contract IntegrationSafe is IntegrationBase {
 
   function setUp() public override {
     IntegrationBase.setUp();
-    vm.selectFork(_geoTestnetForkId);
+    vm.selectFork(_geoForkId);
 
     // Set up safe owners with their keys
     _safeOwners = new address[](2);

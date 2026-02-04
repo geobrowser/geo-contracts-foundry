@@ -43,10 +43,9 @@ corpus_dir = 'test/invariants/fuzz/corpus'
 show_solidity = true
 
 [rpc_endpoints]
-arbitrum_one = "${ARBITRUM_ONE_RPC}"
-arbitrum_testnet = "${ARBITRUM_TESTNET_RPC}"
-geo_genesis = "${GEO_GENESIS_RPC}"
-geo_testnet = "${GEO_TESTNET_RPC}"
+base = "${BASE_RPC}"
+geo = "${GEO_RPC}"
 
 [etherscan]
-arbitrum = { key = "${ARBISCAN_API_KEY}" }
+base = { key = "${BASESCAN_API_KEY}" }
+"${GEO_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}" }

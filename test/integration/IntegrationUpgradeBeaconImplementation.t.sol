@@ -28,7 +28,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
 
   function setUp() public override {
     IntegrationBase.setUp();
-    vm.selectFork(_geoTestnetForkId);
+    vm.selectFork(_geoForkId);
 
     daoSpaceProxyA = MockDAOSpaceV2(address(daoSpaceProxy));
     daoSpaceProxyB = MockDAOSpaceV2(
@@ -71,7 +71,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertFalse(daoSpaceProxyA.actionIsFastPathValid(DAOSpace.removeEditor.selector));
     assertFalse(daoSpaceProxyB.actionIsFastPathValid(DAOSpace.removeEditor.selector));
 
-    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     daoSpaceBeacon.upgradeTo(address(daoSpaceImplementationBis));
 
     uint256 _initialTotalMembers = _initialSpaceMembers.length;
@@ -107,7 +107,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(verifierSpaceProxyA.version(), '1.0.0');
     assertEq(verifierSpaceProxyB.version(), '1.0.0');
 
-    vm.prank(Constants.GEO_TESTNET_GEO_MULTISIG_COUNCIL);
+    vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     verifierSpaceBeacon.upgradeTo(address(verifierSpaceImplementationBis));
 
     assertEq(verifierSpaceBeacon.implementation(), address(verifierSpaceImplementationBis));
