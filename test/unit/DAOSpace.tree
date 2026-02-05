@@ -75,7 +75,9 @@ UnitDAOSpace::write
 │   │           ├── it stores the decoded proposal actions
 │   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals PROPOSAL_VOTED
-│   │   ├── when the proposal start date equals zero
+│   │   ├── when the proposal does not exist
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when _proposalVersion is not latestProposalVersion
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the block timestamp is greater than the last date 
 │   │   │   └── it reverts with CanNotVote
@@ -103,6 +105,7 @@ UnitDAOSpace::write
 │   │           ├── when the current _fromSpaceId vote equals no
 │   │           │   ├── it updates the proposal voting mode to the slow path
 │   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
+│   │           │   ├── it updates the proposal quorum to votingSettings.quorum
 │   │           │   ├── it updates the proposal start date to block.timestamp
 │   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
 │   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
@@ -118,9 +121,9 @@ UnitDAOSpace::write
 │   │       ├── it resets the voting state
 │   │       └── it updates the proposal with a new version
 │   ├── when _action equals PROPOSAL_EXECUTED
-│   │   ├── when the proposal has already been executed
+│   │   ├── when the proposal does not exist
 │   │   │   └── it reverts with CanNotExecute
-│   │   ├── when the proposal start date equals zero
+│   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute
 │   │   ├── when the support threshold has not been reached
 │   │   │   └── it reverts with CanNotExecute

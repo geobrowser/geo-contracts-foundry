@@ -54,7 +54,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     bytes16 _fastPathProposalId = '0';
     _createFastPathProposal(_fastPathProposalId);
     // Vote: Abstain
-    _voteProposal(_fastPathProposalId, IDAOSpace.VoteOption.Abstain);
+    _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Abstain});
 
     Proposal memory _fastPathProposal;
     (_fastPathProposal.executed,, _fastPathProposal.parameters, _fastPathProposal.tally,) =
@@ -70,10 +70,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
 
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
     // Vote: None
-    _voteProposal(_fastPathProposalId, IDAOSpace.VoteOption.None);
+    _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.None});
 
     // Vote: No
-    _voteProposal(_fastPathProposalId, IDAOSpace.VoteOption.No);
+    _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.No});
 
     (_fastPathProposal.executed,, _fastPathProposal.parameters, _fastPathProposal.tally,) =
       daoSpaceProxy.getLatestProposalInformation(_fastPathProposalId);
@@ -90,7 +90,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     bytes16 _fastPathProposalBisId = '1';
     _createFastPathProposal(_fastPathProposalBisId);
     // Vote: Yes
-    _voteProposal(_fastPathProposalBisId, IDAOSpace.VoteOption.Yes);
+    _voteProposal({_proposalId: _fastPathProposalBisId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Yes});
 
     Proposal memory _fastPathProposalBis;
     (_fastPathProposalBis.executed,, _fastPathProposalBis.parameters, _fastPathProposalBis.tally,) =
@@ -106,7 +106,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
 
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
     // Vote: Abstain
-    _voteProposal(_fastPathProposalBisId, IDAOSpace.VoteOption.Abstain);
+    _voteProposal({_proposalId: _fastPathProposalBisId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Abstain});
   }
 
   function test_DefaultGovernance_ExecuteProposals() external {
@@ -117,7 +117,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     bytes16 _fastPathProposalId = '0';
     _createFastPathProposal(_fastPathProposalId);
     // Vote: Yes
-    _voteProposal(_fastPathProposalId, IDAOSpace.VoteOption.Yes);
+    _voteProposal({_proposalId: _fastPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Yes});
     // Execute: removeMember();
 
     Proposal memory _fastPathProposal;
@@ -136,7 +136,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     bytes16 _slowPathProposalId = '1';
     _createSlowPathProposal(_slowPathProposalId);
     // Vote: No
-    _voteProposal(_slowPathProposalId, IDAOSpace.VoteOption.No);
+    _voteProposal({_proposalId: _slowPathProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.No});
 
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
     // Execute: removeEditor();
@@ -159,7 +159,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     bytes16 _slowPathProposalBisId = '2';
     _createSlowPathProposal(_slowPathProposalBisId);
     // Vote: Yes
-    _voteProposal(_slowPathProposalBisId, IDAOSpace.VoteOption.Yes);
+    _voteProposal({_proposalId: _slowPathProposalBisId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Yes});
 
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
     // Execute: removeEditor();
@@ -256,8 +256,8 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     );
   }
 
-  function _voteProposal(bytes16 _proposalId, IDAOSpace.VoteOption _voteOption) internal {
-    bytes memory _voteProposalData = abi.encode(_proposalId, _voteOption);
+  function _voteProposal(bytes16 _proposalId, uint8 _proposalVersion, IDAOSpace.VoteOption _voteOption) internal {
+    bytes memory _voteProposalData = abi.encode(_proposalId, _proposalVersion, _voteOption);
 
     vm.prank(eoaSpace);
     // PROPOSAL_VOTED

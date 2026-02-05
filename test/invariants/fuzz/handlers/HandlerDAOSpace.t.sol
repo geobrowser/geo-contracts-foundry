@@ -173,6 +173,7 @@ contract HandlerDAOSpace is BaseHandler {
     bytes16 _senderSpaceId = spaceRegistry.addressToSpaceId(msg.sender);
     bytes16 _proposalId =
       ghost_activeProposals[_daoSpace][bound(_proposalSeed, 0, ghost_activeProposals[_daoSpace].length - 1)];
+    uint8 _proposalVersion = DAOSpace(_daoSpace).latestProposalVersion(_proposalId);
     IDAOSpace.VoteOption _voteOption = IDAOSpace.VoteOption(bound(_voteOptionSeed, 1, 3));
     IDAOSpace.VoteOption _previousVote = DAOSpace(_daoSpace).getLatestProposalVote(_proposalId, _senderSpaceId);
 
@@ -182,7 +183,7 @@ contract HandlerDAOSpace is BaseHandler {
       _daoSpaceId,
       ActionsConstants.PROPOSAL_VOTED,
       bytes32(_proposalId),
-      abi.encode(_proposalId, _voteOption),
+      abi.encode(_proposalId, _proposalVersion, _voteOption),
       ''
     ) {
       _updateVoteTally(_proposalId, _previousVote, _voteOption);
