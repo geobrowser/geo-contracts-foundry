@@ -189,6 +189,26 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     assertEq(daoSpaceProxy.latestProposalVersion(_slowPathProposalId), 2);
   }
 
+  function test_DefaultGovernance_RequestMembership() external {
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _daoSpaceProxyId));
+
+    // Proposal 0: Request membership (fast path)
+    bytes16 _requestMembershipProposalId = '0';
+    _requestMembership(_requestMembershipProposalId, _daoSpaceProxyId);
+    // Vote: Yes
+    _voteProposal({
+      _proposalId: _requestMembershipProposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Yes
+    });
+    // Execute: addMember();
+
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _daoSpaceProxyId));
+
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    // Proposal 1: Request membership (fast path)
+    bytes16 _requestMembershipProposalBisId = '1';
+    _requestMembership(_requestMembershipProposalBisId, _daoSpaceProxyId);
+  }
+
   function test_DefaultGovernance_LeaveSpace() external {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
@@ -217,10 +237,14 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.FAST_PATH_RESTRICTED(), _eoaSpaceId));
 
     // Restrict: EDITOR
-    _restrictSpace();
+    _restrictSpace(_eoaSpaceId);
 
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.FAST_PATH_RESTRICTED(), _eoaSpaceId));
+
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    // Restrict: EDITOR
+    _restrictSpace(_eoaSpaceId);
 
     vm.expectRevert(IDAOSpace.FastPathRestricted.selector);
     // Proposal 0: Fast path
@@ -288,6 +312,16 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     );
   }
 
+  function _requestMembership(bytes16 _proposalId, bytes16 _newMemberSpaceId) internal {
+    bytes memory _requestMembershipData = abi.encode(_proposalId, _newMemberSpaceId);
+
+    vm.prank(eoaSpace);
+    // MEMBERSHIP_REQUESTED
+    spaceRegistryProxy.enter(
+      _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.MEMBERSHIP_REQUESTED, '', _requestMembershipData, ''
+    );
+  }
+
   function _leaveSpace(bytes32 _role) internal {
     bytes memory _leaveSpaceData = abi.encode(_role);
 
@@ -296,8 +330,8 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     spaceRegistryProxy.enter(_eoaSpaceId, _daoSpaceProxyId, ActionsConstants.SPACE_LEFT, '', _leaveSpaceData, '');
   }
 
-  function _restrictSpace() internal {
-    bytes memory _restrictSpaceData = abi.encode(_eoaSpaceId);
+  function _restrictSpace(bytes16 _newRestrictedSpaceId) internal {
+    bytes memory _restrictSpaceData = abi.encode(_newRestrictedSpaceId);
 
     vm.prank(eoaSpace);
     // SPACE_FAST_PATH_RESTRICTED

@@ -146,6 +146,8 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with InvalidProposalId
 │   │   ├── when _fromSpaceId is restricted
 │   │   │   └── it reverts with FastPathRestricted
+│   │   ├── when _newMemberSpaceId is a member
+│   │   │   └── it reverts with InvalidSpaceIdForRole
 │   │   └── when the request can be made
 │   │       ├── it creates a fast path proposal to add the new member
 │   │       ├── it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
@@ -153,8 +155,10 @@ UnitDAOSpace::write
 │   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
+│   │   ├── when the _newRestrictedSpaceId is restricted
+│   │   │   └── it reverts with InvalidSpaceIdForRole
 │   │   └── when _restrictSpace params are valid
-│   │       └── it grants the FAST_PATH_RESTRICTED role to _space
+│   │       └── it grants the FAST_PATH_RESTRICTED role to _newRestrictedSpaceId
 │   └── when _action does not equal any expected constant
 │       └── it reverts with InvalidAction
 └── when called by non-spaceRegistry
@@ -212,9 +216,12 @@ UnitDAOSpace::removeMember
 
 UnitDAOSpace::unrestrictSpace
 ├── when called by DAO
-│    ├── it revokes the FAST_PATH_RESTRICTED role from _space
-│    ├── it fetches the daoSpaceId from the spaceRegistry
-│    └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
+│   ├── when _oldRestrictedSpaceId is not restricted
+│   │   └── it reverts with InvalidSpaceIdForRole
+│   └── when _oldRestrictedSpaceId is restricted
+│       ├── it revokes the FAST_PATH_RESTRICTED role from _oldRestrictedSpaceId
+│       ├── it fetches the daoSpaceId from the spaceRegistry
+│       └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 

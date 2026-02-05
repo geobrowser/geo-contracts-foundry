@@ -237,9 +237,9 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Unrestricts a space, restoring their ability to create fast path proposals
-   * @param _spaceId The space ID to unrestrict
+   * @param _oldRestrictedSpaceId The space ID to unrestrict
    */
-  function unrestrictSpace(bytes16 _spaceId) external;
+  function unrestrictSpace(bytes16 _oldRestrictedSpaceId) external;
 
   /**
    * @notice Re-enters the Space Registry to emit an Action event

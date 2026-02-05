@@ -162,8 +162,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
-  function unrestrictSpace(bytes16 _spaceId) public virtual onlyRole(DAO) {
-    _unrestrictSpace(_spaceId);
+  function unrestrictSpace(bytes16 _oldRestrictedSpaceId) public virtual onlyRole(DAO) {
+    _unrestrictSpace(_oldRestrictedSpaceId);
   }
 
   /// @inheritdoc IDAOSpace
@@ -613,6 +613,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _requestMembership(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct proposal
     (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
+    // REVIEW: Is it acknowledged that a non-member and non-editor space may request membership
+    //         for non-member spaces other than itself?
 
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     // Ensure proposal ID is valid
@@ -620,7 +622,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_latestProposalVersion != 0) revert InvalidProposalId();
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
+    // Check to handle the already-member case
+    if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
 
+    // REVIEW: Non-editor spaces may create fast-path proposals via `_requestMembership()`, which I suppose is its raison d'être
+    //         Oddly, member spaces cannot create a fast-path proposal to `addMember()` via `_createProposal()`,
+    //         but can via `_requestMembership()`
     VotingMode _votingMode = VotingMode.Fast;
     uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     Action[] memory _actions = new Action[](1);
@@ -640,22 +647,25 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @dev Only editors can restrict others.
    */
   function _restrictSpace(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
-    if (!hasRole(EDITOR, _fromSpaceId)) revert InvalidFromSpace();
-
     // Decode data to restrict space
-    bytes16 _spaceId = abi.decode(_data, (bytes16));
+    bytes16 _newRestrictedSpaceId = abi.decode(_data, (bytes16));
 
-    _grantRole(FAST_PATH_RESTRICTED, _spaceId);
+    if (!hasRole(EDITOR, _fromSpaceId)) revert InvalidFromSpace();
+    if (hasRole(FAST_PATH_RESTRICTED, _newRestrictedSpaceId)) revert InvalidSpaceIdForRole();
+
+    _grantRole(FAST_PATH_RESTRICTED, _newRestrictedSpaceId);
   }
 
   /**
    * @notice Unrestricts a space allowing them to create fast path proposals
-   * @param _spaceId The space ID to be unrestricted
+   * @param _oldRestrictedSpaceId The space ID to be unrestricted
    */
-  function _unrestrictSpace(bytes16 _spaceId) internal virtual {
-    _revokeRole(FAST_PATH_RESTRICTED, _spaceId);
+  function _unrestrictSpace(bytes16 _oldRestrictedSpaceId) internal virtual {
+    if (!hasRole(FAST_PATH_RESTRICTED, _oldRestrictedSpaceId)) revert InvalidSpaceIdForRole();
 
-    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_spaceId), '');
+    _revokeRole(FAST_PATH_RESTRICTED, _oldRestrictedSpaceId);
+
+    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_oldRestrictedSpaceId), '');
   }
 
   /**
