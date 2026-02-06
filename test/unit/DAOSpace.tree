@@ -16,18 +16,20 @@ UnitDAOSpace::constructor
 UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
-│   ├── it sets the voting settings
+│   ├── it calls spaceRegistry to register space ID
 │   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it calls enter on the spaceRegistry with the TOPIC_SET action
 │   ├── it grants the new editor the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 │   ├── it grants the new member the MEMBER role
 │   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
+│   ├── it grants spaceRegistry the SPACE_REGISTRY role
 │   ├── it grants itself the DAO role
+│   ├── it sets the voting settings
+│   ├── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
 │   ├── it sets ping as a valid fast path action
-│   ├── it calls spaceRegistry to register space ID
 │   └── when delegate called again
 │       └── it reverts with InvalidInitialization
 └── when called
@@ -243,7 +245,8 @@ UnitDAOSpace::updateVotingSettings
 │   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
-│       └── it updates the voting settings
+│       ├── it updates the voting settings
+│       └── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 

@@ -356,6 +356,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
 
     $_.votingSettings = _votingSettings;
+
+    // Ping the registry to emit the updated voting settings
+    _ping(ActionsConstants.VOTING_SETTINGS_UPDATED, bytes32(0), abi.encode(_votingSettings));
   }
 
   /**

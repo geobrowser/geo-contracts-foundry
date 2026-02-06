@@ -62,7 +62,7 @@ contract UnitDAOSpace is TestHelper {
     _spaceType = keccak256(bytes(daoSpaceImplementation.name()));
     _spaceVersion = abi.encode(daoSpaceImplementation.version());
 
-    // when delegate called
+    // it calls spaceRegistry to register space ID
     _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
 
     // mock mapping fetch with ping
@@ -111,7 +111,17 @@ contract UnitDAOSpace is TestHelper {
     // mock for _grantRole call
     _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _spaceRegistrySpaceId);
 
-    // when deployed
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      _spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // when deployed and delegate called
     daoSpaceProxy = MockDAOSpace(
       UnsafeUpgrades.deployBeaconProxy(
         daoSpaceBeacon,
@@ -239,6 +249,16 @@ contract UnitDAOSpace is TestHelper {
     // mock _grantRole call
     _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
 
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
     // when delegate called
     daoSpaceProxy = MockDAOSpace(
       UnsafeUpgrades.deployBeaconProxy(
@@ -255,17 +275,20 @@ contract UnitDAOSpace is TestHelper {
     // it sets the spaceRegistry
     assertEq(address(daoSpaceProxy.spaceRegistry()), __spaceRegistry);
 
-    // it sets the voting settings
-    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
-
     // it grants the new editor the EDITOR role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorSpaceId));
 
     // it grants the new member the MEMBER role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberSpaceId));
 
+    // it grants spaceRegistry the SPACE_REGISTRY role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.SPACE_REGISTRY(), _getSpaceId(__spaceRegistry)));
+
     // it grants itself the DAO role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _getSpaceId(address(daoSpaceProxy))));
+
+    // it sets the voting settings
+    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
 
     // it sets addMember as a valid fast path action
     assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector));
@@ -340,6 +363,16 @@ contract UnitDAOSpace is TestHelper {
 
     // mock _grantRole call
     _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
 
     // when delegate called
     daoSpaceProxy = MockDAOSpace(
@@ -2112,6 +2145,15 @@ contract UnitDAOSpace is TestHelper {
       __votingSettings.duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), daoSpaceProxy.MINIMUM_VOTING_DURATION() * 100
     );
 
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(__votingSettings)
+    );
     daoSpaceProxy.updateVotingSettings(__votingSettings);
 
     // it updates the voting settings
