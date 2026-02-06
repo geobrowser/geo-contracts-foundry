@@ -339,7 +339,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
   /// @inheritdoc ISemver
   function version() public pure virtual returns (string memory _version) {
-    _version = '1.0.0';
+    _version = '1.0.1';
   }
 
   /**
