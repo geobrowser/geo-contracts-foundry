@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+pragma solidity 0.8.30;
+
+import {Script} from 'forge-std/Script.sol';
+
+import {Options} from '@openzeppelin/foundry-upgrades/Options.sol';
+import {Upgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
+
+import {VerifierSpaceFactory} from 'contracts/VerifierSpaceFactory.sol';
+
+import 'script/Constants.s.sol' as Constants;
+
+contract UpgradeVerifierSpaceFactory is Script {
+  VerifierSpaceFactory public verifierSpaceFactoryImplementation;
+
+  function run() public {
+    vm.startBroadcast(Constants.GEO_GEO_MULTISIG_COUNCIL);
+
+    // Deploy and upgrade to the new implementation contract
+    bytes memory _upgraderData;
+    // REVIEW: @custom:oz-upgrades-from <reference>
+    Options memory _opts;
+    _opts.unsafeSkipAllChecks = true;
+    Upgrades.upgradeProxy(
+      Constants.GEO_VERIFIER_SPACE_FACTORY_PROXY, 'VerifierSpaceFactory.sol:VerifierSpaceFactory', _upgraderData, _opts
+    );
+    verifierSpaceFactoryImplementation =
+      VerifierSpaceFactory(Upgrades.getImplementationAddress(Constants.GEO_VERIFIER_SPACE_FACTORY_PROXY));
+
+    vm.stopBroadcast();
+  }
+}
