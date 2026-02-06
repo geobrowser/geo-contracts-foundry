@@ -613,8 +613,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _requestMembership(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct proposal
     (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
-    // REVIEW: Is it acknowledged that a non-member and non-editor space may request membership
-    //         for non-member spaces other than itself?
 
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     // Ensure proposal ID is valid
@@ -625,9 +623,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Check to handle the already-member case
     if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
 
-    // REVIEW: Non-editor spaces may create fast-path proposals via `_requestMembership()`, which I suppose is its raison d'être
-    //         Oddly, member spaces cannot create a fast-path proposal to `addMember()` via `_createProposal()`,
-    //         but can via `_requestMembership()`
     VotingMode _votingMode = VotingMode.Fast;
     uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     Action[] memory _actions = new Action[](1);
