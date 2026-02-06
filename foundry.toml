@@ -44,6 +44,8 @@ show_solidity = true
 
 [rpc_endpoints]
 geo = "${GEO_RPC}"
+geo_testnet = "${GEO_TESTNET_RPC}"
 
 [etherscan]
 "${GEO_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}" }
+"${GEO_TESTNET_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}" }
