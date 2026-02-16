@@ -59,6 +59,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @notice Constructor
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }

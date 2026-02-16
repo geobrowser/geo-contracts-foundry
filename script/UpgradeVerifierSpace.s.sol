@@ -18,9 +18,10 @@ contract UpgradeVerifierSpace is Script {
     vm.startBroadcast(Constants.GEO_GEO_MULTISIG_COUNCIL);
 
     // Deploy and upgrade to the new implementation contract
-    // REVIEW: @custom:oz-upgrades-from <reference>
     Options memory _opts;
-    _opts.unsafeSkipAllChecks = true;
+    _opts.referenceBuildInfoDir = 'previous-builds/verifier-space';
+    _opts.referenceContract = 'verifier-space:src/contracts/VerifierSpace.sol:VerifierSpace';
+
     Upgrades.upgradeBeacon(Constants.GEO_VERIFIER_SPACE_BEACON, 'VerifierSpace.sol:VerifierSpace', _opts);
     verifierSpaceImplementation = VerifierSpace(UpgradeableBeacon(Constants.GEO_VERIFIER_SPACE_BEACON).implementation());
 
