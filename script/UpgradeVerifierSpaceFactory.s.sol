@@ -18,9 +18,9 @@ contract UpgradeVerifierSpaceFactory is Script {
 
     // Deploy and upgrade to the new implementation contract
     bytes memory _upgraderData;
-    // REVIEW: @custom:oz-upgrades-from <reference>
     Options memory _opts;
-    _opts.unsafeSkipAllChecks = true;
+    _opts.referenceBuildInfoDir = 'previous-builds/verifier-space-factory';
+    _opts.referenceContract = 'verifier-space-factory:src/contracts/VerifierSpaceFactory.sol:VerifierSpaceFactory';
     Upgrades.upgradeProxy(
       Constants.GEO_VERIFIER_SPACE_FACTORY_PROXY, 'VerifierSpaceFactory.sol:VerifierSpaceFactory', _upgraderData, _opts
     );

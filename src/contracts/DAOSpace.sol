@@ -59,6 +59,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @notice Constructor
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
@@ -339,8 +340,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
   /// @inheritdoc ISemver
   function version() public pure virtual returns (string memory _version) {
-    // NOTE: Each `DAOSpace` proxy should `ping()` the `SpaceRegistry` in order to emit `SPACE_TYPE_DECLARED` action
-    //       with the newer version (overriding `initialize()` for such doesn't seem to be worth it)
     _version = '1.0.1';
   }
 

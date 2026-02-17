@@ -18,9 +18,9 @@ contract UpgradeSpaceRegistry is Script {
 
     // Deploy and upgrade to the new implementation contract
     bytes memory _upgraderData;
-    // REVIEW: @custom:oz-upgrades-from <reference>
     Options memory _opts;
-    _opts.unsafeSkipAllChecks = true;
+    _opts.referenceBuildInfoDir = 'previous-builds/space-registry';
+    _opts.referenceContract = 'space-registry:src/contracts/SpaceRegistry.sol:SpaceRegistry';
     Upgrades.upgradeProxy(Constants.GEO_SPACE_REGISTRY_PROXY, 'SpaceRegistry.sol:SpaceRegistry', _upgraderData, _opts);
     spaceRegistryImplementation = SpaceRegistry(Upgrades.getImplementationAddress(Constants.GEO_SPACE_REGISTRY_PROXY));
 

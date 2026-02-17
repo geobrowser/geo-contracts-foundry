@@ -18,9 +18,9 @@ contract UpgradeDAOSpace is Script {
     vm.startBroadcast(Constants.GEO_GEO_MULTISIG_COUNCIL);
 
     // Deploy and upgrade to the new implementation contract
-    // REVIEW: @custom:oz-upgrades-from <reference>
     Options memory _opts;
-    _opts.unsafeSkipAllChecks = true;
+    _opts.referenceBuildInfoDir = 'previous-builds/dao-space';
+    _opts.referenceContract = 'dao-space:src/contracts/DAOSpace.sol:DAOSpace';
     Upgrades.upgradeBeacon(Constants.GEO_DAO_SPACE_BEACON, 'DAOSpace.sol:DAOSpace', _opts);
     daoSpaceImplementation = DAOSpace(UpgradeableBeacon(Constants.GEO_DAO_SPACE_BEACON).implementation());
 

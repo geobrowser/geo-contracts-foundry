@@ -21,7 +21,7 @@
     "lint:natspec": "lintspec",
     "lint:sol": "solhint 'src/**/*.sol' 'script/**/*.sol' 'test/**/*.sol'",
     "prepare": "husky",
-    "recompile": "forge clean && forge build",
+    "recompile": "bash './script/prepare-upgrade-ref.sh'",
     "test": "yarn recompile && forge test --ffi -vvv",
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",

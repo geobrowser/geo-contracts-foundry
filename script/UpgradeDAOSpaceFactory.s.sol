@@ -18,9 +18,9 @@ contract UpgradeDAOSpaceFactory is Script {
 
     // Deploy and upgrade to the new implementation contract
     bytes memory _upgraderData;
-    // REVIEW: @custom:oz-upgrades-from <reference>
     Options memory _opts;
-    _opts.unsafeSkipAllChecks = true;
+    _opts.referenceBuildInfoDir = 'previous-builds/dao-space-factory';
+    _opts.referenceContract = 'dao-space-factory:src/contracts/DAOSpaceFactory.sol:DAOSpaceFactory';
     Upgrades.upgradeProxy(
       Constants.GEO_DAO_SPACE_FACTORY_PROXY, 'DAOSpaceFactory.sol:DAOSpaceFactory', _upgraderData, _opts
     );
