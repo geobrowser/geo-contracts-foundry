@@ -43,9 +43,9 @@ corpus_dir = 'test/invariants/fuzz/corpus'
 show_solidity = true
 
 [rpc_endpoints]
-base = "${BASE_RPC}"
 geo = "${GEO_RPC}"
+geo_testnet = "${GEO_TESTNET_RPC}"
 
 [etherscan]
-base = { key = "${BASESCAN_API_KEY}" }
-"${GEO_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}" }
+"${GEO_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}", url = "${GEOSCAN_API_URL}" }
+"${GEO_TESTNET_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}", url = "${GEOSCAN_TESTNET_API_URL}" }

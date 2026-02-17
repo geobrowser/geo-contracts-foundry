@@ -30,6 +30,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
 
     // it deploys SpaceRegistry implementation
     assertEq(deployGEOBrowser.spaceRegistryImplementation().proxiableUUID(), ERC1967Utils.IMPLEMENTATION_SLOT);
+    assertEq(deployGEOBrowser.spaceRegistryImplementation().name(), 'SPACE_REGISTRY');
     // it deploys and initializes SpaceRegistry proxy
     assertEq(
       address(
@@ -41,6 +42,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
 
     // it deploys DAOSpaceFactory implementation
     assertEq(deployGEOBrowser.daoSpaceFactoryImplementation().proxiableUUID(), ERC1967Utils.IMPLEMENTATION_SLOT);
+    assertEq(deployGEOBrowser.daoSpaceFactoryImplementation().name(), 'DAO_SPACE_FACTORY');
     // it deploys and initializes DAOSpaceFactory proxy
     assertEq(
       address(
@@ -60,6 +62,7 @@ contract UnitDeployGEOBrowserrun is TestHelper {
 
     // it deploys VerifierSpaceFactory implementation
     assertEq(deployGEOBrowser.verifierSpaceFactoryImplementation().proxiableUUID(), ERC1967Utils.IMPLEMENTATION_SLOT);
+    assertEq(deployGEOBrowser.verifierSpaceFactoryImplementation().name(), 'VERIFIER_SPACE_FACTORY');
     // it deploys and initializes VerifierSpaceFactory proxy
     assertEq(
       address(
