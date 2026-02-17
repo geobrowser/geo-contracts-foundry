@@ -13,7 +13,7 @@ import 'script/Constants.s.sol' as Constants;
 contract UpgradeDAOSpaceFactory is Script {
   DAOSpaceFactory public daoSpaceFactoryImplementation;
 
-  function run() public {
+  function run() public virtual {
     vm.startBroadcast(Constants.GEO_GEO_MULTISIG_COUNCIL);
 
     // Deploy and upgrade to the new implementation contract
