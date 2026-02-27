@@ -53,8 +53,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _role The role governing access control
    */
   modifier onlyRole(bytes32 _role) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if (!hasRole(_role, $.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    if (!hasRole(_role, $_.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
     _;
   }
 
@@ -76,39 +76,36 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, bytes16[], bytes16[], bytes, bytes16));
 
     // Set Space Registry and register new DAO Space
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.spaceRegistry = _spaceRegistry;
-    bytes16 _daoSpaceId = $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.spaceRegistry = _spaceRegistry;
+    bytes16 _daoSpaceId = $_.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
     // Ping the registry with initial edit if it exists
     if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
-
     // Ping the registry again to set an initial topic
     if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_SET, bytes32(_initialTopicId), '');
 
     // Add initial editors
-    uint256 length = _initialEditors.length;
-    for (uint256 i; i < length; i++) {
-      _addEditor(_initialEditors[i]);
+    uint256 _length = _initialEditors.length;
+    for (uint256 _i; _i < _length; _i++) {
+      _addEditor(_initialEditors[_i]);
     }
-
     // Add initial members
-    length = _initialMembers.length;
-    for (uint256 j; j < length; j++) {
-      _addMember(_initialMembers[j]);
+    _length = _initialMembers.length;
+    for (uint256 _j; _j < _length; _j++) {
+      _addMember(_initialMembers[_j]);
     }
-
-    // Set voting settings
-    _updateVotingSettings(_votingSettings);
-
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, _spaceRegistry.addressToSpaceId(address(_spaceRegistry)));
     _grantRole(DAO, _daoSpaceId);
 
+    // Set voting settings
+    _updateVotingSettings(_votingSettings);
+
     // Set the initial fast path actions
-    $.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
-    $.actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
-    $.actionIsFastPathValid[IDAOSpace.ping.selector] = true;
+    $_.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
+    $_.actionIsFastPathValid[IDAOSpace.removeMember.selector] = true;
+    $_.actionIsFastPathValid[IDAOSpace.ping.selector] = true;
   }
 
   /// @inheritdoc ISpace
@@ -219,8 +216,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     returns (bool _isSupportThresholdReached)
   {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    uint256 supportThreshold =
+    uint256 _supportThreshold =
       (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
+
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
       if (block.timestamp <= proposal_.parameters.lastDate) return false;
@@ -229,36 +227,36 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         return false;
       }
       // Threshold percentage calculation
-      if ((RATIO_BASE - supportThreshold) * proposal_.tally.yes > supportThreshold * proposal_.tally.no) return true;
+      if ((RATIO_BASE - _supportThreshold) * proposal_.tally.yes > _supportThreshold * proposal_.tally.no) return true;
     } else {
       // Fast path
       // Threshold flat calculation
-      if (proposal_.tally.yes > supportThreshold) return true;
+      if (proposal_.tally.yes > _supportThreshold) return true;
     }
   }
 
   /// @inheritdoc IDAOSpace
   function votingSettings() public view returns (VotingSettings memory _votingSettings) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _votingSettings = $.votingSettings;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _votingSettings = $_.votingSettings;
   }
 
   /// @inheritdoc IDAOSpace
   function totalEditors() public view returns (uint256 _totalEditors) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _totalEditors = $.totalEditors;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _totalEditors = $_.totalEditors;
   }
 
   /// @inheritdoc IDAOSpace
   function actionIsFastPathValid(bytes4 _selector) public view returns (bool _isValid) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _isValid = $.actionIsFastPathValid[_selector];
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _isValid = $_.actionIsFastPathValid[_selector];
   }
 
   /// @inheritdoc IDAOSpace
   function latestProposalVersion(bytes16 _proposalId) public view returns (uint8 _version) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _version = $.latestProposalVersion[_proposalId];
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _version = $_.latestProposalVersion[_proposalId];
   }
 
   /// @inheritdoc IDAOSpace
@@ -276,12 +274,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       Action[] memory _actions
     )
   {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _executed = $.proposals[_proposalId][_version].executed;
-    _creator = $.proposals[_proposalId][_version].creator;
-    _parameters = $.proposals[_proposalId][_version].parameters;
-    _tally = $.proposals[_proposalId][_version].tally;
-    _actions = $.proposals[_proposalId][_version].actions;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _executed = $_.proposals[_proposalId][_version].executed;
+    _creator = $_.proposals[_proposalId][_version].creator;
+    _parameters = $_.proposals[_proposalId][_version].parameters;
+    _tally = $_.proposals[_proposalId][_version].tally;
+    _actions = $_.proposals[_proposalId][_version].actions;
   }
 
   /// @inheritdoc IDAOSpace
@@ -310,8 +308,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     uint8 _version,
     bytes16 _voterSpaceId
   ) public view returns (VoteOption _voteOption) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _voteOption = $.proposals[_proposalId][_version].voters[_voterSpaceId];
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _voteOption = $_.proposals[_proposalId][_version].voters[_voterSpaceId];
   }
 
   /// @inheritdoc IDAOSpace
@@ -325,8 +323,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
   /// @inheritdoc IDAOSpace
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    _spaceRegistry = $.spaceRegistry;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _spaceRegistry = $_.spaceRegistry;
   }
 
   /// @inheritdoc ISemver
@@ -351,12 +349,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * being executed.
    */
   function _updateVotingSettings(VotingSettings memory _votingSettings) internal virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
-    if (_votingSettings.fastPathFlatThreshold > $.totalEditors) revert InvalidSetting();
-    if (_votingSettings.quorum > $.totalEditors) revert InvalidSetting();
+    if (_votingSettings.fastPathFlatThreshold > $_.totalEditors) revert InvalidSetting();
+    if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
-    $.votingSettings = _votingSettings;
+
+    $_.votingSettings = _votingSettings;
   }
 
   /**
@@ -368,8 +367,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
+
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
+
     // Update proposal storage
     uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
     _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
@@ -389,12 +390,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     VotingMode _votingMode,
     Action[] memory _actions
   ) internal virtual returns (uint256 _supportThreshold) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if (_votingMode == VotingMode.Slow) {
       // Slow path
       // Only members or editors can create slow path proposals
       if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
-      _supportThreshold = $.votingSettings.slowPathPercentageThreshold;
+
+      _supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
     } else {
       // Fast path
       // Only editors can create fast path proposals
@@ -404,12 +406,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       // limit the actions to one call
       if (_actions.length != 1) revert OneActionForFastPath();
       // limit to only valid fast path actions
-      if (!$.actionIsFastPathValid[bytes4(_actions[0].data)]) revert InvalidAction();
+      if (!$_.actionIsFastPathValid[bytes4(_actions[0].data)]) revert InvalidAction();
       // limit the target to only this address
       if (_actions[0].to != address(this)) revert InvalidTarget();
       // limit the transfer of funds
       if (_actions[0].value != 0) revert InvalidFundsTransfer();
-      _supportThreshold = $.votingSettings.fastPathFlatThreshold;
+
+      _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     }
   }
 
@@ -429,18 +432,19 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Action[] memory _actions
   ) internal virtual {
     // Update proposal storage
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.latestProposalVersion[_proposalId]++;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.latestProposalVersion[_proposalId]++;
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.creator = _fromSpaceId;
     proposal_.parameters.startDate = block.timestamp;
-    proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
+    proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
     proposal_.parameters.votingMode = _votingMode;
-    proposal_.parameters.quorum = $.votingSettings.quorum;
+    proposal_.parameters.quorum = $_.votingSettings.quorum;
     proposal_.parameters.supportThreshold = _supportThreshold;
-    for (uint256 i; i < _actions.length; i++) {
-      proposal_.actions.push(_actions[i]);
+    for (uint256 _i; _i < _actions.length; _i++) {
+      proposal_.actions.push(_actions[_i]);
     }
+
     // Ping the registry to emit the proposal settings
     _ping(
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
@@ -465,20 +469,21 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _voteProposal(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct vote
     (bytes16 _proposalId, VoteOption _voteOption) = abi.decode(_data, (bytes16, VoteOption));
+
     // Ensure _fromSpaceId can vote
     if (!_canVote(_fromSpaceId, _proposalId, _voteOption)) revert CanNotVote();
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
+
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    // Remove the previous vote.
-    VoteOption state = proposal_.voters[_fromSpaceId];
-    if (state == VoteOption.Yes) {
+    // Remove the previous vote
+    VoteOption _state = proposal_.voters[_fromSpaceId];
+    if (_state == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes - 1;
-    } else if (state == VoteOption.No) {
+    } else if (_state == VoteOption.No) {
       proposal_.tally.no = proposal_.tally.no - 1;
-    } else if (state == VoteOption.Abstain) {
+    } else if (_state == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain - 1;
     }
-    // Store the updated/new vote for the voter.
+    // Store the updated/new vote for the voter
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
     } else if (_voteOption == VoteOption.No) {
@@ -487,17 +492,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
     proposal_.voters[_fromSpaceId] = _voteOption;
-    // extra fast path logic
+
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    // Extra fast path logic
     if (proposal_.parameters.votingMode == VotingMode.Fast) {
-      // fast path to slow path if rejection occurs
+      // Fast path to slow path if rejection occurs
       if (_voteOption == VoteOption.No) {
         // Update voting mode
         proposal_.parameters.votingMode = VotingMode.Slow;
         // Update threshold
-        proposal_.parameters.supportThreshold = $.votingSettings.slowPathPercentageThreshold;
+        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
-        proposal_.parameters.lastDate = block.timestamp + $.votingSettings.duration;
+        proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
+
         // Ping the registry to emit the updated proposal settings
         _ping(
           ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
@@ -511,7 +519,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
           )
         );
       } else if (_voteOption == VoteOption.Yes) {
-        // immediate execution if possible
+        // Immediate execution if possible
         if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
       }
     }
@@ -527,11 +535,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Decode data to construct new proposal
     (bytes16 _proposalId, VotingMode _votingMode, Action[] memory _actions) =
       abi.decode(_data, (bytes16, VotingMode, Action[]));
+
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Check proposal exists and that only the creator can update it
     if (proposal_.creator != _fromSpaceId) revert InvalidCaller();
     // May not update an already executed proposal
     if (proposal_.executed) revert InvalidProposalId();
+
     // Update proposal storage
     uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
     _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
@@ -542,10 +552,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _data The encoded execution data containing the proposal ID
    */
   function _executeProposal(bytes calldata _data) internal virtual {
+    // Decode data to execute proposal
+    bytes16 _proposalId = abi.decode(_data, (bytes16));
+
     // Anyone can call
     // Check if proposal can be settled
-    bytes16 _proposalId = abi.decode(_data, (bytes16));
     if (!_canExecuteProposal(_proposalId)) revert CanNotExecute();
+
     _executeProposal(_proposalId);
   }
 
@@ -558,14 +571,15 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Set proposal as executed
     proposal_.executed = true;
+
     // Loop over actions
-    Action[] memory actions = proposal_.actions;
-    uint256 actionsLength = actions.length;
-    Action memory action;
-    for (uint256 i; i < actionsLength; i++) {
-      action = actions[i];
-      (bool success,) = (action.to).call{value: action.value}(action.data);
-      if (!success) revert ActionReverted();
+    Action[] memory _actions = proposal_.actions;
+    uint256 _actionsLength = _actions.length;
+    Action memory _action;
+    for (uint256 _i; _i < _actionsLength; _i++) {
+      _action = _actions[_i];
+      (bool _success,) = (_action.to).call{value: _action.value}(_action.data);
+      if (!_success) revert ActionReverted();
     }
   }
 
@@ -575,10 +589,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _data The encoded role data used to determine which role a user wants to leave
    */
   function _leaveSpace(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
-    bytes32 role = abi.decode(_data, (bytes32));
-    if (role == MEMBER && hasRole(MEMBER, _fromSpaceId)) {
+    // Decode data to leave space
+    bytes32 _role = abi.decode(_data, (bytes32));
+
+    if (_role == MEMBER && hasRole(MEMBER, _fromSpaceId)) {
       _removeMember(_fromSpaceId);
-    } else if (role == EDITOR && hasRole(EDITOR, _fromSpaceId)) {
+    } else if (_role == EDITOR && hasRole(EDITOR, _fromSpaceId)) {
       _removeEditor(_fromSpaceId);
     } else {
       revert InvalidFromSpace();
@@ -593,19 +609,23 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _requestMembership(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct proposal
     (bytes16 _proposalId, bytes16 _newMemberSpaceId) = abi.decode(_data, (bytes16, bytes16));
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    // Ensure proposal ID is valid
+
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    // Ensure proposal ID is valid
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
+
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
-    uint256 _supportThreshold = $.votingSettings.fastPathFlatThreshold;
+    uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] =
       IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
+
     // Ping the registry to emit the proposal creation
     _ping(ActionsConstants.PROPOSAL_CREATED, bytes32(_proposalId), abi.encode(_proposalId, _votingMode, _actions));
+
     // Update proposal storage
     _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
   }
@@ -618,7 +638,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _restrictSpace(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     if (!hasRole(EDITOR, _fromSpaceId)) revert InvalidFromSpace();
+
+    // Decode data to restrict space
     bytes16 _spaceId = abi.decode(_data, (bytes16));
+
     _grantRole(FAST_PATH_RESTRICTED, _spaceId);
   }
 
@@ -628,6 +651,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _unrestrictSpace(bytes16 _spaceId) internal virtual {
     _revokeRole(FAST_PATH_RESTRICTED, _spaceId);
+
     _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_spaceId), '');
   }
 
@@ -637,9 +661,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _addEditor(bytes16 _newEditorSpaceId) internal virtual {
     if (hasRole(EDITOR, _newEditorSpaceId)) revert InvalidSpaceIdForRole();
+
     _grantRole(EDITOR, _newEditorSpaceId);
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.totalEditors++;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.totalEditors++;
+
     _ping(ActionsConstants.EDITOR_ADDED, bytes32(_newEditorSpaceId), '');
   }
 
@@ -653,11 +679,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _removeEditor(bytes16 _oldEditorSpaceId) internal virtual {
     if (!hasRole(EDITOR, _oldEditorSpaceId)) revert InvalidSpaceIdForRole();
     // May not remove editor if doing so would prevent proposals from being executed
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    if ($.votingSettings.quorum == $.totalEditors) revert InvalidSetting();
-    if ($.votingSettings.fastPathFlatThreshold == $.totalEditors) revert InvalidSetting();
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    if ($_.votingSettings.quorum == $_.totalEditors) revert InvalidSetting();
+    if ($_.votingSettings.fastPathFlatThreshold == $_.totalEditors) revert InvalidSetting();
+
     _revokeRole(EDITOR, _oldEditorSpaceId);
-    $.totalEditors--;
+    $_.totalEditors--;
+
     _ping(ActionsConstants.EDITOR_REMOVED, bytes32(_oldEditorSpaceId), '');
   }
 
@@ -667,7 +695,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _addMember(bytes16 _newMemberSpaceId) internal virtual {
     if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
+
     _grantRole(MEMBER, _newMemberSpaceId);
+
     _ping(ActionsConstants.MEMBER_ADDED, bytes32(_newMemberSpaceId), '');
   }
 
@@ -677,7 +707,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _removeMember(bytes16 _oldMemberSpaceId) internal virtual {
     if (!hasRole(MEMBER, _oldMemberSpaceId)) revert InvalidSpaceIdForRole();
+
     _revokeRole(MEMBER, _oldMemberSpaceId);
+
     _ping(ActionsConstants.MEMBER_REMOVED, bytes32(_oldMemberSpaceId), '');
   }
 
@@ -689,9 +721,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @dev _from and _to are always the DAO's space ID
    */
   function _ping(bytes32 _action, bytes32 _subject, bytes memory _data) internal virtual {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    bytes16 daoSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
-    $.spaceRegistry.enter(daoSpaceId, daoSpaceId, _action, _subject, _data, '');
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    bytes16 _daoSpaceId = $_.spaceRegistry.addressToSpaceId(address(this));
+
+    $_.spaceRegistry.enter(_daoSpaceId, _daoSpaceId, _action, _subject, _data, '');
   }
 
   /**
@@ -699,7 +732,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _spaceId The space ID to check
    * @param _proposalId The ID of the proposal
    * @param _voteOption The vote option being cast
-   * @return True if the space can vote, false otherwise
+   * @return __canVote True if the space can vote, false otherwise
    * @dev Returns false if proposal doesn't exist, voting ended, vote option is None, or space
    * wasn't an editor at snapshot block. Vote replacement allowed.
    */
@@ -707,7 +740,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes16 _spaceId,
     bytes16 _proposalId,
     VoteOption _voteOption
-  ) internal view virtual returns (bool) {
+  ) internal view virtual returns (bool __canVote) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
@@ -725,11 +758,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Checks if a proposal can be executed
    * @param _proposalId The ID of the proposal to check
-   * @return True if the proposal can be executed, false otherwise
+   * @return __canExecuteProposal True if the proposal can be executed, false otherwise
    * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
    * Slow path requires voting period to end; fast path can execute immediately.
    */
-  function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool) {
+  function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool __canExecuteProposal) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Verify that the proposal has not been executed already.
     if (proposal_.executed) return false;
@@ -746,19 +779,19 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @return _proposal The storage of a proposal
    */
   function _getLatestProposalStorage(bytes16 _proposalId) internal view returns (Proposal storage _proposal) {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    uint8 _version = $.latestProposalVersion[_proposalId];
-    _proposal = $.proposals[_proposalId][_version];
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    uint8 _version = $_.latestProposalVersion[_proposalId];
+    _proposal = $_.proposals[_proposalId][_version];
   }
 
   /**
    * @notice Returns the DAO space contract storage
-   * @return $ The storage of the DAO space contract
+   * @return $_ The storage of the DAO space contract
    * @custom:storage-location erc7201:geo.storage.DAOSpace
    */
-  function _getDAOSpaceStorage() internal pure returns (DAOSpaceStorage storage $) {
+  function _getDAOSpaceStorage() internal pure returns (DAOSpaceStorage storage $_) {
     assembly {
-      $.slot := _DAO_SPACE_STORAGE_LOCATION
+      $_.slot := _DAO_SPACE_STORAGE_LOCATION
     }
   }
 }

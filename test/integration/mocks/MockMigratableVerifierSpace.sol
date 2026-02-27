@@ -17,9 +17,10 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @dev _from and _to are always the DAO's address
    */
   function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    bytes16 verifierSpaceId = $.spaceRegistry.addressToSpaceId(address(this));
-    $.spaceRegistry.enter(verifierSpaceId, verifierSpaceId, _action, _subject, _data, '');
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    bytes16 _verifierSpaceId = $_.spaceRegistry.addressToSpaceId(address(this));
+
+    $_.spaceRegistry.enter(_verifierSpaceId, _verifierSpaceId, _action, _subject, _data, '');
   }
 
   /**
@@ -27,8 +28,8 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @dev Must be called by the owner
    */
   function register() external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
   }
 
   /**
@@ -36,8 +37,8 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @dev Must be called by the owner
    */
   function archive() external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.archiveSpaceId();
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry.archiveSpaceId();
   }
 
   /**
@@ -45,8 +46,8 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @dev Must be called by the owner
    */
   function clear() external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.clearSpaceId();
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry.clearSpaceId();
   }
 
   /**
@@ -55,8 +56,8 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @param _newAccount The proposed address of the space
    */
   function proposeMigration(address _newAccount) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.proposeSpaceMigration(_newAccount);
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry.proposeSpaceMigration(_newAccount);
   }
 
   /**
@@ -66,7 +67,7 @@ contract MockMigratableVerifierSpace is VerifierSpace {
    * @param _spaceId The ID of the space
    */
   function acceptMigration(bytes16 _spaceId) external virtual onlyOwner {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry.acceptSpaceMigration(_spaceId, typeId(), abi.encode(version()));
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry.acceptSpaceMigration(_spaceId, typeId(), abi.encode(version()));
   }
 }

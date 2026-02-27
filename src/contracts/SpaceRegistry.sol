@@ -37,13 +37,17 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function initialize(bytes calldata _initializerData) external virtual initializer {
+    // Decode initializer data
     address _owner = abi.decode(_initializerData, (address));
+
     __Ownable_init(_owner);
+
+    _registerSpaceId(address(this), typeId(), abi.encode(version()));
+
     _permissionlessActionAdded(ActionsConstants.UPVOTED);
     _permissionlessActionAdded(ActionsConstants.DOWNVOTED);
     _permissionlessActionAdded(ActionsConstants.UNVOTED);
     _permissionlessActionAdded(ActionsConstants.COMMENTED);
-    _registerSpaceId(address(this), typeId(), abi.encode(version()));
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -57,9 +61,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   ) external virtual {
     if (!activeSpaceIds(_fromSpaceId) || !activeSpaceIds(_toSpaceId)) revert SpaceNotActive();
 
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    address _fromSpace = $.spaceIdToAddress[_fromSpaceId];
-    address _toSpace = $.spaceIdToAddress[_toSpaceId];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    address _fromSpace = $_.spaceIdToAddress[_fromSpaceId];
+    address _toSpace = $_.spaceIdToAddress[_toSpaceId];
 
     // If msg.sender is not the from space
     // Then pass the msg.sender, to space ID, action, subject, data, and signature to the from space
@@ -68,7 +72,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     }
 
     // No fetch or write with permissionless actions
-    if ($.permissionlessActions[_action]) {
+    if ($_.permissionlessActions[_action]) {
       emit Action(_fromSpaceId, _toSpaceId, _action, _subject, _data);
     } else {
       // Fetch future output variable and update `_subject` for emission if relevant
@@ -89,84 +93,77 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function archiveSpaceId() external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
-    // Space must first be registered
-    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    // Space must first be registered and not archived
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
+    if ($_.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
-    $.archivedSpaceIds[_spaceId] = true;
+    $_.archivedSpaceIds[_spaceId] = true;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_ARCHIVED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
   function recoverSpaceId() external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
-    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    // Space must first be registered and archived
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if (!$.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
+    if (!$_.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
 
-    $.archivedSpaceIds[_spaceId] = false;
+    $_.archivedSpaceIds[_spaceId] = false;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_RECOVERED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
   function clearSpaceId() external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
-    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    // Space must first be registered and archived
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-    if (!$.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
+    if (!$_.archivedSpaceIds[_spaceId]) revert SpaceNotArchived();
 
     // Clear all mappings
-    $.addressToSpaceId[msg.sender] = bytes16(0);
-    $.spaceIdToAddress[_spaceId] = address(0);
-    $.spaceIdToProposedAddress[_spaceId] = address(0);
-    $.archivedSpaceIds[_spaceId] = false;
+    $_.addressToSpaceId[msg.sender] = bytes16(0);
+    $_.spaceIdToAddress[_spaceId] = address(0);
+    $_.spaceIdToProposedAddress[_spaceId] = address(0);
+    $_.archivedSpaceIds[_spaceId] = false;
 
     emit Action(_spaceId, bytes16(0), ActionsConstants.SPACE_ID_CLEARED, bytes32(bytes20(msg.sender)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
   function proposeSpaceMigration(address _newAccount) external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
     // Must be called by the space itself
-    bytes16 _spaceId = $.addressToSpaceId[msg.sender];
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
     if (_spaceId == bytes16(0)) revert SpaceNotRegistered();
-
     // Must not be archived
-    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
+    if ($_.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
-    $.spaceIdToProposedAddress[_spaceId] = _newAccount;
+    $_.spaceIdToProposedAddress[_spaceId] = _newAccount;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATION_PROPOSED, bytes32(bytes20(_newAccount)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
   function acceptSpaceMigration(bytes16 _spaceId, bytes32 _type, bytes calldata _version) external virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
     // Must be called by the proposed space itself
-    if ($.spaceIdToProposedAddress[_spaceId] != msg.sender) revert InvalidCaller();
-
+    if ($_.spaceIdToProposedAddress[_spaceId] != msg.sender) revert InvalidCaller();
     // New address must not be registered
-    if ($.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
-
+    if ($_.addressToSpaceId[msg.sender] != bytes16(0)) revert SpaceAlreadyRegistered();
     // Space must not be archived
-    if ($.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
-
-    address _oldAccount = $.spaceIdToAddress[_spaceId];
+    if ($_.archivedSpaceIds[_spaceId]) revert SpaceAlreadyArchived();
 
     // Update the bi-directional mappings and reset the proposal
-    $.spaceIdToProposedAddress[_spaceId] = address(0);
-    $.spaceIdToAddress[_spaceId] = msg.sender;
-    $.addressToSpaceId[_oldAccount] = bytes16(0);
-    $.addressToSpaceId[msg.sender] = _spaceId;
+    address _oldAccount = $_.spaceIdToAddress[_spaceId];
+    $_.spaceIdToProposedAddress[_spaceId] = address(0);
+    $_.spaceIdToAddress[_spaceId] = msg.sender;
+    $_.addressToSpaceId[_oldAccount] = bytes16(0);
+    $_.addressToSpaceId[msg.sender] = _spaceId;
 
     emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_ID_MIGRATED, bytes32(bytes20(msg.sender)), '');
     if (_type != bytes32(0)) emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
@@ -174,7 +171,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function setPermissionlessAction(bytes32 _action, bool _isPermissionless) external virtual onlyOwner {
-    (_isPermissionless) ? _permissionlessActionAdded(_action) : _permissionlessActionRemoved(_action);
+    _isPermissionless ? _permissionlessActionAdded(_action) : _permissionlessActionRemoved(_action);
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -186,50 +183,50 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function spaceIdToAddress(bytes16 _spaceId) public view returns (address _account) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _account = $.spaceIdToAddress[_spaceId];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _account = $_.spaceIdToAddress[_spaceId];
   }
 
   /// @inheritdoc ISpaceRegistry
   function spaceIdToProposedAddress(bytes16 _spaceId) public view returns (address _account) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _account = $.spaceIdToProposedAddress[_spaceId];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _account = $_.spaceIdToProposedAddress[_spaceId];
   }
 
   /// @inheritdoc ISpaceRegistry
   function addressToSpaceId(address _account) public view returns (bytes16 _spaceId) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _spaceId = $.addressToSpaceId[_account];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _spaceId = $_.addressToSpaceId[_account];
   }
 
   /// @inheritdoc ISpaceRegistry
   function permissionlessActions(bytes32 _action) public view returns (bool _isPermissionless) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _isPermissionless = $.permissionlessActions[_action];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _isPermissionless = $_.permissionlessActions[_action];
   }
 
   /// @inheritdoc ISpaceRegistry
   function registeredSpaceIds(bytes16 _spaceId) public view returns (bool _isRegistered) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _isRegistered = $.spaceIdToAddress[_spaceId] != address(0);
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _isRegistered = $_.spaceIdToAddress[_spaceId] != address(0);
   }
 
   /// @inheritdoc ISpaceRegistry
   function registeredSpaceAddresses(address _account) public view returns (bool _isRegistered) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _isRegistered = $.addressToSpaceId[_account] != bytes16(0);
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _isRegistered = $_.addressToSpaceId[_account] != bytes16(0);
   }
 
   /// @inheritdoc ISpaceRegistry
   function archivedSpaceIds(bytes16 _spaceId) public view returns (bool _isArchived) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _isArchived = $.archivedSpaceIds[_spaceId];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _isArchived = $_.archivedSpaceIds[_spaceId];
   }
 
   /// @inheritdoc ISpaceRegistry
   function activeSpaceIds(bytes16 _spaceId) public view returns (bool _isActive) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    _isActive = $.spaceIdToAddress[_spaceId] != address(0) && !$.archivedSpaceIds[_spaceId];
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    _isActive = $_.spaceIdToAddress[_spaceId] != address(0) && !$_.archivedSpaceIds[_spaceId];
   }
 
   /// @inheritdoc ISemver
@@ -248,7 +245,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+  function _authorizeUpgrade(address _newImplementation) internal virtual override onlyOwner {}
 
   /**
    * @notice Registers an account as a space in the registry
@@ -262,15 +259,14 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes32 _type,
     bytes memory _version
   ) internal virtual returns (bytes16 _spaceId) {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
     // Account must not be registered
-    if ($.addressToSpaceId[_account] != bytes16(0)) revert SpaceAlreadyRegistered();
+    if ($_.addressToSpaceId[_account] != bytes16(0)) revert SpaceAlreadyRegistered();
 
-    _spaceId = generateSpaceId(_account, $._spaceIdNonce++);
+    _spaceId = generateSpaceId(_account, $_._spaceIdNonce++);
 
-    $.addressToSpaceId[_account] = _spaceId;
-    $.spaceIdToAddress[_spaceId] = _account;
+    $_.addressToSpaceId[_account] = _spaceId;
+    $_.spaceIdToAddress[_spaceId] = _account;
 
     emit Action(bytes16(0), _spaceId, ActionsConstants.SPACE_ID_REGISTERED, bytes32(bytes20(_account)), '');
     if (_type != bytes32(0)) emit Action(_spaceId, _spaceId, ActionsConstants.SPACE_TYPE_DECLARED, _type, _version);
@@ -281,8 +277,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
    * @param _action The action identifier
    */
   function _permissionlessActionAdded(bytes32 _action) internal virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.permissionlessActions[_action] = true;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.permissionlessActions[_action] = true;
+
     emit Action(bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_ADDED, _action, '');
   }
 
@@ -291,19 +288,20 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
    * @param _action The action identifier
    */
   function _permissionlessActionRemoved(bytes32 _action) internal virtual {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
-    $.permissionlessActions[_action] = false;
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.permissionlessActions[_action] = false;
+
     emit Action(bytes16(0), bytes16(0), ActionsConstants.PERMISSIONLESS_ACTION_REMOVED, _action, '');
   }
 
   /**
    * @notice Returns the space registry contract storage
-   * @return $ The storage of the space registry contract
+   * @return $_ The storage of the space registry contract
    * @custom:storage-location erc7201:geo.storage.SpaceRegistry
    */
-  function _getSpaceRegistryStorage() internal pure returns (SpaceRegistryStorage storage $) {
+  function _getSpaceRegistryStorage() internal pure returns (SpaceRegistryStorage storage $_) {
     assembly {
-      $.slot := _SPACE_REGISTRY_STORAGE_LOCATION
+      $_.slot := _SPACE_REGISTRY_STORAGE_LOCATION
     }
   }
 }

@@ -8,7 +8,7 @@ interface ISpaceAccessControl {
    * @custom:storage-location erc7201:geo.storage.SpaceAccessControl
    */
   struct SpaceAccessControlStorage {
-    mapping(bytes32 _role => mapping(bytes16 _space => bool)) hasRole;
+    mapping(bytes32 _role => mapping(bytes16 _spaceId => bool _hasRole)) hasRole;
   }
 
   /**

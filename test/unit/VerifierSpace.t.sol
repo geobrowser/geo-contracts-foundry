@@ -38,11 +38,11 @@ contract UnitVerifierSpace is TestHelper {
     _spaceVersion = abi.encode(verifierSpaceImplementation.version());
 
     // Get predicted Verifier Space proxy address
-    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+    address _predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedVerifierSpaceProxySpaceId = _getSpaceId(_predictedVerifierSpaceProxy);
 
     // mock the space registration
-    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+    _mockRegisterSpaceId(_spaceRegistry, _spaceType, _spaceVersion, _predictedVerifierSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(_spaceRegistry, _owner, _getSpaceId(_owner));
@@ -96,11 +96,11 @@ contract UnitVerifierSpace is TestHelper {
     _assumeFuzzable(address(__spaceRegistry));
 
     // Get predicted Verifier Space proxy address
-    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+    address _predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedVerifierSpaceProxySpaceId = _getSpaceId(_predictedVerifierSpaceProxy);
 
     // it calls spaceRegistry to register space ID
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedVerifierSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
@@ -124,10 +124,10 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
 
     // it sets validWriters
-    bytes16 ownerSpaceId = _getSpaceId(__owner);
-    bytes16 verifierSpaceProxySpaceId = _getSpaceId(address(verifierSpaceProxy));
-    assertTrue(verifierSpaceProxy.validWriters(ownerSpaceId));
-    assertTrue(verifierSpaceProxy.validWriters(verifierSpaceProxySpaceId));
+    bytes16 _ownerSpaceId = _getSpaceId(__owner);
+    bytes16 _verifierSpaceProxySpaceId = _getSpaceId(address(verifierSpaceProxy));
+    assertTrue(verifierSpaceProxy.validWriters(_ownerSpaceId));
+    assertTrue(verifierSpaceProxy.validWriters(_verifierSpaceProxySpaceId));
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
@@ -137,11 +137,11 @@ contract UnitVerifierSpace is TestHelper {
     _assumeFuzzable(address(__spaceRegistry));
 
     // Get predicted Verifier Space proxy address
-    address predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
-    bytes16 predictedVerifierSpaceProxySpaceId = _getSpaceId(predictedVerifierSpaceProxy);
+    address _predictedVerifierSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedVerifierSpaceProxySpaceId = _getSpaceId(_predictedVerifierSpaceProxy);
 
     // mock the space registration
-    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, predictedVerifierSpaceProxySpaceId);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedVerifierSpaceProxySpaceId);
 
     // mock mapping fetch with ping
     _mockAddressToSpaceId(__spaceRegistry, __owner, _getSpaceId(__owner));
@@ -224,11 +224,11 @@ contract UnitVerifierSpace is TestHelper {
     uint256 _replayNonce = verifierSpaceProxy.replayNonce();
 
     // struct hash
-    bytes32 structHash = keccak256(
+    bytes32 _structHash = keccak256(
       abi.encode(verifierSpaceProxy.MESSAGE_TYPEHASH(), _toSpaceId, _action, _subject, _replayNonce, keccak256(_data))
     );
     // domain separator
-    bytes32 domainSeparator = keccak256(
+    bytes32 _domainSeparator = keccak256(
       abi.encode(
         keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
         keccak256('VERIFIER_SPACE'),
@@ -238,10 +238,10 @@ contract UnitVerifierSpace is TestHelper {
       )
     );
     // digest
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
+    bytes32 _digest = keccak256(abi.encodePacked('\x19\x01', _domainSeparator, _structHash));
 
     // signature
-    (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, digest);
+    (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_ownerPrivateKey, _digest);
     bytes memory _signature = abi.encodePacked(_r, _s, _v);
     verifierSpaceProxy.verify(_sender, _toSpaceId, _action, _subject, _data, _signature);
 

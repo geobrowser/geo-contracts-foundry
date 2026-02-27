@@ -20,8 +20,8 @@ contract MockDAOSpace is DAOSpace {
     uint256 _quorum,
     Action[] memory _actions
   ) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.latestProposalVersion[_proposalId] = _version;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.latestProposalVersion[_proposalId] = _version;
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     proposal_.executed = _executed;
     proposal_.creator = _creatorSpaceId;
@@ -30,8 +30,8 @@ contract MockDAOSpace is DAOSpace {
     proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.supportThreshold = _supportThreshold;
     proposal_.parameters.quorum = _quorum;
-    for (uint256 i; i < _actions.length; i++) {
-      proposal_.actions.push(_actions[i]);
+    for (uint256 _i; _i < _actions.length; _i++) {
+      proposal_.actions.push(_actions[_i]);
     }
   }
 
@@ -55,8 +55,8 @@ contract MockDAOSpace is DAOSpace {
   }
 
   function workaround_setVotingSettings(VotingSettings calldata _votingSettings) external {
-    DAOSpaceStorage storage $ = _getDAOSpaceStorage();
-    $.votingSettings = _votingSettings;
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.votingSettings = _votingSettings;
   }
 
   function workaround_grantRole(bytes32 _role, bytes16 _spaceId) external {

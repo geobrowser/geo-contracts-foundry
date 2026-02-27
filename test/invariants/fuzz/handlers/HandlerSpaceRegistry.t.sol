@@ -17,16 +17,16 @@ contract HandlerSpaceRegistry is BaseHandler {
   ) BaseHandler(_spaceRegistry, _eoaActors, _daoSpaceActors, _verifierSpaceActors) {}
 
   function handler_registerSpaceId() external {
-    address actor = msg.sender;
-    if (!isEOA(actor) || spaceRegistry.addressToSpaceId(actor) != bytes16(0)) {
+    address _actor = msg.sender;
+    if (!isEOA(_actor) || spaceRegistry.addressToSpaceId(_actor) != bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
+    vm.prank(_actor);
     try spaceRegistry.registerSpaceId(bytes32(0), '') {
-      bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
-      _trackNewRegistration(actor, spaceId);
+      bytes16 _spaceId = spaceRegistry.addressToSpaceId(_actor);
+      _trackNewRegistration(_actor, _spaceId);
       ghost_totalRegistrations++;
       lastTxSucceeded = true;
     } catch {
@@ -35,23 +35,23 @@ contract HandlerSpaceRegistry is BaseHandler {
   }
 
   function handler_archiveSpaceId() external {
-    address actor = msg.sender;
-    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
-    if (spaceId == bytes16(0)) {
+    address _actor = msg.sender;
+    bytes16 _spaceId = spaceRegistry.addressToSpaceId(_actor);
+    if (_spaceId == bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
     // Check if already archived
-    if (spaceRegistry.archivedSpaceIds(spaceId)) {
+    if (spaceRegistry.archivedSpaceIds(_spaceId)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
+    vm.prank(_actor);
     try spaceRegistry.archiveSpaceId() {
       // Space is still registered, just archived
-      ghost_isSpaceIdArchived[spaceId] = true;
+      ghost_isSpaceIdArchived[_spaceId] = true;
       ghost_totalArchives++;
       lastTxSucceeded = true;
     } catch {
@@ -60,23 +60,23 @@ contract HandlerSpaceRegistry is BaseHandler {
   }
 
   function handler_recoverSpaceId() external {
-    address actor = msg.sender;
-    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
-    if (spaceId == bytes16(0)) {
+    address _actor = msg.sender;
+    bytes16 _spaceId = spaceRegistry.addressToSpaceId(_actor);
+    if (_spaceId == bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
     // Check if archived
-    if (!spaceRegistry.archivedSpaceIds(spaceId)) {
+    if (!spaceRegistry.archivedSpaceIds(_spaceId)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
+    vm.prank(_actor);
     try spaceRegistry.recoverSpaceId() {
       // Space is still registered, just un-archived
-      ghost_isSpaceIdArchived[spaceId] = false;
+      ghost_isSpaceIdArchived[_spaceId] = false;
       ghost_totalRecoveries++;
       lastTxSucceeded = true;
     } catch {
@@ -85,24 +85,24 @@ contract HandlerSpaceRegistry is BaseHandler {
   }
 
   function handler_clearSpaceId() external {
-    address actor = msg.sender;
-    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
-    if (spaceId == bytes16(0)) {
+    address _actor = msg.sender;
+    bytes16 _spaceId = spaceRegistry.addressToSpaceId(_actor);
+    if (_spaceId == bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
     // Must be archived before clearing
-    if (!spaceRegistry.archivedSpaceIds(spaceId)) {
+    if (!spaceRegistry.archivedSpaceIds(_spaceId)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
+    vm.prank(_actor);
     try spaceRegistry.clearSpaceId() {
-      ghost_isAddressRegistered[actor] = false;
-      ghost_isSpaceIdRegistered[spaceId] = false;
-      ghost_isSpaceIdArchived[spaceId] = false;
+      ghost_isAddressRegistered[_actor] = false;
+      ghost_isSpaceIdRegistered[_spaceId] = false;
+      ghost_isSpaceIdArchived[_spaceId] = false;
       ghost_totalClears++;
       lastTxSucceeded = true;
     } catch {
@@ -111,27 +111,27 @@ contract HandlerSpaceRegistry is BaseHandler {
   }
 
   function handler_proposeSpaceMigration(uint256 _actorSeed) external {
-    address actor = msg.sender;
-    bytes16 spaceId = spaceRegistry.addressToSpaceId(actor);
-    if (spaceId == bytes16(0)) {
+    address _actor = msg.sender;
+    bytes16 _spaceId = spaceRegistry.addressToSpaceId(_actor);
+    if (_spaceId == bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
     // Cannot propose migration if archived
-    if (spaceRegistry.archivedSpaceIds(spaceId)) {
+    if (spaceRegistry.archivedSpaceIds(_spaceId)) {
       lastTxSucceeded = false;
       return;
     }
 
-    address newAccount = _findUnregisteredEOA(_actorSeed, actor);
-    if (newAccount == address(0)) {
+    address _newAccount = _findUnregisteredEOA(_actorSeed, _actor);
+    if (_newAccount == address(0)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
-    try spaceRegistry.proposeSpaceMigration(newAccount) {
+    vm.prank(_actor);
+    try spaceRegistry.proposeSpaceMigration(_newAccount) {
       lastTxSucceeded = true;
     } catch {
       lastTxSucceeded = false;
@@ -139,31 +139,31 @@ contract HandlerSpaceRegistry is BaseHandler {
   }
 
   function handler_acceptSpaceMigration() external {
-    address actor = msg.sender;
-    if (spaceRegistry.addressToSpaceId(actor) != bytes16(0)) {
+    address _actor = msg.sender;
+    if (spaceRegistry.addressToSpaceId(_actor) != bytes16(0)) {
       lastTxSucceeded = false;
       return;
     }
 
-    (bytes16 targetSpaceId, address oldAddress, bool found) = _findPendingMigration(actor);
-    if (!found) {
+    (bytes16 _targetSpaceId, address _oldAddress, bool _found) = _findPendingMigration(_actor);
+    if (!_found) {
       lastTxSucceeded = false;
       return;
     }
 
     // Cannot accept migration if source space is archived
-    if (spaceRegistry.archivedSpaceIds(targetSpaceId)) {
+    if (spaceRegistry.archivedSpaceIds(_targetSpaceId)) {
       lastTxSucceeded = false;
       return;
     }
 
-    vm.prank(actor);
-    try spaceRegistry.acceptSpaceMigration(targetSpaceId, bytes32(0), '') {
-      ghost_isAddressRegistered[oldAddress] = false;
-      _trackNewRegistration(actor, targetSpaceId);
+    vm.prank(_actor);
+    try spaceRegistry.acceptSpaceMigration(_targetSpaceId, bytes32(0), '') {
+      ghost_isAddressRegistered[_oldAddress] = false;
+      _trackNewRegistration(_actor, _targetSpaceId);
       // Space is not archived after migration (check prevents archived spaces from migrating)
-      ghost_isSpaceIdArchived[targetSpaceId] = false;
-      ghost_migrations[oldAddress] = actor;
+      ghost_isSpaceIdArchived[_targetSpaceId] = false;
+      ghost_migrations[_oldAddress] = _actor;
       ghost_acceptedMigrations++;
       lastTxSucceeded = true;
     } catch {
@@ -184,11 +184,11 @@ contract HandlerSpaceRegistry is BaseHandler {
 
   function _findUnregisteredEOA(uint256 _seed, address _exclude) internal view returns (address _unregisteredEOA) {
     _seed = bound(_seed, 0, type(uint128).max);
-    for (uint256 i = 0; i < eoaActors.length; i++) {
-      uint256 idx = (_seed + i) % eoaActors.length;
-      address candidate = eoaActors[idx];
-      if (spaceRegistry.addressToSpaceId(candidate) == bytes16(0) && candidate != _exclude) {
-        return candidate;
+    for (uint256 _i = 0; _i < eoaActors.length; _i++) {
+      uint256 _idx = (_seed + _i) % eoaActors.length;
+      address _candidate = eoaActors[_idx];
+      if (spaceRegistry.addressToSpaceId(_candidate) == bytes16(0) && _candidate != _exclude) {
+        return _candidate;
       }
     }
     return address(0);
@@ -199,10 +199,10 @@ contract HandlerSpaceRegistry is BaseHandler {
     view
     returns (bytes16 _spaceId, address _oldAddress, bool _found)
   {
-    for (uint256 i = 0; i < ghost_registeredSpaceIds.length; i++) {
-      bytes16 id = ghost_registeredSpaceIds[i];
-      if (ghost_isSpaceIdRegistered[id] && spaceRegistry.spaceIdToProposedAddress(id) == _proposedAddr) {
-        return (id, spaceRegistry.spaceIdToAddress(id), true);
+    for (uint256 _i = 0; _i < ghost_registeredSpaceIds.length; _i++) {
+      bytes16 _id = ghost_registeredSpaceIds[_i];
+      if (ghost_isSpaceIdRegistered[_id] && spaceRegistry.spaceIdToProposedAddress(_id) == _proposedAddr) {
+        return (_id, spaceRegistry.spaceIdToAddress(_id), true);
       }
     }
     return (bytes16(0), address(0), false);

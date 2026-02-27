@@ -49,11 +49,11 @@ contract IntegrationSafe is IntegrationBase {
     signMessageLib = new SignMessageLib();
 
     // Create safe with fallback handler set during setup
-    bytes memory initializer = abi.encodeCall(
+    bytes memory _initializer = abi.encodeCall(
       ISafe.setup,
       (_safeOwners, _safeThreshold, address(0), '', address(fallbackHandler), address(0), 0, payable(address(0)))
     );
-    userSafe = Safe(payable(address(safeProxyFactory.createProxyWithNonce(address(safeSingleton), initializer, 0))));
+    userSafe = Safe(payable(address(safeProxyFactory.createProxyWithNonce(address(safeSingleton), _initializer, 0))));
 
     // Deploy VerifierSpace with the safe as the owner
     verifierSpace = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(address(userSafe)));
@@ -79,14 +79,14 @@ contract IntegrationSafe is IntegrationBase {
   function test_VerifierSpace_SafeSignsAndEmitsEvent_WithPreApprovedHash() external {
     // Pre-approve the message using SignMessageLib
     /// @dev Use a permissionless action to isolate the verify logic
-    bytes32 verifierDigest = _getVerifierSpaceDigest(
+    bytes32 _verifierDigest = _getVerifierSpaceDigest(
       spaceRegistryProxy.addressToSpaceId(_safeOwners[0]), ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
     );
-    bytes memory signMessageData = abi.encodeCall(SignMessageLib.signMessage, (abi.encode(verifierDigest)));
-    bytes32 signTxHash = userSafe.getTransactionHash(
+    bytes memory _signMessageData = abi.encodeCall(SignMessageLib.signMessage, (abi.encode(_verifierDigest)));
+    bytes32 _signTxHash = userSafe.getTransactionHash(
       address(signMessageLib),
       0,
-      signMessageData,
+      _signMessageData,
       Enum.Operation.DelegateCall,
       0,
       0,
@@ -97,20 +97,20 @@ contract IntegrationSafe is IntegrationBase {
     );
 
     vm.prank(_safeOwners[0]);
-    userSafe.approveHash(signTxHash);
-    bytes memory signApprovedSig = abi.encodePacked(bytes32(uint256(uint160(_safeOwners[0]))), bytes32(0), uint8(1));
+    userSafe.approveHash(_signTxHash);
+    bytes memory _signApprovedSig = abi.encodePacked(bytes32(uint256(uint160(_safeOwners[0]))), bytes32(0), uint8(1));
 
     userSafe.execTransaction(
       address(signMessageLib),
       0,
-      signMessageData,
+      _signMessageData,
       Enum.Operation.DelegateCall,
       0,
       0,
       0,
       address(0),
       payable(address(0)),
-      signApprovedSig
+      _signApprovedSig
     );
 
     vm.expectEmit();
@@ -137,12 +137,12 @@ contract IntegrationSafe is IntegrationBase {
   function test_VerifierSpace_SafeSignsAndEmitsEvent_WithSignature() external {
     // Create a signature for the verify flow
     /// @dev Use a permissionless action to isolate the verify logic
-    bytes32 verifierDigest = _getVerifierSpaceDigest(
+    bytes32 _verifierDigest = _getVerifierSpaceDigest(
       spaceRegistryProxy.addressToSpaceId(_safeOwners[0]), ActionsConstants.UPVOTED, bytes32(0), abi.encode('')
     );
-    bytes32 safeMessageHash = fallbackHandler.getMessageHashForSafe(userSafe, abi.encode(verifierDigest));
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(_safeOwnersPrivateKeys[0], safeMessageHash);
-    bytes memory signature = abi.encodePacked(r, s, v);
+    bytes32 _safeMessageHash = fallbackHandler.getMessageHashForSafe(userSafe, abi.encode(_verifierDigest));
+    (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_safeOwnersPrivateKeys[0], _safeMessageHash);
+    bytes memory _signature = abi.encodePacked(_r, _s, _v);
 
     // Enter the space registry using the verify flow
     vm.expectEmit();
@@ -151,7 +151,7 @@ contract IntegrationSafe is IntegrationBase {
     );
 
     spaceRegistryProxy.enter(
-      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), signature
+      _verifierSpaceId, _safeOwnerSpaceIds[0], ActionsConstants.UPVOTED, bytes32(0), abi.encode(''), _signature
     );
 
     // Verify the replay nonce was incremented
@@ -170,11 +170,11 @@ contract IntegrationSafe is IntegrationBase {
     bytes32 _subject,
     bytes memory _data
   ) internal view returns (bytes32 _digest) {
-    uint256 replayNonce = verifierSpace.replayNonce();
-    bytes32 structHash = keccak256(
-      abi.encode(verifierSpace.MESSAGE_TYPEHASH(), _toSpaceId, _action, _subject, replayNonce, keccak256(_data))
+    uint256 _replayNonce = verifierSpace.replayNonce();
+    bytes32 _structHash = keccak256(
+      abi.encode(verifierSpace.MESSAGE_TYPEHASH(), _toSpaceId, _action, _subject, _replayNonce, keccak256(_data))
     );
-    bytes32 domainSeparator = keccak256(
+    bytes32 _domainSeparator = keccak256(
       abi.encode(
         keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
         keccak256(bytes(verifierSpace.name())),
@@ -183,6 +183,6 @@ contract IntegrationSafe is IntegrationBase {
         address(verifierSpace)
       )
     );
-    _digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
+    _digest = keccak256(abi.encodePacked('\x19\x01', _domainSeparator, _structHash));
   }
 }

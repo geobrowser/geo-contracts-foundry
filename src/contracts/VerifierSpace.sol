@@ -45,8 +45,8 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     __EIP712_init(name(), version());
 
     // Set Space Registry and register new Verifier Space
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.spaceRegistry = _spaceRegistry;
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.spaceRegistry = _spaceRegistry;
     bytes16 _verifierSpaceId = _spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
     // Set valid writers
@@ -68,44 +68,42 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     bytes calldata _data,
     bytes calldata _signature
   ) external virtual {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
     // Only space registry can call
-    if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
+    if (msg.sender != address($_.spaceRegistry)) revert InvalidCaller();
     // Construct the message hash and increment nonce to prevent replay
-    bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _subject, $.replayNonce++, keccak256(_data)))
+    bytes32 _digest = _hashTypedDataV4(
+      keccak256(abi.encode(MESSAGE_TYPEHASH, _toSpaceId, _action, _subject, $_.replayNonce++, keccak256(_data)))
     );
     // Validate that owner is the signer of the message hash, revert if not
-    if (!SignatureChecker.isValidSignatureNow(owner(), digest, _signature)) revert InvalidSignature();
+    if (!SignatureChecker.isValidSignatureNow(owner(), _digest, _signature)) revert InvalidSignature();
   }
 
   /// @inheritdoc ISpace
   function write(bytes16 _fromSpaceId, bytes32, bytes32, bytes calldata) external view virtual {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
     // Only space registry can call
-    if (msg.sender != address($.spaceRegistry)) revert InvalidCaller();
+    if (msg.sender != address($_.spaceRegistry)) revert InvalidCaller();
     // From space must be valid writer
-    if (!$.validWriters[_fromSpaceId]) revert InvalidWriter();
+    if (!$_.validWriters[_fromSpaceId]) revert InvalidWriter();
   }
 
   /// @inheritdoc IVerifierSpace
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    _spaceRegistry = $.spaceRegistry;
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    _spaceRegistry = $_.spaceRegistry;
   }
 
   /// @inheritdoc IVerifierSpace
   function validWriters(bytes16 _spaceId) public view returns (bool _valid) {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    _valid = $.validWriters[_spaceId];
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    _valid = $_.validWriters[_spaceId];
   }
 
   /// @inheritdoc IVerifierSpace
   function replayNonce() public view returns (uint256 _replayNonce) {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    _replayNonce = $.replayNonce;
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    _replayNonce = $_.replayNonce;
   }
 
   /// @inheritdoc ISpace
@@ -134,19 +132,19 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
    * @param _valid Whether the writer will be valid
    */
   function _setValidWriters(bytes16 _spaceId, bool _valid) internal virtual {
-    VerifierSpaceStorage storage $ = _getVerifierSpaceStorage();
-    $.validWriters[_spaceId] = _valid;
+    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
+    $_.validWriters[_spaceId] = _valid;
     emit ValidWriterSet(_spaceId, _valid);
   }
 
   /**
    * @notice Returns the verifier space contract storage
-   * @return $ The storage of the verifier space contract
+   * @return $_ The storage of the verifier space contract
    * @custom:storage-location erc7201:geo.storage.VerifierSpace
    */
-  function _getVerifierSpaceStorage() internal pure returns (VerifierSpaceStorage storage $) {
+  function _getVerifierSpaceStorage() internal pure returns (VerifierSpaceStorage storage $_) {
     assembly {
-      $.slot := _VERIFIER_SPACE_STORAGE_LOCATION
+      $_.slot := _VERIFIER_SPACE_STORAGE_LOCATION
     }
   }
 }

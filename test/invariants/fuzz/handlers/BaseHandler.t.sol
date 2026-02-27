@@ -29,34 +29,34 @@ abstract contract BaseHandler is Test, GhostState {
     address[] memory _daoSpaceActors,
     address[] memory _verifierSpaceActors
   ) internal {
-    for (uint256 i = 0; i < _eoaActors.length; i++) {
-      eoaActors.push(_eoaActors[i]);
-      ghost_actorType[_eoaActors[i]] = ActorType.EOA;
+    for (uint256 _i = 0; _i < _eoaActors.length; _i++) {
+      eoaActors.push(_eoaActors[_i]);
+      ghost_actorType[_eoaActors[_i]] = ActorType.EOA;
     }
 
-    for (uint256 i = 0; i < _daoSpaceActors.length; i++) {
-      daoSpaceActors.push(_daoSpaceActors[i]);
-      ghost_actorType[_daoSpaceActors[i]] = ActorType.DAOSpace;
-      _trackPreRegisteredSpace(_daoSpaceActors[i]);
+    for (uint256 _i = 0; _i < _daoSpaceActors.length; _i++) {
+      daoSpaceActors.push(_daoSpaceActors[_i]);
+      ghost_actorType[_daoSpaceActors[_i]] = ActorType.DAOSpace;
+      _trackPreRegisteredSpace(_daoSpaceActors[_i]);
     }
 
-    for (uint256 i = 0; i < _verifierSpaceActors.length; i++) {
-      verifierSpaceActors.push(_verifierSpaceActors[i]);
-      ghost_actorType[_verifierSpaceActors[i]] = ActorType.VerifierSpace;
-      _trackPreRegisteredSpace(_verifierSpaceActors[i]);
+    for (uint256 _i = 0; _i < _verifierSpaceActors.length; _i++) {
+      verifierSpaceActors.push(_verifierSpaceActors[_i]);
+      ghost_actorType[_verifierSpaceActors[_i]] = ActorType.VerifierSpace;
+      _trackPreRegisteredSpace(_verifierSpaceActors[_i]);
     }
   }
 
   function _trackPreRegisteredSpace(address _space) internal {
-    bytes16 spaceId = spaceRegistry.addressToSpaceId(_space);
-    require(spaceId != bytes16(0), 'Space not registered');
+    bytes16 _spaceId = spaceRegistry.addressToSpaceId(_space);
+    require(_spaceId != bytes16(0), 'Space not registered');
 
     ghost_registeredAddresses.push(_space);
     ghost_addressEverRegistered[_space] = true;
     ghost_isAddressRegistered[_space] = true;
-    ghost_registeredSpaceIds.push(spaceId);
-    ghost_isSpaceIdRegistered[spaceId] = true;
-    ghost_isSpaceIdArchived[spaceId] = false;
+    ghost_registeredSpaceIds.push(_spaceId);
+    ghost_isSpaceIdRegistered[_spaceId] = true;
+    ghost_isSpaceIdArchived[_spaceId] = false;
     ghost_factoryCreatedSpaces++;
     ghost_factoryCreatedSpaceAddresses.push(_space);
   }
