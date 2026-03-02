@@ -221,11 +221,18 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
-      if (block.timestamp <= proposal_.parameters.lastDate) return false;
       // Quorum check
-      if (proposal_.tally.yes + proposal_.tally.no + proposal_.tally.abstain < proposal_.parameters.quorum) {
+      uint256 _totalVotes = proposal_.tally.yes + proposal_.tally.no + proposal_.tally.abstain;
+      if (_totalVotes < proposal_.parameters.quorum) {
         return false;
       }
+      // REVIEW: What if partial threshold is already met and expected to keep being met given a worst-case scenario (i.e., all uncast votes are assumed to be no)? 
+      // Threshold check to allow for early execution
+      DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+      uint256 _remainingVotes = $_.totalEditors - _totalVotes;
+      if ((RATIO_BASE - _supportThreshold) * proposal_.tally.yes > _supportThreshold * (proposal_.tally.no + _remainingVotes)) return true;
+      // Duration check
+      if (block.timestamp <= proposal_.parameters.lastDate) return false;
       // Threshold percentage calculation
       if ((RATIO_BASE - _supportThreshold) * proposal_.tally.yes > _supportThreshold * proposal_.tally.no) return true;
     } else {
@@ -351,6 +358,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   function _updateVotingSettings(VotingSettings memory _votingSettings) internal virtual {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
+    if (_votingSettings.slowPathAbsoluteThreshold > RATIO_BASE) revert InvalidSetting();
     if (_votingSettings.fastPathFlatThreshold > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
@@ -744,13 +752,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    // The proposal voting period has already ended.
+    // The proposal voting period has already ended
     if (block.timestamp > proposal_.parameters.lastDate) return false;
-    // The proposal has already been executed.
+    // The proposal has already been executed
     if (proposal_.executed) return false;
-    // The voter votes `None` which is not allowed.
+    // The voter votes `None` which is not allowed
     if (_voteOption == VoteOption.None) return false;
-    // The voter has no voting power.
+    // The voter has no voting power
     if (!hasRole(EDITOR, _spaceId)) return false;
     return true;
   }
