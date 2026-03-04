@@ -508,6 +508,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_voteOption == VoteOption.No) {
         // Update voting mode
         proposal_.parameters.votingMode = VotingMode.Slow;
+        // Update quorum
+        proposal_.parameters.quorum = $_.votingSettings.quorum;
         // Update threshold
         proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
         // Reset duration and block times

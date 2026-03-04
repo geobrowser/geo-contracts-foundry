@@ -13,7 +13,7 @@ interface IDAOSpace is ISpace {
    * @notice Vote options that a voter can choose from
    * @param None Default state; cannot be cast
    * @param Yes Increases support; executes immediately when non-partial threshold met // REVIEW: What about immediate execution, whatever the vote option cast, when partial threshold is met and not expected to change (e.g., 1 % of total editors votes yes and then the remaining 99 % votes abstain)?
-   * @param No Decreases support; escalates flat mode to percentage mode // REVIEW: Does the notion of escalation still make sense without fast/slow paths?
+   * @param No Decreases support; escalates fast path to slow path
    * @param Abstain Counts towards participation but doesn't influence support
    */
   enum VoteOption {
@@ -25,29 +25,27 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Voting modes for proposals
-   * @param Percentage Percentage-based voting with relative thresholds
-   * @param Flat Flat-based voting with absolute thresholds
+   * @param Slow Percentage-based voting with relative thresholds
+   * @param Fast Flat-based voting with absolute thresholds
    */
   enum VotingMode {
-    Percentage,
-    Flat
+    Slow,
+    Fast
   }
 
   /**
    * @notice Voting settings configuration for proposals
-   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for percentage mode proposals (0-10^6, where 10^6 = 100% of yes/no votes)
-   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for percentage mode proposals (0-10^6, where 10^6 = 100% of total editors)
-   * @param flatSupportThreshold Flat count (absolute) support threshold for flat mode proposals (number of yes votes)
-   * @param percentageQuorum Percentage (relative) quorum for percentage mode proposals (0-10^6, where 10^6 = 100% of total editors)
-   * @param flatQuorum Flat count (absolute) quorum for flat mode proposals (minimum number of votes – participation – required)
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path (number of yes votes)
+   * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param duration Voting window duration in seconds
    */
   struct VotingSettings {
     uint256 partialPercentageSupportThreshold;
     uint256 universalPercentageSupportThreshold;
     uint256 flatSupportThreshold;
-    uint256 percentageQuorum; // REVIEW: Naturally, a percentage quorum would eventually come, right?
-    uint256 flatQuorum; // REVIEW: Could make sense, especially if voting mode escalation is deprecated
+    uint256 quorum;
     uint256 duration;
   }
 
@@ -57,12 +55,15 @@ interface IDAOSpace is ISpace {
    * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
-   * @param lastDate Last voting timestamp (slow path execution requires this)
+   * @param lastDate Last voting timestamp
    */
   struct ProposalParameters {
     VotingMode votingMode;
-    uint256 supportThreshold;
     // REVIEW: For the sake of storage simplicity and optimization, it would be great to avoid having multiple concomitant support thresholds for a same voting mode (e.g., partial and universal percentages); anticipating final results from current partial data might work around
+    uint256 supportThreshold;
+    // uint256 partialPercentageSupportThreshold;
+    // uint256 universalPercentageSupportThreshold;
+    // uint256 flatSupportThreshold;
     uint256 quorum;
     uint256 startDate;
     uint256 lastDate;
