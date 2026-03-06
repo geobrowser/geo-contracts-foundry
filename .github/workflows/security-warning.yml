@@ -21,7 +21,7 @@ jobs:
           MISSING=()
 
           while IFS= read -r -d '' file; do
-            if ! grep -q "$WARNING" "$file"; then
+            if ! grep -qF "$WARNING" "$file"; then
               MISSING+=("$file")
             fi
           done < <(find src/contracts -name '*.sol' -print0)
