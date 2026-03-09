@@ -12,7 +12,7 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
    * @param None Default state; cannot be cast
-   * @param Yes Increases support; executes immediately when non-partial threshold met // REVIEW: What about immediate execution, whatever the vote option cast, when partial threshold is met and not expected to change (e.g., 1 % of total editors votes yes and then the remaining 99 % votes abstain)?
+   * @param Yes Increases support; executes immediately when threshold met
    * @param No Decreases support; escalates fast path to slow path
    * @param Abstain Counts towards participation but doesn't influence support
    */
@@ -52,18 +52,18 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Proposal parameters at creation time
    * @param votingMode Voting mode (Slow or Fast)
-   * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
    * @param lastDate Last voting timestamp
    */
   struct ProposalParameters {
     VotingMode votingMode;
-    // REVIEW: For the sake of storage simplicity and optimization, it would be great to avoid having multiple concomitant support thresholds for a same voting mode (e.g., partial and universal percentages); anticipating final results from current partial data might work around
-    uint256 supportThreshold;
-    // uint256 partialPercentageSupportThreshold;
-    // uint256 universalPercentageSupportThreshold;
-    // uint256 flatSupportThreshold;
+    uint256 partialPercentageSupportThreshold;
+    uint256 universalPercentageSupportThreshold;
+    uint256 flatSupportThreshold;
     uint256 quorum;
     uint256 startDate;
     uint256 lastDate;

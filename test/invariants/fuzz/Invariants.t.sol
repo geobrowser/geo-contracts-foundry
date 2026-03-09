@@ -202,9 +202,7 @@ contract Invariants is Setup {
     for (uint256 _i = 0; _i < daoSpaceActors.length; _i++) {
       DAOSpace _dao = DAOSpace(daoSpaceActors[_i]);
       assertLe(
-        _dao.votingSettings().fastPathFlatThreshold,
-        _dao.totalEditors(),
-        'DS-INV-7: Fast path threshold exceeds editors'
+        _dao.votingSettings().flatSupportThreshold, _dao.totalEditors(), 'DS-INV-7: Fast path threshold exceeds editors'
       );
     }
   }

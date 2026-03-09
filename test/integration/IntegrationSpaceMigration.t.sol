@@ -37,10 +37,15 @@ contract IntegrationSpaceMigration is IntegrationBase {
     spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
     _eoaSpaceBisId = spaceRegistryProxy.addressToSpaceId(eoaSpaceBis);
 
-    _initialSpaceEditorsBis = new bytes16[](1);
+    verifierSpaceProxyBis = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpaceBis));
+    _verifierSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyBis));
+
+    _initialSpaceEditorsBis = new bytes16[](2);
     _initialSpaceEditorsBis[0] = _eoaSpaceBisId;
-    _initialSpaceMembersBis = new bytes16[](1);
+    _initialSpaceEditorsBis[1] = _verifierSpaceProxyBisId;
+    _initialSpaceMembersBis = new bytes16[](2);
     _initialSpaceMembersBis[0] = _eoaSpaceBisId;
+    _initialSpaceMembersBis[1] = _verifierSpaceProxyBisId;
 
     daoSpaceProxyBis = DAOSpace(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
@@ -53,9 +58,6 @@ contract IntegrationSpaceMigration is IntegrationBase {
       )
     );
     _daoSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyBis));
-
-    verifierSpaceProxyBis = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpaceBis));
-    _verifierSpaceProxyBisId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyBis));
 
     migratableVerifierSpaceImplementation = new MockMigratableVerifierSpace();
     vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
