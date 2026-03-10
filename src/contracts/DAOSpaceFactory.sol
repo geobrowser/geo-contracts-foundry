@@ -14,7 +14,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 /**
  * @title DAOSpaceFactory
  * @notice Produces beacon-proxy-upgradeable DAO spaces
- * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
+ * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */
 contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactory {
   /**

@@ -18,7 +18,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  *      and slow path (percentage-based, relative thresholds).
  *      Fast path escalates to slow path on "No" vote.
  *      Both paths execute immediately on "Yes" vote, if threshold is met.
- * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
+ * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */
 contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
