@@ -48,7 +48,8 @@ contract UnitDAOSpaceFactory is TestHelper {
       universalPercentageSupportThreshold: 5e5,
       flatSupportThreshold: 1,
       quorum: 1,
-      duration: 2 days
+      duration: 2 days,
+      defaultFastPathAccessForMembers: false
     });
 
     // when deployed

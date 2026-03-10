@@ -92,6 +92,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     for (uint256 _i; _i < _length; _i++) {
       _addEditor(_initialEditors[_i]);
     }
+
+    // Set voting settings
+    // Must be added after editors but before members so that the default fast path member behaviour occurs
+    _updateVotingSettings(_votingSettings);
+
     // Add initial members
     _length = _initialMembers.length;
     for (uint256 _j; _j < _length; _j++) {
@@ -100,9 +105,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, _spaceRegistry.addressToSpaceId(address(_spaceRegistry)));
     _grantRole(DAO, _daoSpaceId);
-
-    // Set voting settings
-    _updateVotingSettings(_votingSettings);
 
     // Set the initial fast path actions
     $_.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
@@ -407,7 +409,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID creating the proposal
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
-   * @dev Fast path: only editors can create, creator must not be restricted, single action required,
+   * @return _supportThreshold The support threshold (slow or fast) of the proposal
+   * @dev Fast path: members or editors can create, creator must not be restricted, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
   function _checkProposalPath(bytes16 _fromSpaceId, VotingMode _votingMode, Action[] memory _actions) internal virtual {
@@ -418,8 +421,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
     } else {
       // Fast path
-      // Only editors can create fast path proposals
-      if (!hasRole(EDITOR, _fromSpaceId)) revert InvalidFromSpace();
+      // Only members or editors can create fast path proposals
+      if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
       // Checks from space is allowed to use fast path
       if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
       // limit the actions to one call
@@ -715,10 +718,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Internal function to add a member
    * @param _newMemberSpaceId The space ID of the new member
+   * @dev When defaultFastPathAccessForMembers is false, the new member is restricted from the fast path.
    */
   function _addMember(bytes16 _newMemberSpaceId) internal virtual {
     if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
 
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    if (!$_.votingSettings.defaultFastPathAccessForMembers) _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
     _grantRole(MEMBER, _newMemberSpaceId);
 
     _ping(ActionsConstants.MEMBER_ADDED, bytes32(_newMemberSpaceId), '');

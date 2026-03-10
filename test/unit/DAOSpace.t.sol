@@ -46,7 +46,8 @@ contract UnitDAOSpace is TestHelper {
       universalPercentageSupportThreshold: 5e5,
       flatSupportThreshold: 1,
       quorum: 1,
-      duration: 2 days
+      duration: 2 days,
+      defaultFastPathAccessForMembers: false
     });
     _initialEditors = new bytes16[](2);
     _initialEditors[0] = _initialEditorASpaceId;
@@ -733,6 +734,67 @@ contract UnitDAOSpace is TestHelper {
     assertEq(_actions[0].to, address(daoSpaceProxy));
     assertEq(_actions[0].value, 0);
     assertEq(_actions[0].data, abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller))));
+  }
+
+  function test_Write_When_createProposalParamsAreValid_WhenTheVotingModeIsFast_WhenCreatorIsMemberNotEditor(bytes32 _subject)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_CREATED
+    whenTheVotingModeIsFast
+  {
+    bytes16 _memberOnlySpaceId = bytes16(keccak256('_memberOnlyFastPath'));
+    vm.assume(_memberOnlySpaceId != _initialEditorSpaceId);
+    vm.assume(_memberOnlySpaceId != _initialMemberSpaceId);
+
+    // Add a member (not editor) with fast path access: update settings then add member as DAO
+    vm.stopPrank();
+    vm.startPrank(address(daoSpaceProxy));
+    IDAOSpace.VotingSettings memory _settings = daoSpaceProxy.votingSettings();
+    _settings.defaultFastPathAccessForMembers = true;
+    daoSpaceProxy.updateVotingSettings(_settings);
+
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_memberOnlySpaceId),
+      ''
+    );
+    daoSpaceProxy.addMember(_memberOnlySpaceId);
+    vm.stopPrank();
+    vm.startPrank(_spaceRegistry);
+
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _memberOnlySpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _memberOnlySpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _memberOnlySpaceId));
+
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
+
+    IDAOSpace.VotingSettings memory _votingSettings = daoSpaceProxy.votingSettings();
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(
+        vm.getBlockTimestamp(),
+        vm.getBlockTimestamp() + _votingSettings.duration,
+        IDAOSpace.VotingMode.Fast,
+        _votingSettings.quorum,
+        _votingSettings.fastPathFlatThreshold
+      )
+    );
+
+    bytes memory _proposalData = _createFastPathProposalToAddMember();
+    daoSpaceProxy.write(_memberOnlySpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _proposalData);
+
+    (, bytes16 _creator,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_creator, _memberOnlySpaceId);
+    assertEq(daoSpaceProxy.latestProposalVersion(_proposalId), 1);
   }
 
   /// WRITE - PROPOSAL_VOTED ///
@@ -1664,7 +1726,8 @@ contract UnitDAOSpace is TestHelper {
         universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
         flatSupportThreshold: 0,
         quorum: 0,
-        duration: _votingSettings.duration
+        duration: _votingSettings.duration,
+        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
       })
     );
 
@@ -2026,7 +2089,8 @@ contract UnitDAOSpace is TestHelper {
         universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
         flatSupportThreshold: 0,
         quorum: 2,
-        duration: _votingSettings.duration
+        duration: _votingSettings.duration,
+        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
       })
     );
 
@@ -2042,7 +2106,8 @@ contract UnitDAOSpace is TestHelper {
         universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
         flatSupportThreshold: 2,
         quorum: 0,
-        duration: _votingSettings.duration
+        duration: _votingSettings.duration,
+        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
       })
     );
 
@@ -2059,7 +2124,8 @@ contract UnitDAOSpace is TestHelper {
         universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
         flatSupportThreshold: 0,
         quorum: 0,
-        duration: _votingSettings.duration
+        duration: _votingSettings.duration,
+        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
       })
     );
 
@@ -2104,6 +2170,29 @@ contract UnitDAOSpace is TestHelper {
     // it reverts with InvalidSpaceIdForRole
     vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
     daoSpaceProxy.addMember(_initialMemberASpaceId);
+  }
+
+  function test_AddMember_WhenDefaultFastPathAccessForMembersIsFalse() external whenCalledByDAO {
+    bytes16 _newMemberSpaceId = bytes16(keccak256('_newMemberRestricted'));
+    vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_newMemberSpaceId),
+      ''
+    );
+
+    daoSpaceProxy.addMember(_newMemberSpaceId);
+
+    // it grants FastPathRestricted to new member
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _newMemberSpaceId));
   }
 
   function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId) external whenCalledByDAO {

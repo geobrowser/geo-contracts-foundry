@@ -209,6 +209,8 @@ UnitDAOSpace::addMember
 ├── when called by DAO
 │   ├── when _newMember is a member
 │   │   └── it reverts with InvalidSpaceIdForRole
+│   ├── when defaultFastPathAccessForMembers is false
+│   │   └── it grants FastPathRestricted to new member
 │   └── when _newMember is not a member
 │       ├── it grants _newMember the MEMBER role
 │       └── it calls enter on the spaceRegistry with the MEMBER_ADDED action
