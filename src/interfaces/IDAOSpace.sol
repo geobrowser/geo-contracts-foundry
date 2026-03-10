@@ -35,9 +35,9 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Voting settings configuration for proposals
-   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of yes/no votes)
-   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of total editors)
-   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path (number of yes votes)
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path late execution (0-10e6, where 10e6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path early execution (0-10e6, where 10e6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param duration Voting window duration in seconds
    */
@@ -52,9 +52,9 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Proposal parameters at creation time
    * @param votingMode Voting mode (Slow or Fast)
-   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of yes/no votes)
-   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path (0-10^6, where 10^6 = 100% of total editors)
-   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path (number of yes votes)
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path late execution (0-10e6, where 10e6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path early execution (0-10e6, where 10e6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
    * @param lastDate Last voting timestamp
@@ -377,7 +377,7 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Returns the ratio base used for percentage calculations
-   * @return _ratioBase The ratio base (10^6)
+   * @return _ratioBase The ratio base (10e6)
    */
   function RATIO_BASE() external view returns (uint256 _ratioBase);
 

@@ -218,7 +218,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     returns (bool _isSupportThresholdReached)
   {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    uint256 _supportThreshold;
+    uint256 _effectiveSupportThreshold;
 
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
@@ -228,39 +228,35 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         return false;
       }
 
-      _supportThreshold = (proposal_.parameters.universalPercentageSupportThreshold == 0)
-        ? 0
-        : proposal_.parameters.universalPercentageSupportThreshold - 1;
-
+      _effectiveSupportThreshold =
+        _computeEffectiveSupportThreshold(proposal_.parameters.universalPercentageSupportThreshold);
       DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-      // REVIEW: Should $_.totalEditors be stored in ProposalParameters?
       // Threshold percentage check to allow for early execution
       // % = influencing + non-influencing votes (yes/no/abstain/none) = total votes = total editors
       // % of yes votes > % of no + abstain + none votes
-      if (proposal_.tally.yes * RATIO_BASE > _supportThreshold * $_.totalEditors) {
+      if (proposal_.tally.yes * RATIO_BASE > _effectiveSupportThreshold * $_.totalEditors) {
         return true;
       }
 
       // Duration check
       if (block.timestamp <= proposal_.parameters.lastDate) return false;
 
-      _supportThreshold = (proposal_.parameters.partialPercentageSupportThreshold == 0)
-        ? 0
-        : proposal_.parameters.partialPercentageSupportThreshold - 1;
-
+      _effectiveSupportThreshold =
+        _computeEffectiveSupportThreshold(proposal_.parameters.partialPercentageSupportThreshold);
       // Threshold percentage calculation
       // % = influencing votes (yes/no)
       // % of yes votes > % of no votes
-      if ((RATIO_BASE - _supportThreshold) * proposal_.tally.yes > _supportThreshold * proposal_.tally.no) return true;
+      if (
+        (RATIO_BASE - _effectiveSupportThreshold) * proposal_.tally.yes
+          > _effectiveSupportThreshold * proposal_.tally.no
+      ) return true;
     } else {
       // Fast path
 
-      _supportThreshold =
-        (proposal_.parameters.flatSupportThreshold == 0) ? 0 : proposal_.parameters.flatSupportThreshold - 1;
-
+      _effectiveSupportThreshold = _computeEffectiveSupportThreshold(proposal_.parameters.flatSupportThreshold);
       // Threshold flat calculation
       // # of yes votes > flat count
-      if (proposal_.tally.yes > _supportThreshold) return true;
+      if (proposal_.tally.yes > _effectiveSupportThreshold) return true;
     }
   }
 
@@ -809,6 +805,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     uint8 _version = $_.latestProposalVersion[_proposalId];
     _proposal = $_.proposals[_proposalId][_version];
+  }
+
+  /**
+   * @notice Returns the effective support threshold to be used in threshold calculation
+   * @param _supportThreshold The support threshold
+   * @return _effectiveSupportThreshold The effective support threshold
+   */
+  function _computeEffectiveSupportThreshold(uint256 _supportThreshold)
+    internal
+    pure
+    virtual
+    returns (uint256 _effectiveSupportThreshold)
+  {
+    _effectiveSupportThreshold = (_supportThreshold == 0) ? 0 : _supportThreshold - 1;
   }
 
   /**
