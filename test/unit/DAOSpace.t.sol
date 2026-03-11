@@ -559,7 +559,7 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Write_When_fromSpaceIdIsNotAnEditor(bytes32 _subject)
+  function test_Write_When_fromSpaceIdIsNotAMemberOrEditor_WhenTheVotingModeIsFast(bytes32 _subject)
     external
     whenCalledBySpaceRegistry
     when_actionEqualsPROPOSAL_CREATED
@@ -2137,17 +2137,23 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
   }
 
-  function test_AddMember_WhenDefaultFastPathAccessForMembersIsFalse()
+  modifier whenDefaultFastPathAccessForMembersIsFalse() {
+    assertFalse(daoSpaceProxy.votingSettings().defaultFastPathAccessForMembers);
+    _;
+  }
+
+  function test_AddMember_When_newMemberIsNotAnEditor(bytes16 _newMemberSpaceId)
     external
     whenCalledByDAO
     when_newMemberIsNotAMember
+    whenDefaultFastPathAccessForMembersIsFalse
   {
-    bytes16 _newMemberSpaceId = bytes16(keccak256('_newMemberRestricted'));
     vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorSpaceId);
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
 
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
     _mockEnter(
       _spaceRegistry,
       _daoSpaceProxySpaceId,
@@ -2161,9 +2167,48 @@ contract UnitDAOSpace is TestHelper {
 
     // it grants _newMember the MEMBER role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action (covered by _mockEnter expectation)
     // it grants FastPathRestricted to new member
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _newMemberSpaceId));
+  }
+
+  function test_AddMember_When_newMemberIsAlreadyAnEditor(bytes16 _newMemberSpaceId)
+    external
+    whenCalledByDAO
+    when_newMemberIsNotAMember
+    whenDefaultFastPathAccessForMembersIsFalse
+  {
+    vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorSpaceId);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
+
+    // Grant editor role initially
+    bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.EDITOR_ADDED,
+      bytes32(_newMemberSpaceId),
+      ''
+    );
+    daoSpaceProxy.addEditor(_newMemberSpaceId);
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
+
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_newMemberSpaceId),
+      ''
+    );
+    daoSpaceProxy.addMember(_newMemberSpaceId);
+
+    // it grants _newMember the MEMBER role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+    // it does not grant FastPathRestricted to new member
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _newMemberSpaceId));
   }
 
   function test_AddMember_WhenCalledByNon_DAO(address _caller, bytes16 _newMemberSpaceId) external {
@@ -2223,7 +2268,6 @@ contract UnitDAOSpace is TestHelper {
   function test_UnrestrictSpace_WhenCalledByDAO() external whenCalledByDAO {
     daoSpaceProxy.workaround_grantRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller));
 
-    // it revokes the FAST_PATH_RESTRICTED role from _space
     // it fetches the daoSpaceId from the spaceRegistry
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
@@ -2239,6 +2283,7 @@ contract UnitDAOSpace is TestHelper {
     );
     daoSpaceProxy.unrestrictSpace(_getSpaceId(_randomCaller));
 
+    // it revokes the FAST_PATH_RESTRICTED role from _space
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _getSpaceId(_randomCaller)));
   }
 

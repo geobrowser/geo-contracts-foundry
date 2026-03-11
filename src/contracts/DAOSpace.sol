@@ -415,14 +415,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _checkProposalPath(bytes16 _fromSpaceId, VotingMode _votingMode, Action[] memory _actions) internal virtual {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+
+    // Only members or editors can create proposals
+    if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
+
     if (_votingMode == VotingMode.Slow) {
       // Slow path
-      // Only members or editors can create slow path proposals
-      if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
     } else {
       // Fast path
-      // Only members or editors can create fast path proposals
-      if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
       // Checks from space is allowed to use fast path
       if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
       // limit the actions to one call
@@ -724,7 +724,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
 
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    if (!$_.votingSettings.defaultFastPathAccessForMembers) _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
+    if (!$_.votingSettings.defaultFastPathAccessForMembers && !hasRole(EDITOR, _newMemberSpaceId)) {
+      _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
+    }
     _grantRole(MEMBER, _newMemberSpaceId);
 
     _ping(ActionsConstants.MEMBER_ADDED, bytes32(_newMemberSpaceId), '');
