@@ -19,9 +19,9 @@ UnitDAOSpace::initialize
 │   ├── it sets the voting settings
 │   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it calls enter on the spaceRegistry with the TOPIC_SET action
-│   ├── it grants the new editor the EDITOR role
+│   ├── it grants the new editors the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
-│   ├── it grants the new member the MEMBER role
+│   ├── it grants the new members the MEMBER role
 │   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action

@@ -294,11 +294,13 @@ contract UnitDAOSpace is TestHelper {
     // it sets the voting settings
     assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
 
-    // it grants the new editor the EDITOR role
+    // it grants the new editors the EDITOR role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorBSpaceId));
 
-    // it grants the new member the MEMBER role
+    // it grants the new members the MEMBER role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberBSpaceId));
 
     // it grants itself the DAO role
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _getSpaceId(address(daoSpaceProxy))));
@@ -1069,10 +1071,10 @@ contract UnitDAOSpace is TestHelper {
   {
     _votingMode = bound(_votingMode, 0, 1);
 
-    // proposal set up to add randomCaller as an editor
+    // proposal set up to add randomCaller as a member
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_getSpaceId(_randomCaller)))
     });
     daoSpaceProxy.workaround_createProposal(
       _proposalId,
@@ -1089,15 +1091,15 @@ contract UnitDAOSpace is TestHelper {
       _actions
     );
 
-    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _getSpaceId(_randomCaller)));
 
-    // it calls enter on the spaceRegistry with the EDITOR_ADDED action
+    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
     _mockEnter(
       _spaceRegistry,
       _daoSpaceProxySpaceId,
       _daoSpaceProxySpaceId,
-      ActionsConstants.EDITOR_ADDED,
+      ActionsConstants.MEMBER_ADDED,
       bytes32(_getSpaceId(_randomCaller)),
       ''
     );
@@ -1116,7 +1118,7 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(_executed);
 
     // it loops over the stored proposal actions and performs the external calls
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _getSpaceId(_randomCaller)));
   }
 
   modifier whenTheCurrent_fromSpaceIdVoteEqualsNo() {
@@ -2453,6 +2455,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _no,
     uint256 _abstain,
     uint256 _none,
+    uint256 _quorum,
     uint256 _universalPercentageSupportThreshold
   ) external whenTheProposalVotingModeIsSlow {
     // set up
@@ -2460,6 +2463,7 @@ contract UnitDAOSpace is TestHelper {
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
     _none = bound(_none, 0, 1e3);
+    _quorum = bound(_quorum, 0, _yes + _no + _abstain);
     _universalPercentageSupportThreshold = bound(_universalPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
     vm.assume(
       (_yes * daoSpaceProxy.RATIO_BASE() > (_universalPercentageSupportThreshold - 1) * (_yes + _no + _abstain + _none))
@@ -2472,7 +2476,7 @@ contract UnitDAOSpace is TestHelper {
       block.timestamp,
       block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
-      0,
+      _quorum,
       daoSpaceProxy.RATIO_BASE(),
       _universalPercentageSupportThreshold,
       daoSpaceProxy.votingSettings().flatSupportThreshold,
@@ -2485,11 +2489,25 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
-  function test_IsSupportThresholdReached_WhenTheBlockTimestampIsLessThanOrEqualToTheProposalLastDate()
-    external
-    whenTheProposalVotingModeIsSlow
-  {
+  function test_IsSupportThresholdReached_WhenTheBlockTimestampIsLessThanOrEqualToTheProposalLastDate(
+    uint256 _yes,
+    uint256 _no,
+    uint256 _abstain,
+    uint256 _none,
+    uint256 _quorum,
+    uint256 _universalPercentageSupportThreshold
+  ) external whenTheProposalVotingModeIsSlow {
     // set up
+    _yes = bound(_yes, 1, 1e3);
+    _no = bound(_no, 0, 1e3);
+    _abstain = bound(_abstain, 0, 1e3);
+    _none = bound(_none, 0, 1e3);
+    _quorum = bound(_quorum, 0, _yes + _no + _abstain);
+    _universalPercentageSupportThreshold = bound(_universalPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
+    vm.assume(
+      (_yes * daoSpaceProxy.RATIO_BASE()
+          <= (_universalPercentageSupportThreshold - 1) * (_yes + _no + _abstain + _none))
+    );
     daoSpaceProxy.workaround_createProposal(
       _proposalId,
       false,
@@ -2498,12 +2516,15 @@ contract UnitDAOSpace is TestHelper {
       block.timestamp,
       block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
-      daoSpaceProxy.votingSettings().quorum,
+      _quorum,
       daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      _universalPercentageSupportThreshold,
       daoSpaceProxy.votingSettings().flatSupportThreshold,
       new IDAOSpace.Action[](0)
     );
+    daoSpaceProxy.workaround_setTally(_proposalId, _yes, _no, _abstain);
+    daoSpaceProxy.workaround_setTotalEditors(_yes + _no + _abstain + _none);
+    vm.warp(block.timestamp + daoSpaceProxy.votingSettings().duration);
 
     // it returns false
     assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
@@ -2514,6 +2535,8 @@ contract UnitDAOSpace is TestHelper {
     uint256 _no,
     uint256 _abstain,
     uint256 _none,
+    uint256 _quorum,
+    uint256 _universalPercentageSupportThreshold,
     uint256 _partialPercentageSupportThreshold
   ) external whenTheProposalVotingModeIsSlow {
     // set up
@@ -2521,6 +2544,12 @@ contract UnitDAOSpace is TestHelper {
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
     _none = bound(_none, 0, 1e3);
+    _quorum = bound(_quorum, 0, _yes + _no + _abstain);
+    _universalPercentageSupportThreshold = bound(_universalPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
+    vm.assume(
+      (_yes * daoSpaceProxy.RATIO_BASE()
+          <= (_universalPercentageSupportThreshold - 1) * (_yes + _no + _abstain + _none))
+    );
     _partialPercentageSupportThreshold = bound(_partialPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
     vm.assume(
       (daoSpaceProxy.RATIO_BASE() - (_partialPercentageSupportThreshold - 1)) * _yes
@@ -2534,9 +2563,9 @@ contract UnitDAOSpace is TestHelper {
       block.timestamp,
       block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
-      0,
+      _quorum,
       _partialPercentageSupportThreshold,
-      daoSpaceProxy.RATIO_BASE(),
+      _universalPercentageSupportThreshold,
       daoSpaceProxy.votingSettings().flatSupportThreshold,
       new IDAOSpace.Action[](0)
     );
@@ -2553,6 +2582,8 @@ contract UnitDAOSpace is TestHelper {
     uint256 _no,
     uint256 _abstain,
     uint256 _none,
+    uint256 _quorum,
+    uint256 _universalPercentageSupportThreshold,
     uint256 _partialPercentageSupportThreshold
   ) external whenTheProposalVotingModeIsSlow {
     // set up
@@ -2560,6 +2591,12 @@ contract UnitDAOSpace is TestHelper {
     _no = bound(_no, 0, 1e3);
     _abstain = bound(_abstain, 0, 1e3);
     _none = bound(_none, 0, 1e3);
+    _quorum = bound(_quorum, 0, _yes + _no + _abstain);
+    _universalPercentageSupportThreshold = bound(_universalPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
+    vm.assume(
+      (_yes * daoSpaceProxy.RATIO_BASE()
+          <= (_universalPercentageSupportThreshold - 1) * (_yes + _no + _abstain + _none))
+    );
     _partialPercentageSupportThreshold = bound(_partialPercentageSupportThreshold, 1, daoSpaceProxy.RATIO_BASE());
     vm.assume(
       (daoSpaceProxy.RATIO_BASE() - (_partialPercentageSupportThreshold - 1)) * _yes
@@ -2573,9 +2610,9 @@ contract UnitDAOSpace is TestHelper {
       block.timestamp,
       block.timestamp + daoSpaceProxy.votingSettings().duration,
       IDAOSpace.VotingMode.Slow,
-      0,
+      _quorum,
       _partialPercentageSupportThreshold,
-      daoSpaceProxy.RATIO_BASE(),
+      _universalPercentageSupportThreshold,
       daoSpaceProxy.votingSettings().flatSupportThreshold,
       new IDAOSpace.Action[](0)
     );
