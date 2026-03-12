@@ -10,7 +10,7 @@ import {ISpaceAccessControl} from 'interfaces/utils/ISpaceAccessControl.sol';
  * @notice Manages a nested mapping to allow for space ids to be granted roles
  * @dev Inspired by the Openzeppelin's AccessControlUpgradeable implementation
  * https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/access/AccessControlUpgradeable.sol
- * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
+ * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */
 abstract contract SpaceAccessControl is Initializable, ISpaceAccessControl {
   /**

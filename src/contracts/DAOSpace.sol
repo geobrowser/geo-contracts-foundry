@@ -16,7 +16,7 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  * @dev This contract allows members and editors to create proposals, vote, and execute them.
  *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
  *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
- * @custom:security WARNING: This contract has not been audited and should not be used to hold funds.
+ * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */
 contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
@@ -443,8 +443,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     proposal_.creator = _fromSpaceId;
     proposal_.parameters.startDate = block.timestamp;
     proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
-    proposal_.parameters.quorum = $_.votingSettings.quorum;
     proposal_.parameters.votingMode = _votingMode;
+    proposal_.parameters.quorum = $_.votingSettings.quorum;
     proposal_.parameters.supportThreshold = _supportThreshold;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
@@ -506,10 +506,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_voteOption == VoteOption.No) {
         // Update voting mode
         proposal_.parameters.votingMode = VotingMode.Slow;
-        // Update threshold
-        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
         // Update quorum
         proposal_.parameters.quorum = $_.votingSettings.quorum;
+        // Update threshold
+        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
