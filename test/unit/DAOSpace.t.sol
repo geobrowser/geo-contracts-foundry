@@ -1514,7 +1514,7 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsPROPOSAL_EXECUTED
     whenTheProposalCanBeExecuted
   {
-    // proposal set up to add randomCaller as an editor
+    // proposal set up to add randomCaller as an editor and member
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
     _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_getSpaceId(_randomCaller)))
@@ -1553,6 +1553,16 @@ contract UnitDAOSpace is TestHelper {
       _daoSpaceProxySpaceId,
       _daoSpaceProxySpaceId,
       ActionsConstants.EDITOR_ADDED,
+      bytes32(_getSpaceId(_randomCaller)),
+      ''
+    );
+
+    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
       bytes32(_getSpaceId(_randomCaller)),
       ''
     );

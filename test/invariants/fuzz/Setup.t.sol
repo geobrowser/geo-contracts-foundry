@@ -42,8 +42,8 @@ contract Setup is Test, DeployGEOBrowser {
     // quorum and flatSupportThreshold must be <= totalEditors
     // Since we create DAOSpaces with 0 initial editors, these must be 0
     _defaultVotingSettings = IDAOSpace.VotingSettings({
-      partialPercentageSupportThreshold: 5e5, // 50%
-      universalPercentageSupportThreshold: 5e5, // 50%
+      partialPercentageSupportThreshold: 5e5, // 5%
+      universalPercentageSupportThreshold: 5e5, // 5%
       flatSupportThreshold: 0,
       quorum: 0,
       duration: 2 days
