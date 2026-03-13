@@ -47,7 +47,7 @@ contract Setup is Test, DeployGEOBrowser {
       flatSupportThreshold: 0,
       quorum: 0,
       duration: 2 days,
-      defaultFastPathAccessForMembers: false
+      disableFastPathAccessForNewMembers: false
     });
   }
 

@@ -47,7 +47,7 @@ contract UnitDAOSpace is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      defaultFastPathAccessForMembers: false
+      disableFastPathAccessForNewMembers: false
     });
     _initialEditors = new bytes16[](2);
     _initialEditors[0] = _initialEditorASpaceId;
@@ -1666,7 +1666,7 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
       })
     );
 
@@ -2029,7 +2029,7 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 2,
         duration: _votingSettings.duration,
-        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
       })
     );
 
@@ -2046,7 +2046,7 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 2,
         quorum: 0,
         duration: _votingSettings.duration,
-        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
       })
     );
 
@@ -2064,7 +2064,7 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        defaultFastPathAccessForMembers: _votingSettings.defaultFastPathAccessForMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
       })
     );
 
@@ -2137,8 +2137,8 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
   }
 
-  modifier whenDefaultFastPathAccessForMembersIsFalse() {
-    assertFalse(daoSpaceProxy.votingSettings().defaultFastPathAccessForMembers);
+  modifier whenDisableFastPathAccessForNewMembersIsFalse() {
+    assertFalse(daoSpaceProxy.votingSettings().disableFastPathAccessForNewMembers);
     _;
   }
 
@@ -2146,7 +2146,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
     when_newMemberIsNotAMember
-    whenDefaultFastPathAccessForMembersIsFalse
+    whenDisableFastPathAccessForNewMembersIsFalse
   {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
@@ -2177,7 +2177,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
     when_newMemberIsNotAMember
-    whenDefaultFastPathAccessForMembersIsFalse
+    whenDisableFastPathAccessForNewMembersIsFalse
   {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);

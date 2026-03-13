@@ -40,7 +40,7 @@ interface IDAOSpace is ISpace {
    * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param duration Voting window duration in seconds (slow path)
-   * @param defaultFastPathAccessForMembers If false, newly added members are restricted from the fast path by default
+   * @param disableFastPathAccessForNewMembers If true, newly added members are restricted from the fast path; if false, they have fast path access by default
    */
   struct VotingSettings {
     uint256 partialPercentageSupportThreshold;
@@ -48,7 +48,7 @@ interface IDAOSpace is ISpace {
     uint256 flatSupportThreshold;
     uint256 quorum;
     uint256 duration;
-    bool defaultFastPathAccessForMembers;
+    bool disableFastPathAccessForNewMembers;
   }
 
   /**

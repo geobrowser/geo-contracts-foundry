@@ -716,13 +716,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /**
    * @notice Internal function to add a member
    * @param _newMemberSpaceId The space ID of the new member
-   * @dev When defaultFastPathAccessForMembers is false, the new member is restricted from the fast path.
+   * @dev When disableFastPathAccessForNewMembers is false, the new member is restricted from the fast path.
    */
   function _addMember(bytes16 _newMemberSpaceId) internal virtual {
     if (hasRole(MEMBER, _newMemberSpaceId)) revert InvalidSpaceIdForRole();
 
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    if (!$_.votingSettings.defaultFastPathAccessForMembers && !hasRole(EDITOR, _newMemberSpaceId)) {
+    if (!$_.votingSettings.disableFastPathAccessForNewMembers && !hasRole(EDITOR, _newMemberSpaceId)) {
       _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
     }
     _grantRole(MEMBER, _newMemberSpaceId);
