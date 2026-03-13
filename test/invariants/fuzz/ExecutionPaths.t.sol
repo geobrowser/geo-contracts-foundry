@@ -359,7 +359,9 @@ contract ExecutionPaths is Setup {
 
     vm.prank(_member);
     handlerDAOSpace.handler_daoSpace_createProposal(0, 1);
-    assertFalse(handlerDAOSpace.lastTxSucceeded(), 'Member should not create fast path');
+    assertTrue(
+      handlerDAOSpace.lastTxSucceeded(), 'Member should create fast path (default: fast path allowed for new members)'
+    );
   }
 
   // ==================== VerifierSpace Handler Tests ====================
