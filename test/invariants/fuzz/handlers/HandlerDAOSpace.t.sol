@@ -98,7 +98,8 @@ contract HandlerDAOSpace is BaseHandler {
 
   function handler_daoSpace_updateVotingSettings(
     uint256 _daoSpaceSeed,
-    uint256 _thresholdSeed,
+    uint256 _partialPercentageThresholdSeed,
+    uint256 _universalPercentageThresholdSeed,
     uint256 _flatThresholdSeed,
     uint256 _quorumSeed
   ) external {
@@ -109,8 +110,9 @@ contract HandlerDAOSpace is BaseHandler {
 
     address _daoSpace = daoSpaceActors[bound(_daoSpaceSeed, 0, daoSpaceActors.length - 1)];
     IDAOSpace.VotingSettings memory _newSettings = IDAOSpace.VotingSettings({
-      slowPathPercentageThreshold: bound(_thresholdSeed, 0, 2e6),
-      fastPathFlatThreshold: bound(_flatThresholdSeed, 0, 100),
+      partialPercentageSupportThreshold: bound(_partialPercentageThresholdSeed, 0, 2e6),
+      universalPercentageSupportThreshold: bound(_universalPercentageThresholdSeed, 0, 2e6),
+      flatSupportThreshold: bound(_flatThresholdSeed, 0, 100),
       quorum: bound(_quorumSeed, 0, 100),
       duration: bound(_quorumSeed, 0, 30 days)
     });

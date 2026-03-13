@@ -57,12 +57,22 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
     spaceRegistryProxy.registerSpaceId(keccak256('EOA_SPACE'), '1.0.0');
     _eoaSpaceId = spaceRegistryProxy.addressToSpaceId(eoaSpace);
 
+    // Deploy and register verifier space
+    verifierSpaceProxy = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
+    _verifierSpaceProxyId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxy));
+
     // Deploy and register DAO space
+    _votingSettings.partialPercentageSupportThreshold = 1e6; // 10%
+    _votingSettings.universalPercentageSupportThreshold = 10e6; // 100%
+    _votingSettings.flatSupportThreshold = 0;
+    _votingSettings.quorum = 0;
     _votingSettings.duration = daoSpaceImplementation.MINIMUM_VOTING_DURATION();
-    _initialSpaceEditors = new bytes16[](1);
+    _initialSpaceEditors = new bytes16[](2);
     _initialSpaceEditors[0] = _eoaSpaceId;
-    _initialSpaceMembers = new bytes16[](1);
+    _initialSpaceEditors[1] = _verifierSpaceProxyId;
+    _initialSpaceMembers = new bytes16[](2);
     _initialSpaceMembers[0] = _eoaSpaceId;
+    _initialSpaceMembers[1] = _verifierSpaceProxyId;
     _initialTopicId = '_initialTopicId';
 
     daoSpaceProxy = DAOSpace(
@@ -76,9 +86,5 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
       )
     );
     _daoSpaceProxyId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxy));
-
-    // Deploy and register verifier space
-    verifierSpaceProxy = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
-    _verifierSpaceProxyId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxy));
   }
 }

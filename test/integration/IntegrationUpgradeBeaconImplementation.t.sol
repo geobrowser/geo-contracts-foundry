@@ -30,6 +30,11 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     IntegrationBase.setUp();
     vm.selectFork(_geoForkId);
 
+    verifierSpaceProxyA = verifierSpaceProxy;
+    verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
+    _verifierSpaceProxyAId = _verifierSpaceProxyId;
+    _verifierSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyB));
+
     daoSpaceProxyA = MockDAOSpaceV2(address(daoSpaceProxy));
     daoSpaceProxyB = MockDAOSpaceV2(
       daoSpaceFactoryProxy.createDAOSpaceProxy(
@@ -44,13 +49,8 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     _daoSpaceProxyAId = _daoSpaceProxyId;
     _daoSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyB));
 
-    verifierSpaceProxyA = verifierSpaceProxy;
-    verifierSpaceProxyB = VerifierSpace(verifierSpaceFactoryProxy.createVerifierSpaceProxy(eoaSpace));
-    _verifierSpaceProxyAId = _verifierSpaceProxyId;
-    _verifierSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(verifierSpaceProxyB));
-
-    daoSpaceImplementationBis = new MockDAOSpaceV2();
     verifierSpaceImplementationBis = VerifierSpace(address(new MockNewImplementation()));
+    daoSpaceImplementationBis = new MockDAOSpaceV2();
   }
 
   function test_UpgradeBeaconImplementation_DAOSpace() external {

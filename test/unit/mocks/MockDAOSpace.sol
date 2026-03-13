@@ -16,8 +16,10 @@ contract MockDAOSpace is DAOSpace {
     uint256 _startDate,
     uint256 _lastDate,
     VotingMode _votingMode,
-    uint256 _supportThreshold,
     uint256 _quorum,
+    uint256 _partialPercentageSupportThreshold,
+    uint256 _universalPercentageSupportThreshold,
+    uint256 _flatSupportThreshold,
     Action[] memory _actions
   ) external {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
@@ -28,8 +30,10 @@ contract MockDAOSpace is DAOSpace {
     proposal_.parameters.startDate = _startDate;
     proposal_.parameters.lastDate = _lastDate;
     proposal_.parameters.votingMode = _votingMode;
-    proposal_.parameters.supportThreshold = _supportThreshold;
     proposal_.parameters.quorum = _quorum;
+    proposal_.parameters.partialPercentageSupportThreshold = _partialPercentageSupportThreshold;
+    proposal_.parameters.universalPercentageSupportThreshold = _universalPercentageSupportThreshold;
+    proposal_.parameters.flatSupportThreshold = _flatSupportThreshold;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
     }
@@ -57,6 +61,11 @@ contract MockDAOSpace is DAOSpace {
   function workaround_setVotingSettings(VotingSettings calldata _votingSettings) external {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     $_.votingSettings = _votingSettings;
+  }
+
+  function workaround_setTotalEditors(uint256 _totalEditors) external {
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    $_.totalEditors = _totalEditors;
   }
 
   function workaround_grantRole(bytes32 _role, bytes16 _spaceId) external {

@@ -44,7 +44,11 @@ contract UnitDAOSpaceFactory is TestHelper {
     _initialMembers[0] = _getSpaceId(_initialMember);
 
     _votingSettings = IDAOSpace.VotingSettings({
-      slowPathPercentageThreshold: 5e5, fastPathFlatThreshold: 1, quorum: 1, duration: 2 days
+      partialPercentageSupportThreshold: 5e5,
+      universalPercentageSupportThreshold: 5e5,
+      flatSupportThreshold: 1,
+      quorum: 1,
+      duration: 2 days
     });
 
     // when deployed
@@ -170,8 +174,11 @@ contract UnitDAOSpaceFactory is TestHelper {
     bytes memory __initialEditsContentUri,
     bytes memory __initialEditsMetadata
   ) external {
-    __votingSettings.slowPathPercentageThreshold = bound(__votingSettings.slowPathPercentageThreshold, 0, 1e6);
-    __votingSettings.fastPathFlatThreshold = bound(__votingSettings.fastPathFlatThreshold, 0, 1);
+    __votingSettings.partialPercentageSupportThreshold =
+      bound(__votingSettings.partialPercentageSupportThreshold, 0, 1e6);
+    __votingSettings.universalPercentageSupportThreshold =
+      bound(__votingSettings.universalPercentageSupportThreshold, 0, 1e6);
+    __votingSettings.flatSupportThreshold = bound(__votingSettings.flatSupportThreshold, 0, 1);
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
     __votingSettings.duration = bound(__votingSettings.duration, 1 minutes, 200 days);
 
