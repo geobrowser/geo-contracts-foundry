@@ -2180,6 +2180,8 @@ contract UnitDAOSpace is TestHelper {
     whenDisableFastPathAccessForNewMembersIsFalse
   {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorASpaceId);
+    vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
     vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
