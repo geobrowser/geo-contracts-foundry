@@ -11,8 +11,8 @@ import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 interface IDAOSpace is ISpace {
   /**
    * @notice Vote options that a voter can choose from
-   * @param None Default state, cannot be cast
-   * @param Yes Increases support; fast path executes immediately when threshold met
+   * @param None Default state; cannot be cast
+   * @param Yes Increases support; executes immediately when threshold met
    * @param No Decreases support; escalates fast path to slow path
    * @param Abstain Counts towards participation but doesn't influence support
    */
@@ -25,8 +25,8 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Voting modes for proposals
-   * @param Slow Majority voting with voting window (percentage threshold)
-   * @param Fast Threshold-based voting with immediate execution (flat count)
+   * @param Slow Percentage-based voting with relative thresholds
+   * @param Fast Flat-based voting with absolute thresholds
    */
   enum VotingMode {
     Slow,
@@ -35,14 +35,16 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Voting settings configuration for proposals
-   * @param slowPathPercentageThreshold Percentage threshold for slow path (0-10^6, where 10^6 = 100%)
-   * @param fastPathFlatThreshold Flat count threshold for fast path (number of yes votes)
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path late execution (0-10e6, where 10e6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path early execution (0-10e6, where 10e6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
-   * @param duration Voting window duration in seconds (slow path)
+   * @param duration Voting window duration in seconds
    */
   struct VotingSettings {
-    uint256 slowPathPercentageThreshold;
-    uint256 fastPathFlatThreshold;
+    uint256 partialPercentageSupportThreshold;
+    uint256 universalPercentageSupportThreshold;
+    uint256 flatSupportThreshold;
     uint256 quorum;
     uint256 duration;
   }
@@ -50,14 +52,18 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Proposal parameters at creation time
    * @param votingMode Voting mode (Slow or Fast)
-   * @param supportThreshold Slow path: percentage (0-10^6). Fast path: flat count. Updated if escalates.
+   * @param partialPercentageSupportThreshold Partial percentage (relative) support threshold for slow path late execution (0-10e6, where 10e6 = 100% of yes/no votes)
+   * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path early execution (0-10e6, where 10e6 = 100% of total editors)
+   * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
-   * @param lastDate Last voting timestamp (slow path execution requires this)
+   * @param lastDate Last voting timestamp
    */
   struct ProposalParameters {
     VotingMode votingMode;
-    uint256 supportThreshold;
+    uint256 partialPercentageSupportThreshold;
+    uint256 universalPercentageSupportThreshold;
+    uint256 flatSupportThreshold;
     uint256 quorum;
     uint256 startDate;
     uint256 lastDate;
@@ -371,7 +377,7 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Returns the ratio base used for percentage calculations
-   * @return _ratioBase The ratio base (10^6)
+   * @return _ratioBase The ratio base (10e6)
    */
   function RATIO_BASE() external view returns (uint256 _ratioBase);
 

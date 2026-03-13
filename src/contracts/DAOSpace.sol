@@ -14,8 +14,10 @@ import 'src/ActionsConstants.sol' as ActionsConstants;
  * @title DAOSpace
  * @notice Manages governance proposals and voting for a DAO Space
  * @dev This contract allows members and editors to create proposals, vote, and execute them.
- *      This contract also implements a dual-path governance: fast path (threshold-based, immediate execution)
- *      and slow path (majority voting with voting window). Fast path escalates to slow path on "No" vote.
+ *      This contract also implements a dual-path governance: fast path (flat-based, absolute threshold)
+ *      and slow path (percentage-based, relative thresholds).
+ *      Fast path escalates to slow path on "No" vote.
+ *      Both paths execute immediately on "Yes" vote, if threshold is met.
  * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */
 contract DAOSpace is SpaceAccessControl, IDAOSpace {
@@ -216,22 +218,45 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     returns (bool _isSupportThresholdReached)
   {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    uint256 _supportThreshold =
-      (proposal_.parameters.supportThreshold == 0) ? 0 : proposal_.parameters.supportThreshold - 1;
+    uint256 _effectiveSupportThreshold;
 
     if (proposal_.parameters.votingMode == VotingMode.Slow) {
       // Slow path
-      if (block.timestamp <= proposal_.parameters.lastDate) return false;
+
       // Quorum check
       if (proposal_.tally.yes + proposal_.tally.no + proposal_.tally.abstain < proposal_.parameters.quorum) {
         return false;
       }
+
+      _effectiveSupportThreshold =
+        _computeEffectiveSupportThreshold(proposal_.parameters.universalPercentageSupportThreshold);
+      DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+      // Threshold percentage check to allow for early execution
+      // % = influencing + non-influencing votes (yes/no/abstain/none) = total votes = total editors
+      // % of yes votes > % of no + abstain + none votes
+      if (proposal_.tally.yes * RATIO_BASE > _effectiveSupportThreshold * $_.totalEditors) {
+        return true;
+      }
+
+      // Duration check
+      if (block.timestamp <= proposal_.parameters.lastDate) return false;
+
+      _effectiveSupportThreshold =
+        _computeEffectiveSupportThreshold(proposal_.parameters.partialPercentageSupportThreshold);
       // Threshold percentage calculation
-      if ((RATIO_BASE - _supportThreshold) * proposal_.tally.yes > _supportThreshold * proposal_.tally.no) return true;
+      // % = influencing votes (yes/no)
+      // % of yes votes > % of no votes
+      if (
+        (RATIO_BASE - _effectiveSupportThreshold) * proposal_.tally.yes
+          > _effectiveSupportThreshold * proposal_.tally.no
+      ) return true;
     } else {
       // Fast path
+
+      _effectiveSupportThreshold = _computeEffectiveSupportThreshold(proposal_.parameters.flatSupportThreshold);
       // Threshold flat calculation
-      if (proposal_.tally.yes > _supportThreshold) return true;
+      // # of yes votes > flat count
+      if (proposal_.tally.yes > _effectiveSupportThreshold) return true;
     }
   }
 
@@ -350,8 +375,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   function _updateVotingSettings(VotingSettings memory _votingSettings) internal virtual {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    if (_votingSettings.slowPathPercentageThreshold > RATIO_BASE) revert InvalidSetting();
-    if (_votingSettings.fastPathFlatThreshold > $_.totalEditors) revert InvalidSetting();
+    if (_votingSettings.partialPercentageSupportThreshold > RATIO_BASE) revert InvalidSetting();
+    if (_votingSettings.universalPercentageSupportThreshold > RATIO_BASE) revert InvalidSetting();
+    if (_votingSettings.flatSupportThreshold > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
 
@@ -372,8 +398,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (proposal_.parameters.startDate != 0) revert InvalidProposalId();
 
     // Update proposal storage
-    uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
-    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
+    _checkProposalPath(_fromSpaceId, _votingMode, _actions);
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _actions);
   }
 
   /**
@@ -381,22 +407,15 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID creating the proposal
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
-   * @return _supportThreshold The support threshold (slow or fast) of the proposal
    * @dev Fast path: only editors can create, creator must not be restricted, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
-  function _checkProposalPath(
-    bytes16 _fromSpaceId,
-    VotingMode _votingMode,
-    Action[] memory _actions
-  ) internal virtual returns (uint256 _supportThreshold) {
+  function _checkProposalPath(bytes16 _fromSpaceId, VotingMode _votingMode, Action[] memory _actions) internal virtual {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if (_votingMode == VotingMode.Slow) {
       // Slow path
       // Only members or editors can create slow path proposals
       if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
-
-      _supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
     } else {
       // Fast path
       // Only editors can create fast path proposals
@@ -411,8 +430,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_actions[0].to != address(this)) revert InvalidTarget();
       // limit the transfer of funds
       if (_actions[0].value != 0) revert InvalidFundsTransfer();
-
-      _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     }
   }
 
@@ -421,14 +438,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID setting the proposal
    * @param _proposalId The proposal identifier
    * @param _votingMode The voting mode (slow or fast) of the proposal
-   * @param _supportThreshold The support threshold (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
    */
   function _setProposal(
     bytes16 _fromSpaceId,
     bytes16 _proposalId,
     VotingMode _votingMode,
-    uint256 _supportThreshold,
     Action[] memory _actions
   ) internal virtual {
     // Update proposal storage
@@ -440,7 +455,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
     proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.quorum = $_.votingSettings.quorum;
-    proposal_.parameters.supportThreshold = _supportThreshold;
+    proposal_.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
+    proposal_.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
+    proposal_.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
     }
@@ -454,7 +471,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         proposal_.parameters.lastDate,
         proposal_.parameters.votingMode,
         proposal_.parameters.quorum,
-        proposal_.parameters.supportThreshold
+        proposal_.parameters.partialPercentageSupportThreshold,
+        proposal_.parameters.universalPercentageSupportThreshold,
+        proposal_.parameters.flatSupportThreshold
       )
     );
   }
@@ -483,25 +502,30 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     } else if (_state == VoteOption.Abstain) {
       proposal_.tally.abstain = proposal_.tally.abstain - 1;
     }
+
     // Store the updated/new vote for the voter
-    if (_voteOption == VoteOption.Yes) {
-      proposal_.tally.yes = proposal_.tally.yes + 1;
-    } else if (_voteOption == VoteOption.No) {
-      proposal_.tally.no = proposal_.tally.no + 1;
-    } else if (_voteOption == VoteOption.Abstain) {
-      proposal_.tally.abstain = proposal_.tally.abstain + 1;
-    }
     proposal_.voters[_fromSpaceId] = _voteOption;
 
-    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    // Extra fast path logic
-    if (proposal_.parameters.votingMode == VotingMode.Fast) {
+    // Add the new vote
+    if (_voteOption == VoteOption.Yes) {
+      proposal_.tally.yes = proposal_.tally.yes + 1;
+
+      // Immediate execution if possible
+      if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
+    } else if (_voteOption == VoteOption.No) {
+      proposal_.tally.no = proposal_.tally.no + 1;
+
       // Fast path to slow path if rejection occurs
-      if (_voteOption == VoteOption.No) {
+      if (proposal_.parameters.votingMode == VotingMode.Fast) {
+        DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
         // Update voting mode
         proposal_.parameters.votingMode = VotingMode.Slow;
-        // Update threshold
-        proposal_.parameters.supportThreshold = $_.votingSettings.slowPathPercentageThreshold;
+        // Update quorum
+        proposal_.parameters.quorum = $_.votingSettings.quorum;
+        // Update thresholds
+        proposal_.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
+        proposal_.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
+        proposal_.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
@@ -515,13 +539,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
             proposal_.parameters.lastDate,
             proposal_.parameters.votingMode,
             proposal_.parameters.quorum,
-            proposal_.parameters.supportThreshold
+            proposal_.parameters.partialPercentageSupportThreshold,
+            proposal_.parameters.universalPercentageSupportThreshold,
+            proposal_.parameters.flatSupportThreshold
           )
         );
-      } else if (_voteOption == VoteOption.Yes) {
-        // Immediate execution if possible
-        if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
       }
+    } else {
+      proposal_.tally.abstain = proposal_.tally.abstain + 1;
     }
   }
 
@@ -543,8 +568,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (proposal_.executed) revert InvalidProposalId();
 
     // Update proposal storage
-    uint256 _supportThreshold = _checkProposalPath(_fromSpaceId, _votingMode, _actions);
-    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
+    _checkProposalPath(_fromSpaceId, _votingMode, _actions);
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _actions);
   }
 
   /**
@@ -616,9 +641,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Checks from space is allowed to use fast path
     if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();
 
-    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     IDAOSpace.VotingMode _votingMode = IDAOSpace.VotingMode.Fast;
-    uint256 _supportThreshold = $_.votingSettings.fastPathFlatThreshold;
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] =
       IDAOSpace.Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
@@ -627,7 +650,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     _ping(ActionsConstants.PROPOSAL_CREATED, bytes32(_proposalId), abi.encode(_proposalId, _votingMode, _actions));
 
     // Update proposal storage
-    _setProposal(_fromSpaceId, _proposalId, _votingMode, _supportThreshold, _actions);
+    _setProposal(_fromSpaceId, _proposalId, _votingMode, _actions);
   }
 
   /**
@@ -673,7 +696,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Internal function to remove an editor
    * @param _oldEditorSpaceId The space ID of the editor to remove
    * @dev If removal fails due to invalid settings, first update the settings to lower the quorum and/or the
-   * fastPathFlatThreshold. Both the settings update and editor removal operations may be bundled into one proposal
+   * flatSupportThreshold. Both the settings update and editor removal operations may be bundled into one proposal
    * for convenience.
    */
   function _removeEditor(bytes16 _oldEditorSpaceId) internal virtual {
@@ -681,7 +704,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // May not remove editor if doing so would prevent proposals from being executed
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if ($_.votingSettings.quorum == $_.totalEditors) revert InvalidSetting();
-    if ($_.votingSettings.fastPathFlatThreshold == $_.totalEditors) revert InvalidSetting();
+    if ($_.votingSettings.flatSupportThreshold == $_.totalEditors) revert InvalidSetting();
 
     _revokeRole(EDITOR, _oldEditorSpaceId);
     $_.totalEditors--;
@@ -744,13 +767,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     // Proposal does not exist
     if (proposal_.parameters.startDate == 0) return false;
-    // The proposal voting period has already ended.
+    // The proposal voting period has already ended
     if (block.timestamp > proposal_.parameters.lastDate) return false;
-    // The proposal has already been executed.
+    // The proposal has already been executed
     if (proposal_.executed) return false;
-    // The voter votes `None` which is not allowed.
+    // The voter votes `None` which is not allowed
     if (_voteOption == VoteOption.None) return false;
-    // The voter has no voting power.
+    // The voter has no voting power
     if (!hasRole(EDITOR, _spaceId)) return false;
     return true;
   }
@@ -782,6 +805,20 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     uint8 _version = $_.latestProposalVersion[_proposalId];
     _proposal = $_.proposals[_proposalId][_version];
+  }
+
+  /**
+   * @notice Returns the effective support threshold to be used in threshold calculation
+   * @param _supportThreshold The support threshold
+   * @return _effectiveSupportThreshold The effective support threshold
+   */
+  function _computeEffectiveSupportThreshold(uint256 _supportThreshold)
+    internal
+    pure
+    virtual
+    returns (uint256 _effectiveSupportThreshold)
+  {
+    _effectiveSupportThreshold = (_supportThreshold == 0) ? 0 : _supportThreshold - 1;
   }
 
   /**

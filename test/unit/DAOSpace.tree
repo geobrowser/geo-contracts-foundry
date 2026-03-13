@@ -19,9 +19,9 @@ UnitDAOSpace::initialize
 │   ├── it sets the voting settings
 │   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it calls enter on the spaceRegistry with the TOPIC_SET action
-│   ├── it grants the new editor the EDITOR role
+│   ├── it grants the new editors the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
-│   ├── it grants the new member the MEMBER role
+│   ├── it grants the new members the MEMBER role
 │   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 │   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
@@ -46,8 +46,11 @@ UnitDAOSpace::write
 │   │   │       ├── it sets the proposal creator to _fromSpaceId
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │   │       ├── it sets the proposal voting mode
-│   │   │       ├── it sets the proposal support threshold to the slow path percentage threshold
+│   │   │       ├── it sets the proposal voting mode to the slow path
+│   │   │       ├── it sets the proposal quorum to votingSettings.quorum
+│   │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
+│   │   │       ├── it sets the proposal universal percentage support threshold to votingSettings.universalPercentageSupportThreshold
+│   │   │       ├── it sets the proposal flat support threshold to votingSettings.flatSupportThreshold
 │   │   │       ├── it stores the decoded proposal actions
 │   │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │   └── when the voting mode is fast
@@ -70,8 +73,11 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal creator to _fromSpaceId
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │           ├── it sets the proposal voting mode
-│   │           ├── it sets the proposal support threshold to the fast path flat threshold
+│   │           ├── it sets the proposal voting mode to the fast path
+│   │           ├── it sets the proposal quorum to votingSettings.quorum
+│   │           ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
+│   │           ├── it sets the proposal universal percentage support threshold to votingSettings.universalPercentageSupportThreshold
+│   │           ├── it sets the proposal flat support threshold to votingSettings.flatSupportThreshold
 │   │           ├── it stores the decoded proposal actions
 │   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals PROPOSAL_VOTED
@@ -86,29 +92,31 @@ UnitDAOSpace::write
 │   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with CanNotVote
 │   │   └── when _vote params are valid
-│   │       ├── when the former _fromSpaceId vote equals yes
-│   │       │   └── it decreases the yes vote tally by one
-│   │       ├── when the former _fromSpaceId vote equals no
-│   │       │   └── it decreases the no vote tally by one
-│   │       ├── when the former _fromSpaceId vote equals abstain
-│   │       │   └── it decreases the abstain vote tally by one
-│   │       ├── when the current _fromSpaceId vote equals yes
-│   │       │   └── it increases the yes vote tally by one
-│   │       ├── when the current _fromSpaceId vote equals no
-│   │       │   └── it increases the no vote tally by one
-│   │       ├── when the current _fromSpaceId vote equals abstain
-│   │       │   └── it increases the abstain vote tally by one
 │   │       ├── it stores the current _fromSpaceId vote
-│   │       └── when the proposal voting mode is using the fast path
-│   │           ├── when the current _fromSpaceId vote equals no
-│   │           │   ├── it updates the proposal voting mode to the slow path
-│   │           │   ├── it updates the proposal support threshold to the slow path percentage threshold
-│   │           │   ├── it updates the proposal start date to block.timestamp
-│   │           │   ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
-│   │           │   └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-│   │           └── when the current _fromSpaceId vote equals yes
-│   │               └── when the proposal can be executed
-│   │                   └── it loops over the stored proposal actions and performs the external calls
+│   │       ├── when the former _fromSpaceId vote equals yes
+│   │       │   └── it decreases the proposal yes vote tally by one
+│   │       ├── when the former _fromSpaceId vote equals no
+│   │       │   └── it decreases the proposal no vote tally by one
+│   │       ├── when the former _fromSpaceId vote equals abstain
+│   │       │   └── it decreases the proposal abstain vote tally by one
+│   │       ├── when the current _fromSpaceId vote equals yes
+│   │       │   ├── it increases the proposal yes vote tally by one
+│   │       │   └── when the proposal can be executed
+│   │       │       ├── it sets the proposal executed to true
+│   │       │       └── it loops over the stored proposal actions and performs the external calls
+│   │       ├── when the current _fromSpaceId vote equals no
+│   │       │   ├── it increases the proposal no vote tally by one
+│   │       │   └── when the proposal voting mode is fast
+│   │       │       ├── it updates the proposal voting mode to the slow path
+│   │       │       ├── it updates the proposal quorum to votingSettings.quorum
+│   │       │       ├── it updates the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
+│   │       │       ├── it updates the proposal universal percentage support threshold to votingSettings.universalPercentageSupportThreshold
+│   │       │       ├── it updates the proposal flat support threshold to votingSettings.flatSupportThreshold
+│   │       │       ├── it updates the proposal start date to block.timestamp
+│   │       │       ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │       │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
+│   │       └── when the current _fromSpaceId vote equals abstain
+│   │           └── it increases the proposal abstain vote tally by one
 │   ├── when _action equals PROPOSAL_UPDATED
 │   │   ├── when the proposal creator is not the _fromSpaceId
 │   │   │   └── it reverts with InvalidCaller
@@ -125,6 +133,7 @@ UnitDAOSpace::write
 │   │   ├── when the support threshold has not been reached
 │   │   │   └── it reverts with CanNotExecute
 │   │   └── when the proposal can be executed
+│   │       ├── it sets the proposal executed to true
 │   │       ├── it loops over the stored proposal actions and performs the external calls
 │   │       └── when an external call fails
 │   │           └── it reverts with ActionReverted
@@ -144,7 +153,16 @@ UnitDAOSpace::write
 │   │   ├── when _fromSpaceId is restricted
 │   │   │   └── it reverts with FastPathRestricted
 │   │   └── when the request can be made
-│   │       ├── it creates a fast path proposal to add the new member
+│   │       ├── it increments the proposal version
+│   │       ├── it sets the proposal creator to _fromSpaceId
+│   │       ├── it sets the proposal start date to block.timestamp
+│   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │       ├── it sets the proposal voting mode to the fast path
+│   │       ├── it sets the proposal quorum to votingSettings.quorum
+│   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
+│   │       ├── it sets the proposal universal percentage support threshold to votingSettings.universalPercentageSupportThreshold
+│   │       ├── it sets the proposal flat support threshold to votingSettings.flatSupportThreshold
+│   │       ├── it stores the decoded proposal actions
 │   │       ├── it calls enter on the spaceRegistry with the PROPOSAL_CREATED action
 │   │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
@@ -178,7 +196,7 @@ UnitDAOSpace::removeEditor
 │   │   └── it reverts with InvalidSpaceIdForRole
 │   ├── when the voting settings quorum equals total editors
 │   │   └── it reverts with InvalidSetting
-│   ├── when the voting settings fast path flat threshold equals total editors
+│   ├── when the voting settings flat support threshold equals total editors
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       ├── it removes the EDITOR role from _oldEditor
@@ -224,9 +242,11 @@ UnitDAOSpace::ping
 
 UnitDAOSpace::updateVotingSettings
 ├── when called by DAO
-│   ├── when slowPathPercentageThreshold is greater than RATIO_BASE
+│   ├── when partialPercentageSupportThreshold is greater than RATIO_BASE
 │   │   └── it reverts with InvalidSetting
-│   ├── when fastPathFlatThreshold is greater than totalEditors
+│   ├── when universalPercentageSupportThreshold is greater than RATIO_BASE
+│   │   └── it reverts with InvalidSetting
+│   ├── when flatSupportThreshold is greater than totalEditors
 │   │   └── it reverts with InvalidSetting
 │   ├── when quorum is greater than totalEditors
 │   │   └── it reverts with InvalidSetting
@@ -256,16 +276,18 @@ UnitDAOSpace::fetch
     └── it returns _subjectInput
 
 UnitDAOSpace::isSupportThresholdReached
-├── when the proposal voting mode is using the slow path
-│   ├── when the block timestamp is less than or equal to the proposal last date
-│   │   └── it returns false
+├── when the proposal voting mode is slow
 │   ├── when the voting quorum has not been reached
 │   │   └── it returns false
-│   ├── when the yes votes are not greater than the percentage support threshold
+│   ├── when the yes votes are greater than the universal percentage support threshold
+│   │   └── it returns true
+│   ├── when the block timestamp is less than or equal to the proposal last date
 │   │   └── it returns false
-│   └── when the yes votes are greater than the percentage support threshold
+│   ├── when the yes votes are not greater than the partial percentage support threshold
+│   │   └── it returns false
+│   └── when the yes votes are greater than the partial percentage support threshold
 │       └── it returns true
-└── when the proposal voting mode is using the fast path
+└── when the proposal voting mode is fast
     ├── when the yes votes are not greater than the flat support threshold
     │   └── it returns false
     └── when the yes votes are greater than the flat support threshold
