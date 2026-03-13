@@ -409,7 +409,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID creating the proposal
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
-   * @return _supportThreshold The support threshold (slow or fast) of the proposal
    * @dev Fast path: members or editors can create, creator must not be restricted, single action required,
    * action selector must be valid. Slow path: members or editors can create, multiple actions allowed.
    */
@@ -419,9 +418,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // Only members or editors can create proposals
     if (!(hasRole(MEMBER, _fromSpaceId) || hasRole(EDITOR, _fromSpaceId))) revert InvalidFromSpace();
 
-    if (_votingMode == VotingMode.Slow) {
-      // Slow path
-    } else {
+    // Slow path has no additional checks here
+    if (_votingMode == VotingMode.Fast) {
       // Fast path
       // Checks from space is allowed to use fast path
       if (hasRole(FAST_PATH_RESTRICTED, _fromSpaceId)) revert FastPathRestricted();

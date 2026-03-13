@@ -2148,8 +2148,10 @@ contract UnitDAOSpace is TestHelper {
     when_newMemberIsNotAMember
     whenDefaultFastPathAccessForMembersIsFalse
   {
-    vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
-    vm.assume(_newMemberSpaceId != _initialEditorSpaceId);
+    vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
+    vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorASpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
 
@@ -2177,8 +2179,8 @@ contract UnitDAOSpace is TestHelper {
     when_newMemberIsNotAMember
     whenDefaultFastPathAccessForMembersIsFalse
   {
-    vm.assume(_newMemberSpaceId != _initialMemberSpaceId);
-    vm.assume(_newMemberSpaceId != _initialEditorSpaceId);
+    vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
 

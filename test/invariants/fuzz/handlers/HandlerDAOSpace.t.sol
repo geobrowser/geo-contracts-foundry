@@ -115,7 +115,7 @@ contract HandlerDAOSpace is BaseHandler {
       flatSupportThreshold: bound(_flatThresholdSeed, 0, 100),
       quorum: bound(_quorumSeed, 0, 100),
       duration: bound(_quorumSeed, 0, 30 days),
-      defaultFastPathAccessForMembers: _thresholdSeed % 2 == 0
+      defaultFastPathAccessForMembers: _flatThresholdSeed % 2 == 0
     });
 
     vm.prank(_daoSpace);
