@@ -46,7 +46,8 @@ contract Setup is Test, DeployGEOBrowser {
       universalPercentageSupportThreshold: 5e5, // 5%
       flatSupportThreshold: 0,
       quorum: 0,
-      duration: 2 days
+      duration: 2 days,
+      disableFastPathAccessForNewMembers: false
     });
   }
 
