@@ -47,7 +47,7 @@ contract UnitDAOSpace is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      disableFastPathAccessForNewMembers: false
+      disableFastPathAccessForNewMembers: true
     });
     _initialEditors = new bytes16[](2);
     _initialEditors[0] = _initialEditorASpaceId;
@@ -2137,8 +2137,8 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
   }
 
-  modifier whenDisableFastPathAccessForNewMembersIsFalse() {
-    assertFalse(daoSpaceProxy.votingSettings().disableFastPathAccessForNewMembers);
+  modifier whenDisableFastPathAccessForNewMembersIsTrue() {
+    assertTrue(daoSpaceProxy.votingSettings().disableFastPathAccessForNewMembers);
     _;
   }
 
@@ -2146,7 +2146,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
     when_newMemberIsNotAMember
-    whenDisableFastPathAccessForNewMembersIsFalse
+    whenDisableFastPathAccessForNewMembersIsTrue
   {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
@@ -2177,7 +2177,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
     when_newMemberIsNotAMember
-    whenDisableFastPathAccessForNewMembersIsFalse
+    whenDisableFastPathAccessForNewMembersIsTrue
   {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialEditorASpaceId);

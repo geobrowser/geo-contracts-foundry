@@ -49,7 +49,7 @@ contract UnitDAOSpaceFactory is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      disableFastPathAccessForNewMembers: false
+      disableFastPathAccessForNewMembers: true
     });
 
     // when deployed

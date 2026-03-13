@@ -212,7 +212,7 @@ UnitDAOSpace::addMember
 │   └── when _newMember is not a member
 │       ├── it grants _newMember the MEMBER role
 │       ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
-│       └── when disableFastPathAccessForNewMembers is false
+│       └── when disableFastPathAccessForNewMembers is true
 │           ├── when _newMember is not an editor
 │           │   └── it grants FastPathRestricted to new member
 │           └── when _newMember is already an editor
