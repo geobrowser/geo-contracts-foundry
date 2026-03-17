@@ -464,19 +464,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     }
 
     // Ping the registry to emit the proposal settings
-    _ping(
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(
-        proposal_.parameters.startDate,
-        proposal_.parameters.lastDate,
-        proposal_.parameters.votingMode,
-        proposal_.parameters.quorum,
-        proposal_.parameters.partialPercentageSupportThreshold,
-        proposal_.parameters.universalPercentageSupportThreshold,
-        proposal_.parameters.flatSupportThreshold
-      )
-    );
+    _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
   }
 
   /**
@@ -532,19 +520,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
 
         // Ping the registry to emit the updated proposal settings
-        _ping(
-          ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-          bytes32(_proposalId),
-          abi.encode(
-            proposal_.parameters.startDate,
-            proposal_.parameters.lastDate,
-            proposal_.parameters.votingMode,
-            proposal_.parameters.quorum,
-            proposal_.parameters.partialPercentageSupportThreshold,
-            proposal_.parameters.universalPercentageSupportThreshold,
-            proposal_.parameters.flatSupportThreshold
-          )
-        );
+        _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
       }
     } else {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;

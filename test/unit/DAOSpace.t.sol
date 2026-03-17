@@ -504,13 +504,15 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
-        vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + _votingSettings.duration,
-        IDAOSpace.VotingMode.Slow,
-        _votingSettings.quorum,
-        _votingSettings.partialPercentageSupportThreshold,
-        _votingSettings.universalPercentageSupportThreshold,
-        _votingSettings.flatSupportThreshold
+        IDAOSpace.ProposalParameters({
+          votingMode: IDAOSpace.VotingMode.Slow,
+          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
+          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
+          flatSupportThreshold: _votingSettings.flatSupportThreshold,
+          quorum: _votingSettings.quorum,
+          startDate: vm.getBlockTimestamp(),
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+        })
       )
     );
 
@@ -685,13 +687,15 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
-        vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + _votingSettings.duration,
-        IDAOSpace.VotingMode.Fast,
-        _votingSettings.quorum,
-        _votingSettings.partialPercentageSupportThreshold,
-        _votingSettings.universalPercentageSupportThreshold,
-        _votingSettings.flatSupportThreshold
+        IDAOSpace.ProposalParameters({
+          votingMode: IDAOSpace.VotingMode.Fast,
+          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
+          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
+          flatSupportThreshold: _votingSettings.flatSupportThreshold,
+          quorum: _votingSettings.quorum,
+          startDate: vm.getBlockTimestamp(),
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+        })
       )
     );
 
@@ -1209,13 +1213,15 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
-        block.timestamp,
-        block.timestamp + _votingSettings.duration,
-        IDAOSpace.VotingMode.Slow,
-        _votingSettings.quorum,
-        _votingSettings.partialPercentageSupportThreshold,
-        _votingSettings.universalPercentageSupportThreshold,
-        _votingSettings.flatSupportThreshold
+        IDAOSpace.ProposalParameters({
+          votingMode: IDAOSpace.VotingMode.Slow,
+          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
+          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
+          flatSupportThreshold: _votingSettings.flatSupportThreshold,
+          quorum: _votingSettings.quorum,
+          startDate: block.timestamp,
+          lastDate: block.timestamp + _votingSettings.duration
+        })
       )
     );
 
@@ -1393,13 +1399,15 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
-        block.timestamp,
-        block.timestamp + _votingSettings.duration,
-        IDAOSpace.VotingMode.Fast,
-        _votingSettings.quorum,
-        _votingSettings.partialPercentageSupportThreshold,
-        _votingSettings.universalPercentageSupportThreshold,
-        _votingSettings.flatSupportThreshold
+        IDAOSpace.ProposalParameters({
+          votingMode: IDAOSpace.VotingMode.Fast,
+          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
+          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
+          flatSupportThreshold: _votingSettings.flatSupportThreshold,
+          quorum: _votingSettings.quorum,
+          startDate: block.timestamp,
+          lastDate: block.timestamp + _votingSettings.duration
+        })
       )
     );
 
@@ -1811,13 +1819,15 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
       abi.encode(
-        vm.getBlockTimestamp(),
-        vm.getBlockTimestamp() + _votingSettings.duration,
-        IDAOSpace.VotingMode.Fast,
-        _votingSettings.quorum,
-        _votingSettings.partialPercentageSupportThreshold,
-        _votingSettings.universalPercentageSupportThreshold,
-        _votingSettings.flatSupportThreshold
+        IDAOSpace.ProposalParameters({
+          votingMode: IDAOSpace.VotingMode.Fast,
+          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
+          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
+          flatSupportThreshold: _votingSettings.flatSupportThreshold,
+          quorum: _votingSettings.quorum,
+          startDate: vm.getBlockTimestamp(),
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+        })
       )
     );
 
