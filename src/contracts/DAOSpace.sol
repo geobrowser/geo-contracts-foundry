@@ -349,6 +349,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
+  function canExecuteProposal(bytes16 _proposalId) public view returns (bool __canExecuteProposal) {
+    return _canExecuteProposal(_proposalId);
+  }
+
+  /// @inheritdoc IDAOSpace
   function spaceRegistry() public view returns (ISpaceRegistry _spaceRegistry) {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     _spaceRegistry = $_.spaceRegistry;

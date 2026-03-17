@@ -1121,6 +1121,7 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal executed to true
     assertTrue(_executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
     // it loops over the stored proposal actions and performs the external calls
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _getSpaceId(_randomCaller)));
@@ -1466,6 +1467,8 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
 
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
 
@@ -1478,6 +1481,8 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsPROPOSAL_EXECUTED
   {
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
 
@@ -1507,6 +1512,8 @@ contract UnitDAOSpace is TestHelper {
     );
 
     vm.warp(block.timestamp + 2);
+
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
     // it reverts with CanNotExecute
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
@@ -1578,6 +1585,8 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
+    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
+
     bytes memory _executeData = abi.encode(_proposalId);
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeData);
 
@@ -1585,6 +1594,7 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal executed to true
     assertTrue(_executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
     // it loops over the stored proposal actions and performs the external calls
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _getSpaceId(_randomCaller)));
