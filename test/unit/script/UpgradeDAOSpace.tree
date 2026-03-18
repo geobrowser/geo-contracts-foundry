@@ -1,4 +1,0 @@
-UnitUpgradeDAOSpace::run
-└── when called
-    ├── it deploys DAOSpace implementation
-    └── it upgrades DAOSpace beacon

@@ -1,4 +1,0 @@
-UnitUpgradeSpaceRegistry::run
-└── when called
-    ├── it deploys SpaceRegistry implementation
-    └── it upgrades SpaceRegistry proxy

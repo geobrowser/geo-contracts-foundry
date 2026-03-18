@@ -42,22 +42,19 @@ yarn coverage          # coverage report
 
 ## Deploy & verify
 
-1. **Set deployer and chain config in `.env`** — For mainnet: `GEO_DEPLOYER_NAME`, `GEO_RPC`, and `GEO_CHAIN_ID`. For testnet: `GEO_TESTNET_DEPLOYER_NAME`, `GEO_TESTNET_RPC`, and `GEO_TESTNET_CHAIN_ID`. The deployer name is the Foundry keystore name and must match the name you give when importing the key.
+1. **Set deployer in `.env`** — Add `GEO_DEPLOYER_NAME=<keystore_name>` (or the deployer name for the chain you use). `<keystore_name>` is the name you use for the key in Foundry. This must match the name you give when importing.
 
-2. **Import the key** (if you haven’t already). Use `$GEO_DEPLOYER_NAME` for mainnet or `$GEO_TESTNET_DEPLOYER_NAME` for testnet:
+2. **Import the key** (if you haven’t already):
 
 ```bash
 source .env
-cast wallet import $GEO_DEPLOYER_NAME --interactive           # Mainnet
-cast wallet import $GEO_TESTNET_DEPLOYER_NAME --interactive   # Testnet
+cast wallet import $GEO_DEPLOYER_NAME --interactive
 ```
 
 3. **Deploy to GEO:**
 
 ```bash
-yarn deploy:geo-browser           # Mainnet
-
-yarn deploy:geo-browser:testnet   # Testnet
+yarn deploy:geo-browser
 ```
 
 Deployments are written to `./broadcast`. See the [Foundry Book](https://book.getfoundry.sh/reference/forge/forge-create.html) for more options.

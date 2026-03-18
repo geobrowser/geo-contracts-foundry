@@ -1,4 +1,0 @@
-UnitUpgradeVerifierSpaceFactory::run
-└── when called
-    ├── it deploys VerifierSpaceFactory implementation
-    └── it upgrades VerifierSpaceFactory proxy

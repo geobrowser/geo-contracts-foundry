@@ -55,9 +55,9 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
 
   function test_UpgradeBeaconImplementation_DAOSpace() external {
     assertEq(daoSpaceBeacon.implementation(), address(daoSpaceImplementation));
-    assertEq(daoSpaceImplementation.version(), '1.0.1');
-    assertEq(daoSpaceProxyA.version(), '1.0.1');
-    assertEq(daoSpaceProxyB.version(), '1.0.1');
+    assertEq(daoSpaceImplementation.version(), '1.0.0');
+    assertEq(daoSpaceProxyA.version(), '1.0.0');
+    assertEq(daoSpaceProxyB.version(), '1.0.0');
     // _initialMembers
     assertTrue(daoSpaceProxyA.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
     assertTrue(daoSpaceProxyB.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));

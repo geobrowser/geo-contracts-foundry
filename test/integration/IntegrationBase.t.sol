@@ -9,8 +9,10 @@ import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
 import {DeployGEOBrowser} from 'script/DeployGEOBrowser.s.sol';
 
 abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
+  uint256 internal constant _BASE_FORK_BLOCK = 41_000_000;
   uint256 internal constant _GEO_FORK_BLOCK = 500;
 
+  uint256 internal _baseForkId;
   uint256 internal _geoForkId;
 
   // Spaces
@@ -35,9 +37,14 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
   bytes16 internal _initialTopicId;
 
   function setUp() public virtual {
+    _baseForkId = vm.createFork(vm.rpcUrl('base'), _BASE_FORK_BLOCK);
     _geoForkId = vm.createFork(vm.rpcUrl('geo'), _GEO_FORK_BLOCK);
 
     (eoaSpace, _eoaSpacePrivateKey) = makeAddrAndKey('eoaSpace');
+
+    vm.selectFork(_baseForkId);
+    // Deploy GEO incentives contracts
+    _deployGEOIncentives();
 
     vm.selectFork(_geoForkId);
     // Deploy GEO browser contracts
@@ -45,6 +52,8 @@ abstract contract IntegrationBase is TestHelper, DeployGEOBrowser {
     // Register EOA, DAO, and verifier spaces
     _registerSpaces();
   }
+
+  function _deployGEOIncentives() internal {}
 
   function _deployGEOBrowser() internal {
     // Run deployment script
