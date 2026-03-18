@@ -292,6 +292,16 @@ UnitDAOSpace::fetch
 └── when _action equals anything else
     └── it returns _subjectInput
 
+UnitDAOSpace::canExecuteProposal
+├── when proposal does not exist
+│   └── it returns false
+├── when proposal has already been executed
+│   └── it returns false
+├── when support threshold is not reached
+│   └── it returns false
+└── when support threshold is reached
+    └── it returns true
+
 UnitDAOSpace::isSupportThresholdReached
 ├── when the proposal voting mode is slow
 │   ├── when the voting quorum has not been reached
