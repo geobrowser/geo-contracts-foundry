@@ -2355,6 +2355,8 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
+    daoSpaceProxy.workaround_revokeRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _oldRestrictedSpaceId);
+
     // it reverts with InvalidSpaceIdForRole
     vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
     daoSpaceProxy.unrestrictSpace(_oldRestrictedSpaceId);
