@@ -2520,6 +2520,94 @@ contract UnitDAOSpace is TestHelper {
     assertEq(daoSpaceProxy.fetch(_action, _subjectInput, _data), _subjectInput);
   }
 
+  /// CAN EXECUTE PROPOSAL ///
+
+  function test_CanExecuteProposal_WhenProposalHasAlreadyBeenExecuted() external {
+    // Create proposal where it has already been executed
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      true,
+      1,
+      _initialEditorASpaceId,
+      block.timestamp,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      IDAOSpace.VotingMode.Fast,
+      daoSpaceProxy.votingSettings().quorum,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      0,
+      new IDAOSpace.Action[](0)
+    );
+
+    // it returns false
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenProposalStartDateIsZero() external {
+    // Create proposal where the start date is zero
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      0,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      IDAOSpace.VotingMode.Fast,
+      daoSpaceProxy.votingSettings().quorum,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      0,
+      new IDAOSpace.Action[](0)
+    );
+
+    // it returns false
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenSupportThresholdIsNotReached() external {
+    // Create proposal where the threshold is not reached
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      block.timestamp,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      IDAOSpace.VotingMode.Fast,
+      daoSpaceProxy.votingSettings().quorum,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      1,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 0, 0, 0);
+
+    // it returns false
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenSupportThresholdIsReached() external {
+    // Create proposal where the threshold has been reached
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      block.timestamp,
+      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      IDAOSpace.VotingMode.Fast,
+      daoSpaceProxy.votingSettings().quorum,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      0,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 1, 0, 0);
+
+    // it returns true
+    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
   /// IS SUPPORT THRESHOLD REACHED ///
 
   modifier whenTheProposalVotingModeIsSlow() {

@@ -299,8 +299,10 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Checks if a proposal can be executed
-   * @param _proposalId ID of the proposal to check
-   * @return _canExecuteProposal True if the proposal exists, is not yet executed, and has reached its support threshold
+   * @param _proposalId The ID of the proposal to check
+   * @return _canExecuteProposal True if the proposal can be executed, false otherwise
+   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
+   * Slow path requires voting period to end; fast path can execute immediately.
    */
   function canExecuteProposal(bytes16 _proposalId) external view returns (bool _canExecuteProposal);
 

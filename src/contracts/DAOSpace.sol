@@ -213,6 +213,18 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
+  function canExecuteProposal(bytes16 _proposalId) public view virtual returns (bool _canExecuteProposal) {
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    // Verify that the proposal has not been executed already.
+    if (proposal_.executed) return false;
+    // Proposal does not exist
+    if (proposal_.parameters.startDate == 0) return false;
+    // Support threshold not reached
+    if (!isSupportThresholdReached(_proposalId)) return false;
+    return true;
+  }
+
+  /// @inheritdoc IDAOSpace
   function isSupportThresholdReached(bytes16 _proposalId)
     public
     view
@@ -346,11 +358,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   ) public view returns (VoteOption _voteOption) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
     _voteOption = proposal_.voters[_voterSpaceId];
-  }
-
-  /// @inheritdoc IDAOSpace
-  function canExecuteProposal(bytes16 _proposalId) public view returns (bool __canExecuteProposal) {
-    return _canExecuteProposal(_proposalId);
   }
 
   /// @inheritdoc IDAOSpace
@@ -505,7 +512,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
       // Immediate execution if possible
-      if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
+      if (canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
     } else if (_voteOption == VoteOption.No) {
       proposal_.tally.no = proposal_.tally.no + 1;
 
@@ -564,7 +571,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     // Anyone can call
     // Check if proposal can be settled
-    if (!_canExecuteProposal(_proposalId)) revert CanNotExecute();
+    if (!canExecuteProposal(_proposalId)) revert CanNotExecute();
 
     _executeProposal(_proposalId);
   }
@@ -762,24 +769,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_voteOption == VoteOption.None) return false;
     // The voter has no voting power
     if (!hasRole(EDITOR, _spaceId)) return false;
-    return true;
-  }
-
-  /**
-   * @notice Checks if a proposal can be executed
-   * @param _proposalId The ID of the proposal to check
-   * @return __canExecuteProposal True if the proposal can be executed, false otherwise
-   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
-   * Slow path requires voting period to end; fast path can execute immediately.
-   */
-  function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool __canExecuteProposal) {
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-    // Verify that the proposal has not been executed already.
-    if (proposal_.executed) return false;
-    // Proposal does not exist
-    if (proposal_.parameters.startDate == 0) return false;
-    // Support threshold not reached
-    if (!isSupportThresholdReached(_proposalId)) return false;
     return true;
   }
 
