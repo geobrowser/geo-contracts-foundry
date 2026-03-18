@@ -122,6 +122,7 @@ contract Invariants is Setup {
           assertTrue(
             _dao.isSupportThresholdReached(_proposalId), 'DS-INV-1: Executed proposal did not reach support threshold'
           );
+          assertFalse(_dao.canExecuteProposal(_proposalId), 'DS-INV-1: Executed proposal still executable');
         }
       }
     }
