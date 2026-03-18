@@ -298,6 +298,14 @@ interface IDAOSpace is ISpace {
   function isSupportThresholdReached(bytes16 _proposalId) external view returns (bool _isSupportThresholdReached);
 
   /**
+   * @notice Checks if a proposal can be executed
+   * @param _proposalId The ID of the proposal to check
+   * @return _canExecuteProposal True if the proposal can be executed, false otherwise
+   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
+   */
+  function canExecuteProposal(bytes16 _proposalId) external view returns (bool _canExecuteProposal);
+
+  /**
    * @notice Gets the information for a proposal and version pair
    * @param _proposalId The ID of the proposal
    * @param _proposalVersion The version of the proposal

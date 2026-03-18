@@ -189,6 +189,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
       daoSpaceProxy.getLatestProposalInformation(_fastPathProposalId);
     assertEq(uint8(_fastPathProposal.parameters.votingMode), uint8(IDAOSpace.VotingMode.Fast));
     assertTrue(_fastPathProposal.executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_fastPathProposalId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _verifierSpaceProxyId));
@@ -209,11 +210,13 @@ contract IntegrationDefaultGovernance is IntegrationBase {
       _voteOption: IDAOSpace.VoteOption.No
     });
 
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowPathProposalId));
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
     // Execute: removeEditor(_verifierSpaceProxyId);
     _executeProposal(_slowPathProposalId);
 
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowPathProposalId));
     vm.expectRevert(IDAOSpace.CanNotExecute.selector);
     // Execute: removeEditor(_verifierSpaceProxyId);
     _executeProposal(_slowPathProposalId);
@@ -240,6 +243,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     });
 
     skip(daoSpaceImplementation.MINIMUM_VOTING_DURATION() + 1);
+    assertTrue(daoSpaceProxy.canExecuteProposal(_slowPathProposalBisId));
     // Execute: removeEditor(_verifierSpaceProxyId);
     _executeProposal(_slowPathProposalBisId);
 
@@ -248,6 +252,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
       daoSpaceProxy.getLatestProposalInformation(_slowPathProposalBisId);
     assertEq(uint8(_slowPathProposalBis.parameters.votingMode), uint8(IDAOSpace.VotingMode.Slow));
     assertTrue(_slowPathProposalBis.executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowPathProposalBisId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _verifierSpaceProxyId));
@@ -270,6 +275,7 @@ contract IntegrationDefaultGovernance is IntegrationBase {
       daoSpaceProxy.getLatestProposalInformation(_slowPathProposalTerId);
     assertEq(uint8(_slowPathProposalTer.parameters.votingMode), uint8(IDAOSpace.VotingMode.Slow));
     assertTrue(_slowPathProposalTer.executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowPathProposalTerId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _eoaSpaceId));
     assertTrue(daoSpaceProxy.hasRole(daoSpaceImplementation.MEMBER(), _eoaSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _verifierSpaceProxyId));

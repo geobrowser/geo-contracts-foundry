@@ -214,6 +214,19 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /// @inheritdoc IDAOSpace
+  function canExecuteProposal(bytes16 _proposalId) public view virtual returns (bool _canExecuteProposal) {
+    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+
+    // Proposal does not exist
+    if (proposal_.creator == bytes16(0)) return false;
+    // The proposal has not been executed already
+    if (proposal_.executed) return false;
+    // Support threshold not reached
+    if (!isSupportThresholdReached(_proposalId)) return false;
+    return true;
+  }
+
+  /// @inheritdoc IDAOSpace
   function isSupportThresholdReached(bytes16 _proposalId)
     public
     view
@@ -469,19 +482,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     }
 
     // Ping the registry to emit the proposal settings
-    _ping(
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(
-        proposal_.parameters.startDate,
-        proposal_.parameters.lastDate,
-        proposal_.parameters.votingMode,
-        proposal_.parameters.quorum,
-        proposal_.parameters.partialPercentageSupportThreshold,
-        proposal_.parameters.universalPercentageSupportThreshold,
-        proposal_.parameters.flatSupportThreshold
-      )
-    );
+    _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
   }
 
   /**
@@ -518,7 +519,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
       // Immediate execution if possible
-      if (_canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
+      if (canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
     } else if (_voteOption == VoteOption.No) {
       proposal_.tally.no = proposal_.tally.no + 1;
 
@@ -538,19 +539,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
 
         // Ping the registry to emit the updated proposal settings
-        _ping(
-          ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-          bytes32(_proposalId),
-          abi.encode(
-            proposal_.parameters.startDate,
-            proposal_.parameters.lastDate,
-            proposal_.parameters.votingMode,
-            proposal_.parameters.quorum,
-            proposal_.parameters.partialPercentageSupportThreshold,
-            proposal_.parameters.universalPercentageSupportThreshold,
-            proposal_.parameters.flatSupportThreshold
-          )
-        );
+        _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
       }
     } else {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
@@ -589,7 +578,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     // Anyone can call
     // Check if proposal can be settled
-    if (!_canExecuteProposal(_proposalId)) revert CanNotExecute();
+    if (!canExecuteProposal(_proposalId)) revert CanNotExecute();
 
     _executeProposal(_proposalId);
   }
