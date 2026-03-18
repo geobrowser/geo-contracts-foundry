@@ -792,25 +792,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /**
-   * @notice Checks if a proposal can be executed
-   * @param _proposalId The ID of the proposal to check
-   * @return __canExecuteProposal True if the proposal can be executed, false otherwise
-   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
-   * Slow path requires voting period to end; fast path can execute immediately.
-   */
-  function _canExecuteProposal(bytes16 _proposalId) internal view virtual returns (bool __canExecuteProposal) {
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-
-    // Proposal does not exist
-    if (proposal_.creator == bytes16(0)) return false;
-    // The proposal has not been executed already
-    if (proposal_.executed) return false;
-    // Support threshold not reached
-    if (!isSupportThresholdReached(_proposalId)) return false;
-    return true;
-  }
-
-  /**
    * @notice Returns the storage of a proposal
    * @param _proposalId The proposal ID
    * @param _proposalVersion The proposal version
