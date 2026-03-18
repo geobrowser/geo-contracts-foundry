@@ -813,7 +813,7 @@ contract UnitDAOSpace is TestHelper {
       _latestProposalVersion,
       _initialEditorASpaceId,
       block.timestamp,
-      block.timestamp - 1,
+      block.timestamp + 1,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
