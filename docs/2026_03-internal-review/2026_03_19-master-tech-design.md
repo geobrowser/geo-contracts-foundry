@@ -14,7 +14,7 @@ The following is a list of motivating ideas behind recent changes to this repo. 
 
 - **Space ID format** — This work enforces UUIDv4 on space ID generation so that they can be easily used with offchain tooling and libraries, all while maintaining consistency and uniqueness.
 
-- **Fast path actions** — This change simplifies the use of the fast path by making `ping` a valid fast-path action, while publish, flag, and unflag have been removed from the contract entirely. With that being said, these Actions are still supported by the contract, and can be emitted via `ping`, but now no longer have stand-alone functions. This supports scalability and flexibility moving forward, because unique Action events can be invented in the future and emitted with `ping`.
+- **Fast path actions** — This change simplifies the fast path by making `ping` a valid fast-path selector. Publish, flag, and unflag are no longer exposed as their own public functions (those dedicated entrypoints were removed); callers may still emit the same kinds of Action events by invoking `ping` with the appropriate action constant and calldata. That keeps one generic on-chain path while preserving indexer/UI behaviour, and future action kinds can be introduced the same way without new function selectors.
 
 - **Topic on DAO creation** — This work supports the option that DAO creation includes declaring a topic, so that the DAO's scope is recorded on-chain from the start for indexing and discovery.
 
