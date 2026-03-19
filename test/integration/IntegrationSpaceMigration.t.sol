@@ -29,6 +29,10 @@ contract IntegrationSpaceMigration is IntegrationBase {
   bytes16[] internal _initialSpaceEditorsBis;
   bytes16[] internal _initialSpaceMembersBis;
 
+  // Proposals
+  bytes16 internal _proposalId;
+  uint8 internal _proposalVersion = 1;
+
   function setUp() public override {
     IntegrationBase.setUp();
     vm.selectFork(_geoForkId);
@@ -92,7 +96,6 @@ contract IntegrationSpaceMigration is IntegrationBase {
   function test_SpaceMigration_EOASpace_DAOSpaceMultiVote() external {
     // daoSpaceProxy
     // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId();
-    bytes16 _proposalId = 0;
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
     _actions[0] = IDAOSpace.Action({
       to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
@@ -101,7 +104,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
       to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
-    bytes memory _voteProposalData = abi.encode(_proposalId, IDAOSpace.VoteOption.Yes);
+    bytes memory _voteProposalData = abi.encode(_proposalId, _proposalVersion, IDAOSpace.VoteOption.Yes);
 
     vm.startPrank(eoaSpace);
     // PROPOSAL_CREATED
@@ -148,7 +151,6 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
     // daoSpaceProxy
     // Proposal 0 (slow path): proposeSpaceMigration();
-    bytes16 _proposalId = 0;
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
       to: address(spaceRegistryProxy),
@@ -156,7 +158,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
       data: abi.encodeCall(ISpaceRegistry.proposeSpaceMigration, (address(daoSpaceProxyBis)))
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
-    bytes memory _voteProposalData = abi.encode(_proposalId, IDAOSpace.VoteOption.Yes);
+    bytes memory _voteProposalData = abi.encode(_proposalId, _proposalVersion, IDAOSpace.VoteOption.Yes);
     bytes memory _executeProposalData = abi.encode(_proposalId);
 
     vm.startPrank(eoaSpace);
@@ -182,7 +184,6 @@ contract IntegrationSpaceMigration is IntegrationBase {
 
     // daoSpaceProxyBis
     // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId(); acceptSpaceMigration();
-    _proposalId = 0;
     _actions = new IDAOSpace.Action[](3);
     _actions[0] = IDAOSpace.Action({
       to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
@@ -196,7 +197,7 @@ contract IntegrationSpaceMigration is IntegrationBase {
       data: abi.encodeCall(ISpaceRegistry.acceptSpaceMigration, (_daoSpaceProxyId, 'DAO_SPACE', '1.0.0'))
     });
     _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
-    _voteProposalData = abi.encode(_proposalId, IDAOSpace.VoteOption.Yes);
+    _voteProposalData = abi.encode(_proposalId, _proposalVersion, IDAOSpace.VoteOption.Yes);
     _executeProposalData = abi.encode(_proposalId);
 
     vm.startPrank(eoaSpaceBis);

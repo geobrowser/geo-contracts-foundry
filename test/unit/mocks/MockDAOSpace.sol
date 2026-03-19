@@ -11,7 +11,7 @@ contract MockDAOSpace is DAOSpace {
   function workaround_createProposal(
     bytes16 _proposalId,
     bool _executed,
-    uint8 _version,
+    uint8 _proposalVersion,
     bytes16 _creatorSpaceId,
     uint256 _startDate,
     uint256 _lastDate,
@@ -23,8 +23,8 @@ contract MockDAOSpace is DAOSpace {
     Action[] memory _actions
   ) external {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    $_.latestProposalVersion[_proposalId] = _version;
-    Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
+    $_.latestProposalVersion[_proposalId] = _proposalVersion;
+    Proposal storage proposal_ = _getProposalStorage(_proposalId, _proposalVersion);
     proposal_.executed = _executed;
     proposal_.creator = _creatorSpaceId;
     proposal_.parameters.startDate = _startDate;

@@ -252,7 +252,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
    * @param _account The account address to register
    * @param _type The type of space being registered (optional)
    * @param _version The version of the space implementation (optional)
-   * @return _spaceId The newly generated space id
+   * @return _spaceId The newly generated space ID
    */
   function _registerSpaceId(
     address _account,

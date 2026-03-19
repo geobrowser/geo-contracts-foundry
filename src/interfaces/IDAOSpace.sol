@@ -128,8 +128,8 @@ interface IDAOSpace is ISpace {
     VotingSettings votingSettings;
     uint256 totalEditors;
     mapping(bytes4 _selector => bool _isValid) actionIsFastPathValid;
-    mapping(bytes16 _proposalId => uint8 _version) latestProposalVersion;
-    mapping(bytes16 _proposalId => mapping(uint8 _version => Proposal _proposal)) proposals;
+    mapping(bytes16 _proposalId => uint8 _proposalVersion) latestProposalVersion;
+    mapping(bytes16 _proposalId => mapping(uint8 _proposalVersion => Proposal _proposal)) proposals;
   }
 
   /**
@@ -245,9 +245,9 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Unrestricts a space, restoring their ability to create fast path proposals
-   * @param _spaceId The space ID to unrestrict
+   * @param _oldRestrictedSpaceId The space ID to unrestrict
    */
-  function unrestrictSpace(bytes16 _spaceId) external;
+  function unrestrictSpace(bytes16 _oldRestrictedSpaceId) external;
 
   /**
    * @notice Re-enters the Space Registry to emit an Action event
@@ -284,11 +284,11 @@ interface IDAOSpace is ISpace {
   function actionIsFastPathValid(bytes4 _selector) external view returns (bool _isValid);
 
   /**
-   * @notice Maps a proposal id to a version number
+   * @notice Maps a proposal ID to a version number
    * @param _proposalId ID of the proposal to fetch the latest version
-   * @return _version The version of the proposal
+   * @return _latestProposalVersion The latest version of the proposal
    */
-  function latestProposalVersion(bytes16 _proposalId) external view returns (uint8 _version);
+  function latestProposalVersion(bytes16 _proposalId) external view returns (uint8 _latestProposalVersion);
 
   /**
    * @notice Checks if a proposal has reached its support threshold
@@ -308,7 +308,7 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Gets the information for a proposal and version pair
    * @param _proposalId The ID of the proposal
-   * @param _version The version of the proposal
+   * @param _proposalVersion The version of the proposal
    * @return _executed Whether the proposal has been executed
    * @return _creator The creator of the proposal
    * @return _parameters The proposal parameters at the time of creation
@@ -317,7 +317,7 @@ interface IDAOSpace is ISpace {
    */
   function getProposalInformation(
     bytes16 _proposalId,
-    uint8 _version
+    uint8 _proposalVersion
   )
     external
     view
@@ -352,13 +352,13 @@ interface IDAOSpace is ISpace {
   /**
    * @notice Gets the vote option cast by a given space on a proposal and version pairing
    * @param _proposalId The ID of the proposal
-   * @param _version The version of the proposal to fetch
+   * @param _proposalVersion The version of the proposal to fetch
    * @param _voterSpaceId The space ID of the voter to check
    * @return _voteOption The vote option cast by the space (None if not voted)
    */
   function getProposalVote(
     bytes16 _proposalId,
-    uint8 _version,
+    uint8 _proposalVersion,
     bytes16 _voterSpaceId
   ) external view returns (VoteOption _voteOption);
 

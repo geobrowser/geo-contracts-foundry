@@ -16,18 +16,20 @@ UnitDAOSpace::constructor
 UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
-│   ├── it sets the voting settings
+│   ├── it calls spaceRegistry to register space ID
 │   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   ├── it calls enter on the spaceRegistry with the TOPIC_SET action
 │   ├── it grants the new editors the EDITOR role
 │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
 │   ├── it grants the new members the MEMBER role
 │   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
+│   ├── it grants spaceRegistry the SPACE_REGISTRY role
 │   ├── it grants itself the DAO role
+│   ├── it sets the voting settings
+│   ├── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
 │   ├── it sets ping as a valid fast path action
-│   ├── it calls spaceRegistry to register space ID
 │   └── when delegate called again
 │       └── it reverts with InvalidInitialization
 └── when called
@@ -81,7 +83,9 @@ UnitDAOSpace::write
 │   │           ├── it stores the decoded proposal actions
 │   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   ├── when _action equals PROPOSAL_VOTED
-│   │   ├── when the proposal start date equals zero
+│   │   ├── when the proposal does not exist
+│   │   │   └── it reverts with CanNotVote
+│   │   ├── when _proposalVersion is not latestProposalVersion
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the block timestamp is greater than the last date 
 │   │   │   └── it reverts with CanNotVote
@@ -126,9 +130,9 @@ UnitDAOSpace::write
 │   │       ├── it resets the voting state
 │   │       └── it updates the proposal with a new version
 │   ├── when _action equals PROPOSAL_EXECUTED
-│   │   ├── when the proposal has already been executed
+│   │   ├── when the proposal does not exist
 │   │   │   └── it reverts with CanNotExecute
-│   │   ├── when the proposal start date equals zero
+│   │   ├── when the proposal has already been executed
 │   │   │   └── it reverts with CanNotExecute
 │   │   ├── when the support threshold has not been reached
 │   │   │   └── it reverts with CanNotExecute
@@ -152,6 +156,8 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with InvalidProposalId
 │   │   ├── when _fromSpaceId is restricted
 │   │   │   └── it reverts with FastPathRestricted
+│   │   ├── when _newMemberSpaceId is a member
+│   │   │   └── it reverts with InvalidSpaceIdForRole
 │   │   └── when the request can be made
 │   │       ├── it increments the proposal version
 │   │       ├── it sets the proposal creator to _fromSpaceId
@@ -168,8 +174,10 @@ UnitDAOSpace::write
 │   ├── when _action equals SPACE_FAST_PATH_RESTRICTED
 │   │   ├── when the _fromSpaceId is not an editor
 │   │   │   └── it reverts with InvalidFromSpace
+│   │   ├── when the _newRestrictedSpaceId is restricted
+│   │   │   └── it reverts with InvalidSpaceIdForRole
 │   │   └── when _restrictSpace params are valid
-│   │       └── it grants the FAST_PATH_RESTRICTED role to _space
+│   │       └── it grants the FAST_PATH_RESTRICTED role to _newRestrictedSpaceId
 │   └── when _action does not equal any expected constant
 │       └── it reverts with InvalidAction
 └── when called by non-spaceRegistry
@@ -232,9 +240,12 @@ UnitDAOSpace::removeMember
 
 UnitDAOSpace::unrestrictSpace
 ├── when called by DAO
-│    ├── it revokes the FAST_PATH_RESTRICTED role from _space
-│    ├── it fetches the daoSpaceId from the spaceRegistry
-│    └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
+│   ├── when _oldRestrictedSpaceId is not restricted
+│   │   └── it reverts with InvalidSpaceIdForRole
+│   └── when _oldRestrictedSpaceId is restricted
+│       ├── it revokes the FAST_PATH_RESTRICTED role from _oldRestrictedSpaceId
+│       ├── it fetches the daoSpaceId from the spaceRegistry
+│       └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_UNRESTRICTED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -258,7 +269,8 @@ UnitDAOSpace::updateVotingSettings
 │   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
-│       └── it updates the voting settings
+│       ├── it updates the voting settings
+│       └── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
 └── when called by non-DAO
     └── it reverts with InvalidCaller
 
@@ -281,9 +293,9 @@ UnitDAOSpace::fetch
     └── it returns _subjectInput
 
 UnitDAOSpace::canExecuteProposal
-├── when proposal has already been executed
+├── when proposal does not exist
 │   └── it returns false
-├── when proposal start date is zero
+├── when proposal has already been executed
 │   └── it returns false
 ├── when support threshold is not reached
 │   └── it returns false

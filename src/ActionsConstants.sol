@@ -28,13 +28,16 @@ bytes32 constant PERMISSIONLESS_ACTION_ADDED = keccak256('GOVERNANCE.PERMISSIONL
 /// @dev The ID of the action when a permissionless action is removed from the space registry
 bytes32 constant PERMISSIONLESS_ACTION_REMOVED = keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED');
 
+/// @dev The ID of the action to update the voting settings
+bytes32 constant VOTING_SETTINGS_UPDATED = keccak256('GOVERNANCE.VOTING_SETTINGS_UPDATED');
+
 /// @dev The ID of the action to create a proposal
 bytes32 constant PROPOSAL_CREATED = keccak256('GOVERNANCE.PROPOSAL_CREATED');
 
-/// @dev The ID of the action to declare the proposal settings selected. Should be emitted when a proposal is created or updated.
+/// @dev The ID of the action to declare the proposal settings selected. Should be emitted when a proposal is created or updated
 bytes32 constant PROPOSAL_SETTINGS_SELECTED = keccak256('GOVERNANCE.PROPOSAL_SETTINGS_SELECTED');
 
-/// @dev The ID of the action to update a proposal.
+/// @dev The ID of the action to update a proposal
 bytes32 constant PROPOSAL_UPDATED = keccak256('GOVERNANCE.PROPOSAL_UPDATED');
 
 /// @dev The ID of the action to vote on a proposal

@@ -31,6 +31,7 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     0xc1676672be845731e27a8a9dcb0bb8dcd73102852fa8f3d5fb86df9b24265c00;
 
   /// @notice Constructor
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
