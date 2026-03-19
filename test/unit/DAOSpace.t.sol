@@ -813,7 +813,7 @@ contract UnitDAOSpace is TestHelper {
       _latestProposalVersion,
       _initialEditorASpaceId,
       block.timestamp,
-      block.timestamp - 1,
+      block.timestamp + 1,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -2375,6 +2375,8 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
+    daoSpaceProxy.workaround_revokeRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _oldRestrictedSpaceId);
+
     // it reverts with InvalidSpaceIdForRole
     vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
     daoSpaceProxy.unrestrictSpace(_oldRestrictedSpaceId);
