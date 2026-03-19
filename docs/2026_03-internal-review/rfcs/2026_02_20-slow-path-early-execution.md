@@ -176,9 +176,3 @@ The security team’s internal review effort is still to be defined.
         - Enforce, `slowPathAbsoluteThreshold` > `slowPathPercentageThreshold`.
         - Enforce, 50% < `slowPathAbsoluteThreshold` < 100%.
     - **Decision**: given that the `quorum` check is now also enforced, DAOs are free to set their own `slowPathAbsoluteThreshold` to whatever they wish.
-
-# Signatures
-
-- @Cooki 0x at February 20, 2026
-- @Joxes at February 20, 2026
-- @Yaco 0x at February 20, 2026

@@ -176,9 +176,3 @@ This project is estimated to take one solidity developer 1 week to implement, in
 # Open Questions and Thoughts
 
 - 
-
-# Signatures
-
-- @Cooki 0x at January 28, 2026
-- @Yaco 0x at January 29, 2026
-- @Joxes at February 2, 2026

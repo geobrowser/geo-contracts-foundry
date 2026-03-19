@@ -121,7 +121,3 @@ The security team’s internal review effort is still to be defined.
 # Open Questions and Thoughts
 
 - 
-
-# Signatures
-
-- @Cooki 0x at February 25, 2026
