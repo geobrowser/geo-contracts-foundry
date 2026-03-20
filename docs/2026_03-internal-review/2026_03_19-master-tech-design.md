@@ -1,6 +1,6 @@
 # Master tech design — GEO contracts (source of truth)
 
-This document is the **primary reference** for what the GEO contracts found in this repo are for, how they behave, and how the pieces fit together. Use this document for when you need the story end-to-end; use the RFCs in `rfcs/` for proposal-level background, requirements, and implementation sketches on specific topics. 
+This document is the **primary reference** for what the GEO contracts found in this repo are for, how they behave, and how the pieces fit together. Use this document when you need the story end-to-end; use the RFCs in `rfcs/` for proposal-level background, requirements, and implementation sketches on specific topics. 
 
 ---
 
@@ -62,6 +62,24 @@ These are the baseline intents the singleton architecture is built to support.
 - **Slow-path thresholds and early execution** — **`isSupportThresholdReached`** in **`DAOSpace`** defines the order of **quorum**, **`lastDate`**, **`universalPercentageSupportThreshold`** (including **`_computeEffectiveSupportThreshold`**), and **`partialPercentageSupportThreshold`**. **`IDAOSpace`** and NatSpec on those settings are the interface-level reference.
 
 - **`ping` and follow-on `Action` emissions** — **`DAOSpace.ping`** (callable only with the DAO role) invokes **`_ping`**, which calls **`SpaceRegistry.enter`** with both **`from`** and **`to`** set to the DAO’s space id so the registry emits further **`Action`** events—covering kinds that supplement direct user **`enter`** flows, including behaviour historically exposed via dedicated registry entrypoints.
+
+---
+
+## 5. Deliberate design decisions (for reviewers)
+
+Some behaviours look like inconsistencies when compared to adjacent code paths or to older RFC documentation. The items below are **intentional**, and are highlighted here so human and LLM-led reviews do not treat them as accidental gaps or critical defects.
+
+### 5.1 Membership requests do not require MEMBER/EDITOR on the caller
+
+**`MEMBERSHIP_REQUESTED`** is handled by **`_requestMembership`**, which does **not** repeat the **`hasRole(MEMBER) || hasRole(EDITOR)`** check used in **`_checkProposalPath`** for **`PROPOSAL_CREATED`**.
+
+That difference is deliberate: a membership request is how a **registered space that is not yet a member** of this DAO asks to join. Requiring MEMBER or EDITOR on **`_fromSpaceId`** would make the flow impossible for the intended caller. Governance still proceeds via the normal proposal path (fast path for this flow, with editors voting).
+
+### 5.2 `ping` on the fast path is permissive by design
+
+Fast-path proposals may include **`ping`** when that selector is configured as a valid fast-path action. **`ping`** takes **`(action, subject, data)`** and emits further **`Action`** events through the registry (see §4). That means a successful fast-path execution can surface a wide range of event shapes “as” the DAO space in the event stream.
+
+This is **not** an oversight: **`ping`** is the single generic mechanism for follow-on **`Action`** emissions (including kinds that older designs exposed via separate entrypoints). **Execution remains gated** by DAO governance (fast-path rules, editor votes, and whitelist of selectors). **Downstream systems** (indexers, clients) must not assume that every DAO-originated **`Action`** implies the same kind of on-chain state change as a direct governance operation—they should decode **`action` / `topic` / `data`** and apply product-specific trust and interpretation rules (e.g. the off-chain "Web of Trust"). Treating ambiguous or high-impact events as authoritative without that context is an integration risk, not a contract bug.
 
 ---
 
