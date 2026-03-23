@@ -60,7 +60,31 @@ contract DAOSpaceFactory is UUPSUpgradeable, OwnableUpgradeable, IDAOSpaceFactor
       ? abi.encode(_initialEditsContentUri, _initialEditsMetadata)
       : bytes('');
     bytes memory _initializerData = abi.encode(
-      $_.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId
+      $_.spaceRegistry,
+      _votingSettings,
+      _initialEditors,
+      _initialMembers,
+      _publishEditsData,
+      _initialTopicId,
+      bytes16(0)
+    );
+    _newDAOSpaceProxy =
+      address(new BeaconProxy($_.daoSpaceBeacon, abi.encodeCall(IDAOSpace.initialize, (_initializerData))));
+    $_.proxyIsChildOfFactory[_newDAOSpaceProxy] = true;
+  }
+
+  /// @inheritdoc IDAOSpaceFactory
+  function createDAOSpaceProxyForTransplant(
+    IDAOSpace.VotingSettings calldata _votingSettings,
+    bytes16[] calldata _initialEditors,
+    bytes16[] calldata _initialMembers,
+    bytes16 _transplantDAOSpaceId
+  ) external virtual onlyOwner returns (address _newDAOSpaceProxy) {
+    if (_transplantDAOSpaceId == bytes16(0)) revert InvalidTransplantDAOSpaceId();
+
+    DAOSpaceFactoryStorage storage $_ = _getDAOSpaceFactoryStorage();
+    bytes memory _initializerData = abi.encode(
+      $_.spaceRegistry, _votingSettings, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
     );
     _newDAOSpaceProxy =
       address(new BeaconProxy($_.daoSpaceBeacon, abi.encodeCall(IDAOSpace.initialize, (_initializerData))));

@@ -36,9 +36,10 @@ contract UnitDAOSpace is TestHelper {
   bytes16 internal _initialEditorBSpaceId = bytes16(keccak256('_initialEditorBSpaceId'));
   bytes16 internal _initialMemberASpaceId = bytes16(keccak256('_initialMemberASpaceId'));
   bytes16 internal _initialMemberBSpaceId = bytes16(keccak256('_initialMemberBSpaceId'));
-  bytes internal _publishEditsData = 'Curiouser and curiouser!';
+  bytes16 internal _transplantDAOSpaceId = bytes16(keccak256('_transplantDAOSpaceId'));
   bytes16 internal _initialTopicId = bytes16(keccak256('_initialTopicId'));
   bytes16 internal _proposalId = bytes16(keccak256('_proposalId'));
+  bytes internal _publishEditsData = 'Curiouser and curiouser!';
   uint8 internal _proposalVersion = uint8(uint256(keccak256('_proposalVersion')));
 
   function setUp() external {
@@ -153,7 +154,13 @@ contract UnitDAOSpace is TestHelper {
         abi.encodeCall(
           IDAOSpace.initialize,
           (abi.encode(
-              _spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId
+              _spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              bytes16(0)
             ))
         )
       )
@@ -210,7 +217,33 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Initialize_WhenDelegateCalled(
+  /// @dev Uses the proxy deployed in `setUp` (standard creation, `_daoSpaceId == 0`).
+  function test_Initialize_WhenDelegateCalled() external view whenDelegateCalled {
+    // it sets the spaceRegistry
+    assertEq(address(daoSpaceProxy.spaceRegistry()), _spaceRegistry);
+
+    // it grants the SPACE_REGISTRY role to the registry
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.SPACE_REGISTRY(), _spaceRegistrySpaceId));
+
+    // it grants itself the DAO role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _daoSpaceProxySpaceId));
+
+    // it sets addMember as a valid fast path action
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector));
+
+    // it sets removeMember as a valid fast path action
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.removeMember.selector));
+
+    // it sets ping as a valid fast path action
+    assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.ping.selector));
+  }
+
+  modifier when_daoSpaceIdIsZero() {
+    _;
+  }
+
+  /// @dev Mocks require `registerSpaceId`, `_ping` / `enter` calls, and role grants; failure means init did not follow the zero-`daoSpaceId` path.
+  function test_Initialize_When_daoSpaceIdIsZero(
     address __spaceRegistry,
     bytes memory __publishEditsData,
     bytes16 __initialTopicId
@@ -307,7 +340,152 @@ contract UnitDAOSpace is TestHelper {
         abi.encodeCall(
           IDAOSpace.initialize,
           (abi.encode(
-              __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData, __initialTopicId
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              __publishEditsData,
+              __initialTopicId,
+              bytes16(0)
+            ))
+        )
+      )
+    );
+    _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+
+    // when _daoSpaceId is zero — it sets totalEditors
+    assertEq(daoSpaceProxy.totalEditors(), 2);
+
+    // it sets the voting settings
+    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
+
+    // it grants the new editor the EDITOR role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorBSpaceId));
+
+    // it grants the new member the MEMBER role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberBSpaceId));
+  }
+
+  function test_Initialize_WhenAnInitialEditorAlreadyHasTheEDITORRole(address __spaceRegistry) external {
+    _assumeFuzzable(__spaceRegistry);
+
+    address _predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedDAOSpaceProxySpaceId = _getSpaceId(_predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
+    _mockAddressToSpaceId(__spaceRegistry, _predictedDAOSpaceProxy, _predictedDAOSpaceProxySpaceId);
+
+    bytes16[] memory _duplicateEditors = new bytes16[](2);
+    _duplicateEditors[0] = _initialEditorASpaceId;
+    _duplicateEditors[1] = _initialEditorASpaceId;
+
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.EDITOR_ADDED,
+      bytes32(_initialEditorASpaceId),
+      ''
+    );
+
+    // it reverts with InvalidSpaceIdForRole
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _votingSettings, _duplicateEditors, _initialMembers, bytes(''), bytes16(0), bytes16(0)
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenAnInitialMemberAlreadyHasTheMEMBERRole(address __spaceRegistry) external {
+    _assumeFuzzable(__spaceRegistry);
+
+    address _predictedDAOSpaceProxy = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+    bytes16 _predictedDAOSpaceProxySpaceId = _getSpaceId(_predictedDAOSpaceProxy);
+    _mockRegisterSpaceId(__spaceRegistry, _spaceType, _spaceVersion, _predictedDAOSpaceProxySpaceId);
+    _mockAddressToSpaceId(__spaceRegistry, _predictedDAOSpaceProxy, _predictedDAOSpaceProxySpaceId);
+
+    bytes16[] memory _duplicateMembers = new bytes16[](2);
+    _duplicateMembers[0] = _initialMemberASpaceId;
+    _duplicateMembers[1] = _initialMemberASpaceId;
+
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.EDITOR_ADDED,
+      bytes32(_initialEditorASpaceId),
+      ''
+    );
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.EDITOR_ADDED,
+      bytes32(_initialEditorBSpaceId),
+      ''
+    );
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberASpaceId),
+      ''
+    );
+
+    // it reverts with InvalidSpaceIdForRole
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _votingSettings, _initialEditors, _duplicateMembers, bytes(''), bytes16(0), bytes16(0)
+            ))
+        )
+      )
+    );
+  }
+
+  modifier when_daoSpaceIdIsNon_zero() {
+    _;
+  }
+
+  function test_Initialize_When_daoSpaceIdIsNon_zero(address __spaceRegistry) external {
+    _assumeFuzzable(__spaceRegistry);
+
+    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _transplantDAOSpaceId
             ))
         )
       )
@@ -317,25 +495,11 @@ contract UnitDAOSpace is TestHelper {
     // it sets the spaceRegistry
     assertEq(address(daoSpaceProxy.spaceRegistry()), __spaceRegistry);
 
-    // it sets the voting settings
-    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
-
-    // it grants the new editors the EDITOR role
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorASpaceId));
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorBSpaceId));
-
-    // it grants the new members the MEMBER role
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberASpaceId));
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberBSpaceId));
-
-    // it grants spaceRegistry the SPACE_REGISTRY role
+    // it grants the SPACE_REGISTRY role to the registry
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.SPACE_REGISTRY(), _getSpaceId(__spaceRegistry)));
 
     // it grants itself the DAO role
-    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _daoSpaceProxySpaceId));
-
-    // it sets the voting settings
-    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.DAO(), _transplantDAOSpaceId));
 
     // it sets addMember as a valid fast path action
     assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.addMember.selector));
@@ -345,6 +509,143 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets ping as a valid fast path action
     assertTrue(daoSpaceProxy.actionIsFastPathValid(IDAOSpace.ping.selector));
+
+    // when _daoSpaceId is non-zero — it sets totalEditors
+    assertEq(daoSpaceProxy.totalEditors(), 2);
+
+    // it sets the voting settings
+    assertEq(abi.encode(daoSpaceProxy.votingSettings()), abi.encode(_votingSettings));
+
+    // it grants the new editor the EDITOR role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _initialEditorBSpaceId));
+
+    // it grants the new member the MEMBER role
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberBSpaceId));
+  }
+
+  function test_Initialize_WhenDisableFastPathAccessForNewMembersIsTrue()
+    external
+    whenDelegateCalled
+    when_daoSpaceIdIsNon_zero
+  {
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
+
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              _spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+
+    // it grants FAST_PATH_RESTRICTED to initial members who are not editors
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberBSpaceId));
+  }
+
+  function test_Initialize_WhenDisableFastPathAccessForNewMembersIsFalse()
+    external
+    whenDelegateCalled
+    when_daoSpaceIdIsNon_zero
+  {
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.disableFastPathAccessForNewMembers = false;
+
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
+
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              _spaceRegistry,
+              _vs,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+
+    // it does not grant FAST_PATH_RESTRICTED to initial members
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberASpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberBSpaceId));
+  }
+
+  function test_Initialize_WhenAnInitialEditorAlreadyHasTheEDITORRole_When_daoSpaceIdIsNon_zero(address __spaceRegistry)
+    external
+  {
+    _assumeFuzzable(__spaceRegistry);
+
+    bytes16[] memory _duplicateEditors = new bytes16[](2);
+    _duplicateEditors[0] = _initialEditorASpaceId;
+    _duplicateEditors[1] = _initialEditorASpaceId;
+
+    // it reverts with InvalidSpaceIdForRole
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry,
+              _votingSettings,
+              _duplicateEditors,
+              _initialMembers,
+              bytes(''),
+              bytes16(0),
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenAnInitialMemberAlreadyHasTheMEMBERRole_When_daoSpaceIdIsNon_zero(address __spaceRegistry)
+    external
+  {
+    _assumeFuzzable(__spaceRegistry);
+
+    bytes16[] memory _duplicateMembers = new bytes16[](2);
+    _duplicateMembers[0] = _initialMemberASpaceId;
+    _duplicateMembers[1] = _initialMemberASpaceId;
+
+    // it reverts with InvalidSpaceIdForRole
+    vm.expectRevert(IDAOSpace.InvalidSpaceIdForRole.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _duplicateMembers,
+              bytes(''),
+              bytes16(0),
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
   }
 
   function test_Initialize_WhenDelegateCalledAgain(
@@ -444,7 +745,13 @@ contract UnitDAOSpace is TestHelper {
         abi.encodeCall(
           IDAOSpace.initialize,
           (abi.encode(
-              __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, __publishEditsData, __initialTopicId
+              __spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              __publishEditsData,
+              __initialTopicId,
+              bytes16(0)
             ))
         )
       )
@@ -457,7 +764,13 @@ contract UnitDAOSpace is TestHelper {
     // when delegate called again
     daoSpaceProxy.initialize(
       abi.encode(
-        __spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, __initialTopicId
+        __spaceRegistry,
+        _votingSettings,
+        _initialEditors,
+        _initialMembers,
+        __publishEditsData,
+        __initialTopicId,
+        bytes16(0)
       )
     );
   }
@@ -468,7 +781,15 @@ contract UnitDAOSpace is TestHelper {
 
     // when called again
     daoSpaceProxy.initialize(
-      abi.encode(_spaceRegistry, _votingSettings, _initialEditors, _initialMembers, _publishEditsData, _initialTopicId)
+      abi.encode(
+        _spaceRegistry,
+        _votingSettings,
+        _initialEditors,
+        _initialMembers,
+        _publishEditsData,
+        _initialTopicId,
+        bytes16(0)
+      )
     );
   }
 

@@ -195,10 +195,17 @@ contract UnitDAOSpaceFactory is TestHelper {
         _initialEditors,
         _initialMembers,
         abi.encode(__initialEditsContentUri, __initialEditsMetadata),
-        _initialTopicId
+        _initialTopicId,
+        bytes16(0)
       )
       : abi.encode(
-        daoSpaceFactoryProxy.spaceRegistry(), __votingSettings, _initialEditors, _initialMembers, '', _initialTopicId
+        daoSpaceFactoryProxy.spaceRegistry(),
+        __votingSettings,
+        _initialEditors,
+        _initialMembers,
+        '',
+        _initialTopicId,
+        bytes16(0)
       );
     _mockAndExpect(_daoSpaceImplementation, abi.encodeCall(IDAOSpace.initialize, (_initializerData)), abi.encode());
 
@@ -222,6 +229,76 @@ contract UnitDAOSpaceFactory is TestHelper {
 
     // it updates the proxyIsChildOfFactory for the deployed proxy to true
     assertTrue(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
+  }
+
+  modifier whenCalledByOwner() {
+    // when called by owner
+    vm.prank(_owner);
+    _;
+  }
+
+  function test_CreateDAOSpaceProxyForTransplant_WhenCalledByOwner(
+    bytes16 _transplantDAOSpaceId,
+    IDAOSpace.VotingSettings memory __votingSettings
+  ) external whenCalledByOwner {
+    vm.assume(_transplantDAOSpaceId != bytes16(0));
+    __votingSettings.partialPercentageSupportThreshold =
+      bound(__votingSettings.partialPercentageSupportThreshold, 0, 1e6);
+    __votingSettings.universalPercentageSupportThreshold =
+      bound(__votingSettings.universalPercentageSupportThreshold, 0, 1e6);
+    __votingSettings.flatSupportThreshold = bound(__votingSettings.flatSupportThreshold, 0, 1);
+    __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
+    __votingSettings.duration = bound(__votingSettings.duration, 1 minutes, 200 days);
+
+    uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
+    address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
+    assertFalse(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
+
+    // when called by owner
+    // it deploys and initializes DAO space proxy
+    bytes memory _initializerData = abi.encode(
+      daoSpaceFactoryProxy.spaceRegistry(),
+      __votingSettings,
+      _initialEditors,
+      _initialMembers,
+      bytes(''),
+      bytes16(0),
+      _transplantDAOSpaceId
+    );
+    _mockAndExpect(_daoSpaceImplementation, abi.encodeCall(IDAOSpace.initialize, (_initializerData)), abi.encode());
+
+    // it returns new DAO space proxy
+    vm.prank(_owner);
+    assertEq(
+      daoSpaceFactoryProxy.createDAOSpaceProxyForTransplant(
+        __votingSettings, _initialEditors, _initialMembers, _transplantDAOSpaceId
+      ),
+      _daoSpaceProxy
+    );
+
+    // it updates the proxyIsChildOfFactory for the deployed proxy to true
+    assertTrue(daoSpaceFactoryProxy.proxyIsChildOfFactory(_daoSpaceProxy));
+  }
+
+  function test_CreateDAOSpaceProxyForTransplant_WhenTransplantDAOSpaceIdIsZero() external whenCalledByOwner {
+    // when transplant DAO space id is zero
+
+    // it reverts with InvalidTransplantDAOSpaceId
+    vm.expectRevert(IDAOSpaceFactory.InvalidTransplantDAOSpaceId.selector);
+    daoSpaceFactoryProxy.createDAOSpaceProxyForTransplant(_votingSettings, _initialEditors, _initialMembers, bytes16(0));
+  }
+
+  function test_CreateDAOSpaceProxyForTransplant_WhenCalledByNon_owner(bytes16 _transplantDAOSpaceId) external {
+    vm.assume(_transplantDAOSpaceId != bytes16(0));
+
+    // when called by non-owner
+    vm.prank(_randomCaller);
+
+    // it reverts with OwnableUnauthorizedAccount
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
+    daoSpaceFactoryProxy.createDAOSpaceProxyForTransplant(
+      _votingSettings, _initialEditors, _initialMembers, _transplantDAOSpaceId
+    );
   }
 
   function test_TypeId_WhenCalled() external view {

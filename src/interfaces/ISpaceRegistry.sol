@@ -39,6 +39,9 @@ interface ISpaceRegistry is ISemver {
     bytes16 indexed fromSpaceId, bytes16 indexed toSpaceId, bytes32 indexed action, bytes32 indexed subject, bytes data
   ) anonymous;
 
+  /// @notice Thrown when overrideAction is called with mismatched _fromSpaceIds, _toSpaceIds, _actions, _subjects, _datas lengths
+  error InvalidActionArraysLength();
+
   /// @notice Thrown when the caller is not authorized for the operation
   error InvalidCaller();
 
@@ -122,6 +125,31 @@ interface ISpaceRegistry is ISemver {
    * @param _version The version of the space implementation (optional)
    */
   function acceptSpaceMigration(bytes16 _spaceId, bytes32 _type, bytes calldata _version) external;
+
+  /**
+   * @notice Allows the owner to override or set the bi-directional mapping for a space ID and account
+   * @dev Clears any existing mapping for the given _spaceId and _account, then sets the new mapping. Emits SPACE_ID_OVERRIDDEN.
+   * @param _account The account to bind to _spaceId
+   * @param _spaceId The space ID to bind to _account
+   */
+  function overrideSpaceId(address _account, bytes16 _spaceId) external;
+
+  /**
+   * @notice Allows the owner to emit arbitrary Action events for indexer consistency
+   * @param _fromSpaceIds The space ID for the fromSpaceId of each emitted Action
+   * @param _toSpaceIds The space ID for the toSpaceId of each emitted Action
+   * @param _actions Action identifiers
+   * @param _subjects Subject for each Action event
+   * @param _datas Data for each Action event
+   * @dev All of the input arrays must have the same length
+   */
+  function overrideAction(
+    bytes16[] calldata _fromSpaceIds,
+    bytes16[] calldata _toSpaceIds,
+    bytes32[] calldata _actions,
+    bytes32[] calldata _subjects,
+    bytes[] calldata _datas
+  ) external;
 
   /**
    * @notice Allows the owner to add or remove permissionless actions

@@ -216,6 +216,7 @@ interface IDAOSpace is ISpace {
    *        _initialMembers The initial list of member space IDs
    *        _publishEditsData The optional encoded initial edit publish data (content uri and metadata)
    *        _initialTopicId The optional initial topic ID to declare
+   *        _daoSpaceId The optional pre-determined space ID for a transplant; pass bytes16(0) for standard creation
    */
   function initialize(bytes calldata _initializerData) external;
 
