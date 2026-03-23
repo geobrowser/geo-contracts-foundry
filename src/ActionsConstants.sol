@@ -19,6 +19,9 @@ bytes32 constant SPACE_ID_MIGRATION_PROPOSED = keccak256('GOVERNANCE.SPACE_ID_MI
 /// @dev The ID of the action to migrate a space
 bytes32 constant SPACE_ID_MIGRATED = keccak256('GOVERNANCE.SPACE_ID_MIGRATED');
 
+/// @dev The ID of the action when a space ID is overridden by the registry owner
+bytes32 constant SPACE_ID_OVERRIDDEN = keccak256('GOVERNANCE.SPACE_ID_OVERRIDDEN');
+
 /// @dev The ID of the action to declare a space type. Should be emitted when a space is registered
 bytes32 constant SPACE_TYPE_DECLARED = keccak256('GOVERNANCE.SPACE_TYPE_DECLARED');
 

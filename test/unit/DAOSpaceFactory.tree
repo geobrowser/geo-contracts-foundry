@@ -26,6 +26,16 @@ UnitDAOSpaceFactory::createDAOSpaceProxy
     ├── it updates the proxyIsChildOfFactory for the deployed proxy to true
     └── it returns new DAO space proxy
 
+UnitDAOSpaceFactory::createDAOSpaceProxyForTransplant
+├── when called by owner
+│   ├── it deploys and initializes DAO space proxy
+│   ├── it updates the proxyIsChildOfFactory for the deployed proxy to true
+│   ├── it returns new DAO space proxy
+│   └── when transplant DAO space id is zero
+│       └── it reverts with InvalidTransplantDAOSpaceId
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
 UnitDAOSpaceFactory::typeId
 └── when called
     └── it returns the type

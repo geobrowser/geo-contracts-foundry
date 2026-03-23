@@ -170,6 +170,44 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
+  function overrideSpaceId(address _account, bytes16 _spaceId) external virtual onlyOwner {
+    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+
+    // Clear old relationship
+    address _oldAccount = $.spaceIdToAddress[_spaceId];
+    bytes16 _oldSpaceId = $.addressToSpaceId[_account];
+    $.addressToSpaceId[_oldAccount] = bytes16(0);
+    $.spaceIdToAddress[_oldSpaceId] = address(0);
+
+    // Add new relationship
+    $.addressToSpaceId[_account] = _spaceId;
+    $.spaceIdToAddress[_spaceId] = _account;
+
+    // Action event emissions
+    emit Action(_oldSpaceId, _spaceId, ActionsConstants.SPACE_ID_OVERRIDDEN, bytes32(bytes20(_account)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function overrideAction(
+    bytes16[] calldata _fromSpaceIds,
+    bytes16[] calldata _toSpaceIds,
+    bytes32[] calldata _actions,
+    bytes32[] calldata _subjects,
+    bytes[] calldata _datas
+  ) external virtual onlyOwner {
+    uint256 _length = _fromSpaceIds.length;
+    if (
+      _length != _toSpaceIds.length || _length != _actions.length || _length != _subjects.length
+        || _length != _datas.length
+    ) revert InvalidActionArraysLength();
+
+    // Emit arbitrary Action events for indexer consistency
+    for (uint256 _i; _i < _length; _i++) {
+      emit Action(_fromSpaceIds[_i], _toSpaceIds[_i], _actions[_i], _subjects[_i], _datas[_i]);
+    }
+  }
+
+  /// @inheritdoc ISpaceRegistry
   function setPermissionlessAction(bytes32 _action, bool _isPermissionless) external virtual onlyOwner {
     _isPermissionless ? _permissionlessActionAdded(_action) : _permissionlessActionRemoved(_action);
   }

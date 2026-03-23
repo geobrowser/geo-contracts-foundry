@@ -75,34 +75,66 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       bytes16[] memory _initialEditors,
       bytes16[] memory _initialMembers,
       bytes memory _publishEditsData,
-      bytes16 _initialTopicId
-    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, bytes16[], bytes16[], bytes, bytes16));
+      bytes16 _initialTopicId,
+      bytes16 _daoSpaceId
+    ) = abi.decode(_initializerData, (ISpaceRegistry, VotingSettings, bytes16[], bytes16[], bytes, bytes16, bytes16));
 
-    // Set Space Registry and register new DAO Space
+    // Set Space Registry
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     $_.spaceRegistry = _spaceRegistry;
-    bytes16 _daoSpaceId = $_.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
-    // Ping the registry with initial edit if it exists
-    if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
-    // Ping the registry again to set an initial topic
-    if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_SET, bytes32(_initialTopicId), '');
+    // Standard creation
+    if (_daoSpaceId == bytes16(0)) {
+      // Register new DAO Space
+      _daoSpaceId = $_.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
 
-    // Add initial editors
-    uint256 _length = _initialEditors.length;
-    for (uint256 _i; _i < _length; _i++) {
-      _addEditor(_initialEditors[_i]);
+      // Ping the registry with initial edit if it exists
+      if (_publishEditsData.length != 0) _ping(ActionsConstants.EDITS_PUBLISHED, '', _publishEditsData);
+
+      // Ping the registry again to set an initial topic
+      if (_initialTopicId != bytes16(0)) _ping(ActionsConstants.TOPIC_SET, bytes32(_initialTopicId), '');
+
+      // Add initial editors
+      uint256 _length = _initialEditors.length;
+      for (uint256 _i; _i < _length; _i++) {
+        _addEditor(_initialEditors[_i]);
+      }
+
+      // Set voting settings
+      // Must be added after editors but before members so that the default fast path member behaviour occurs
+      _updateVotingSettings(_votingSettings);
+
+      // Add initial members
+      _length = _initialMembers.length;
+      for (uint256 _j; _j < _length; _j++) {
+        _addMember(_initialMembers[_j]);
+      }
+    } else {
+      // Transplant creation
+      // Add initial editors
+      uint256 _length = _initialEditors.length;
+      for (uint256 _i; _i < _length; _i++) {
+        if (hasRole(EDITOR, _initialEditors[_i])) revert InvalidSpaceIdForRole();
+        _grantRole(EDITOR, _initialEditors[_i]);
+      }
+      $_.totalEditors = _length;
+
+      // Add initial members
+      _length = _initialMembers.length;
+      for (uint256 _j; _j < _length; _j++) {
+        if (hasRole(MEMBER, _initialMembers[_j])) revert InvalidSpaceIdForRole();
+        _grantRole(MEMBER, _initialMembers[_j]);
+      }
+
+      // Set voting settings
+      if (_votingSettings.partialPercentageSupportThreshold > RATIO_BASE) revert InvalidSetting();
+      if (_votingSettings.universalPercentageSupportThreshold > RATIO_BASE) revert InvalidSetting();
+      if (_votingSettings.flatSupportThreshold > $_.totalEditors) revert InvalidSetting();
+      if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
+      if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
+      $_.votingSettings = _votingSettings;
     }
 
-    // Set voting settings
-    // Must be added after editors but before members so that the default fast path member behaviour occurs
-    _updateVotingSettings(_votingSettings);
-
-    // Add initial members
-    _length = _initialMembers.length;
-    for (uint256 _j; _j < _length; _j++) {
-      _addMember(_initialMembers[_j]);
-    }
     // Grant further roles for access control
     _grantRole(SPACE_REGISTRY, _spaceRegistry.addressToSpaceId(address(_spaceRegistry)));
     _grantRole(DAO, _daoSpaceId);
