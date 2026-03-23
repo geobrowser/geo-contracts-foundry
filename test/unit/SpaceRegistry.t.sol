@@ -657,8 +657,95 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.setPermissionlessAction(_action, _set);
   }
 
+  function test_OverrideSpaceId_WhenCalledByOwner(address _account, bytes16 _oldSpaceId) external whenCalledByOwner {
+    vm.assume(_account != _fromSpace);
+    vm.assume(_oldSpaceId != _fromSpaceId);
+
+    // set initial relationship
+    _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
+    _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
+    _mockAddressToSpaceId(_account, _oldSpaceId);
+    _mockSpaceIdToAddress(_oldSpaceId, _account);
+
+    // it emits Action with SPACE_ID_OVERRIDDEN (_oldSpaceId, _spaceId)
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _oldSpaceId, _fromSpaceId, ActionsConstants.SPACE_ID_OVERRIDDEN, bytes32(bytes20(_account)), ''
+    );
+
+    // when called by owner
+    spaceRegistryProxy.overrideSpaceId(_account, _fromSpaceId);
+
+    // it clears old mappings and sets new bi-directional mapping
+    assertEq(spaceRegistryProxy.addressToSpaceId(_account), _fromSpaceId);
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_fromSpaceId), _account);
+    assertEq(spaceRegistryProxy.addressToSpaceId(_fromSpace), bytes16(0));
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_oldSpaceId), address(0));
+  }
+
+  function test_OverrideSpaceId_WhenCalledByNon_owner(address _account, bytes16 _spaceId) external {
+    // it reverts with OwnableUnauthorizedAccount
+    vm.startPrank(_randomCaller);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
+    spaceRegistryProxy.overrideSpaceId(_account, _spaceId);
+  }
+
+  function test_OverrideAction_WhenCalledByOwner() external whenCalledByOwner {
+    bytes16[] memory _fromSpaceIds = new bytes16[](3);
+    _fromSpaceIds[0] = _fromSpaceId;
+    _fromSpaceIds[1] = _fromSpaceId;
+    _fromSpaceIds[2] = _fromSpaceId;
+    bytes16[] memory _toSpaceIds = new bytes16[](3);
+    _toSpaceIds[0] = _toSpaceId;
+    _toSpaceIds[1] = _toSpaceId;
+    _toSpaceIds[2] = _toSpaceId;
+    bytes32[] memory _actions = new bytes32[](3);
+    _actions[0] = ActionsConstants.EDITOR_ADDED;
+    _actions[1] = ActionsConstants.MEMBER_ADDED;
+    _actions[2] = ActionsConstants.EDITS_PUBLISHED;
+    bytes32[] memory _subjects = new bytes32[](3);
+    _subjects[0] = bytes32(_fromSpaceId);
+    _subjects[1] = bytes32(_toSpaceId);
+    _subjects[2] = bytes32(0);
+    bytes[] memory _datas = new bytes[](3);
+    _datas[0] = 'alice';
+    _datas[1] = 'bob';
+    _datas[2] = 'charlie';
+
+    // it emits Action for each _actions _subjects _datas element
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceIds[0], _toSpaceIds[0], _actions[0], _subjects[0], _datas[0]);
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceIds[1], _toSpaceIds[1], _actions[1], _subjects[1], _datas[1]);
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceIds[2], _toSpaceIds[2], _actions[2], _subjects[2], _datas[2]);
+
+    spaceRegistryProxy.overrideAction(_fromSpaceIds, _toSpaceIds, _actions, _subjects, _datas);
+  }
+
+  function test_OverrideAction_WhenActionArraysLengthMismatch() external whenCalledByOwner {
+    bytes16[] memory _fromSpaceIds = new bytes16[](1);
+    _fromSpaceIds[0] = _fromSpaceId;
+    bytes32[] memory _actions = new bytes32[](1);
+    _actions[0] = ActionsConstants.EDITOR_ADDED;
+
+    // it reverts with InvalidActionArraysLength
+    vm.expectRevert(ISpaceRegistry.InvalidActionArraysLength.selector);
+    spaceRegistryProxy.overrideAction(_fromSpaceIds, new bytes16[](0), _actions, new bytes32[](0), new bytes[](0));
+  }
+
+  function test_OverrideAction_WhenCalledByNon_owner() external {
+    // it reverts with OwnableUnauthorizedAccount
+    vm.startPrank(_randomCaller);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
+    spaceRegistryProxy.overrideAction(
+      new bytes16[](0), new bytes16[](0), new bytes32[](0), new bytes32[](0), new bytes[](0)
+    );
+  }
+
   function test_RegisteredSpaceIds_WhenCalled(bytes16 _spaceId, address _account) external {
     vm.assume(_spaceId != bytes16(0));
+    vm.assume(_account != address(spaceRegistryProxy));
     vm.assume(_account != address(0));
 
     // when called

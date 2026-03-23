@@ -116,6 +116,21 @@ UnitSpaceRegistry::setPermissionlessAction
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 
+UnitSpaceRegistry::overrideSpaceId
+├── when called by owner
+│   ├── it clears old mappings and sets new bi-directional mapping
+│   └── it emits Action with SPACE_ID_OVERRIDDEN
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitSpaceRegistry::overrideAction
+├── when called by owner
+│   ├── it emits Action for each _fromSpaceIds _toSpaceIds _actions _subjects _datas element
+│   └── when action arrays length mismatch
+│       └── it reverts with InvalidActionArraysLength
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
 UnitSpaceRegistry::registeredSpaceIds
 └── when called
     └── it returns whether the space ID is registered (has an address mapping)

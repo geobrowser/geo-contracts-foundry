@@ -24,6 +24,11 @@ interface IDAOSpaceFactory is ISemver {
   }
 
   /**
+   * @notice Reverted when transplant DAO space ID is zero.
+   */
+  error InvalidTransplantDAOSpaceId();
+
+  /**
    * @notice Initializes the contract
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
@@ -34,7 +39,7 @@ interface IDAOSpaceFactory is ISemver {
 
   /**
    * @notice Creates a DAO space proxy contract
-   * @dev DAO space should register with space registry when initialized
+   * @dev DAO space registers with space registry when initialized. Use createDAOSpaceProxyForTransplant for transplant.
    * @param _votingSettings The voting settings to use for proposals
    * @param _initialEditors The initial list of editor space IDs
    * @param _initialMembers The initial list of member space IDs
@@ -50,6 +55,21 @@ interface IDAOSpaceFactory is ISemver {
     bytes calldata _initialEditsContentUri,
     bytes calldata _initialEditsMetadata,
     bytes16 _initialTopicId
+  ) external returns (address _newDAOSpaceProxy);
+
+  /**
+   * @notice Creates a DAO space proxy with a pre-determined space ID (transplant). Owner only.
+   * @param _votingSettings The voting settings to use for proposals
+   * @param _initialEditors The initial list of editor space IDs
+   * @param _initialMembers The initial list of member space IDs
+   * @param _transplantDAOSpaceId Pre-determined space ID for transplant
+   * @return _newDAOSpaceProxy The address of the new DAO space proxy contract
+   */
+  function createDAOSpaceProxyForTransplant(
+    IDAOSpace.VotingSettings calldata _votingSettings,
+    bytes16[] calldata _initialEditors,
+    bytes16[] calldata _initialMembers,
+    bytes16 _transplantDAOSpaceId
   ) external returns (address _newDAOSpaceProxy);
 
   /**
