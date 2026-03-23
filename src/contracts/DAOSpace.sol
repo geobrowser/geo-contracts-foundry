@@ -119,10 +119,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       }
       $_.totalEditors = _length;
 
-      // Add initial members
+      // Add initial members (mirror _addMember fast-path restriction using in-memory voting settings)
       _length = _initialMembers.length;
       for (uint256 _j; _j < _length; _j++) {
         if (hasRole(MEMBER, _initialMembers[_j])) revert InvalidSpaceIdForRole();
+        if (_votingSettings.disableFastPathAccessForNewMembers && !hasRole(EDITOR, _initialMembers[_j])) {
+          _grantRole(FAST_PATH_RESTRICTED, _initialMembers[_j]);
+        }
         _grantRole(MEMBER, _initialMembers[_j]);
       }
 

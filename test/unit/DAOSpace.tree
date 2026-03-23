@@ -40,6 +40,10 @@ UnitDAOSpace::initialize
 │   │   ├── it sets the voting settings
 │   │   ├── it grants the new editor the EDITOR role
 │   │   ├── it grants the new member the MEMBER role
+│   │   ├── when disableFastPathAccessForNewMembers is true
+│   │   │   └── it grants FAST_PATH_RESTRICTED to initial members who are not editors
+│   │   ├── when disableFastPathAccessForNewMembers is false
+│   │   │   └── it does not grant FAST_PATH_RESTRICTED to initial members
 │   │   ├── when an initial editor already has the EDITOR role
 │   │   │   └── it reverts with InvalidSpaceIdForRole
 │   │   └── when an initial member already has the MEMBER role

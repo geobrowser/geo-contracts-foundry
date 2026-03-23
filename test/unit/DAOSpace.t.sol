@@ -525,6 +525,69 @@ contract UnitDAOSpace is TestHelper {
     assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _initialMemberBSpaceId));
   }
 
+  function test_Initialize_WhenDisableFastPathAccessForNewMembersIsTrue()
+    external
+    whenDelegateCalled
+    when_daoSpaceIdIsNon_zero
+  {
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
+
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              _spaceRegistry,
+              _votingSettings,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+
+    // it grants FAST_PATH_RESTRICTED to initial members who are not editors
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberASpaceId));
+    assertTrue(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberBSpaceId));
+  }
+
+  function test_Initialize_WhenDisableFastPathAccessForNewMembersIsFalse()
+    external
+    whenDelegateCalled
+    when_daoSpaceIdIsNon_zero
+  {
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.disableFastPathAccessForNewMembers = false;
+
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _getSpaceId(_spaceRegistry));
+
+    daoSpaceProxy = MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              _spaceRegistry,
+              _vs,
+              _initialEditors,
+              _initialMembers,
+              _publishEditsData,
+              _initialTopicId,
+              _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+
+    // it does not grant FAST_PATH_RESTRICTED to initial members
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberASpaceId));
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.FAST_PATH_RESTRICTED(), _initialMemberBSpaceId));
+  }
+
   function test_Initialize_WhenAnInitialEditorAlreadyHasTheEDITORRole_When_daoSpaceIdIsNon_zero(address __spaceRegistry)
     external
   {
