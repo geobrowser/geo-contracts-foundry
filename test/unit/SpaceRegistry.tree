@@ -119,7 +119,11 @@ UnitSpaceRegistry::setPermissionlessAction
 UnitSpaceRegistry::overrideSpaceId
 ├── when called by owner
 │   ├── it clears old mappings and sets new bi-directional mapping
-│   └── it emits Action with SPACE_ID_OVERRIDDEN
+│   ├── it emits Action with SPACE_ID_OVERRIDDEN
+│   ├── when _account is zero address
+│   │   └── it reverts with OverrideZero
+│   └── when _spaceId is zero
+│       └── it reverts with OverrideZero
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 

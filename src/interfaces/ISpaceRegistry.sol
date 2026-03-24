@@ -60,6 +60,9 @@ interface ISpaceRegistry is ISemver {
   /// @notice Thrown when trying to enter with a space that is not active (not registered or archived)
   error SpaceNotActive();
 
+  /// @notice Thrown when overrideSpaceId is called with either the zero address or space id
+  error OverrideZero();
+
   /**
    * @notice Initializes the contract
    * @param _initializerData The encoded initializer data:
@@ -129,6 +132,7 @@ interface ISpaceRegistry is ISemver {
   /**
    * @notice Allows the owner to override or set the bi-directional mapping for a space ID and account
    * @dev Clears any existing mapping for the given _spaceId and _account, then sets the new mapping. Emits SPACE_ID_OVERRIDDEN.
+   *      Reverts with OverrideZero if _account or _spaceId is zero.
    * @param _account The account to bind to _spaceId
    * @param _spaceId The space ID to bind to _account
    */

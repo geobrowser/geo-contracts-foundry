@@ -171,17 +171,19 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
 
   /// @inheritdoc ISpaceRegistry
   function overrideSpaceId(address _account, bytes16 _spaceId) external virtual onlyOwner {
-    SpaceRegistryStorage storage $ = _getSpaceRegistryStorage();
+    if (_account == address(0) || _spaceId == bytes16(0)) revert OverrideZero();
+
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
 
     // Clear old relationship
-    address _oldAccount = $.spaceIdToAddress[_spaceId];
-    bytes16 _oldSpaceId = $.addressToSpaceId[_account];
-    $.addressToSpaceId[_oldAccount] = bytes16(0);
-    $.spaceIdToAddress[_oldSpaceId] = address(0);
+    address _oldAccount = $_.spaceIdToAddress[_spaceId];
+    bytes16 _oldSpaceId = $_.addressToSpaceId[_account];
+    $_.addressToSpaceId[_oldAccount] = bytes16(0);
+    $_.spaceIdToAddress[_oldSpaceId] = address(0);
 
     // Add new relationship
-    $.addressToSpaceId[_account] = _spaceId;
-    $.spaceIdToAddress[_spaceId] = _account;
+    $_.addressToSpaceId[_account] = _spaceId;
+    $_.spaceIdToAddress[_spaceId] = _account;
 
     // Action event emissions
     emit Action(_oldSpaceId, _spaceId, ActionsConstants.SPACE_ID_OVERRIDDEN, bytes32(bytes20(_account)), '');
