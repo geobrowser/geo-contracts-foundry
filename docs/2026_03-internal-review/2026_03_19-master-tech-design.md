@@ -88,6 +88,18 @@ This is **not** an oversight: **`ping`** is the single generic mechanism for fol
 
 **`overrideSpaceId`** and **`overrideAction`** are **owner-only** back-doors: they can reassign **`spaceId` ⇄ address** and emit **synthetic `Action` events** that were not produced by a space’s normal **`enter` → write** path. That is intentional for **transplantation** (same `spaceId` on a new deployment) and for **indexer continuity** (e.g. member/editor **`Action`** shapes after a transplant DAO initializes without registering). It concentrates **operational and trust risk** in whoever controls the registry owner key (expected: Geo multisig). A DAO created for transplant but **never** **`overrideSpaceId`** remains **off-registry** and unusable through **`enter`** until fixed. Reviewers and integrators should treat **`SPACE_ID_OVERRIDDEN`** and owner-emitted batches from **`overrideAction`** as **first-class** signals, not anomalies.
 
+### 5.4 Pending space migration and `overrideSpaceId`
+
+**`spaceIdToProposedAddress`** is set by **`proposeSpaceMigration`** and cleared only by **`acceptSpaceMigration`** or **`clearSpaceId`**—not by owner **`overrideSpaceId`**. That is deliberate: rebinding is a separate, privileged mapping change; it does not imply cancellation of an in-flight migration workflow. **Operators** must **`clearSpaceId`** / resolve the migration before rebinding if a stale proposed recipient must not be able to complete **`acceptSpaceMigration`** against the rebound id. Treating this as a defect misses that the registry owner already has full mapping authority; safe sequencing is an operational contract, not an automatic invariant.
+
+### 5.5 Vote eligibility uses the live EDITOR role (no proposal-time snapshot)
+
+**`_canVote`** checks the caller’s **current** EDITOR role, not a frozen electorate at proposal creation. **By design:** governance answers “who may vote **now**,” which keeps storage and logic simple and aligns voting power with present editorial membership. **Consequences (accepted):** editors added after a proposal opens may vote on it; editors removed before voting cannot; outcomes can shift when membership changes during the window. Reviewers should not flag this as an oversight—snapshotting the electorate would be a different product choice.
+
+### 5.6 Early-execution math uses live `totalEditors` (no snapshot)
+
+Slow-path **early execution** (e.g. universal percentage support) is evaluated against **`totalEditors` at check time**, not at proposal creation or per-vote. **By design:** the bar tracks **current** governance size, avoiding per-proposal snapshots of editor counts. **Consequences (accepted):** removing editors after votes are cast can change whether a proposal becomes executable without new votes; removed editors’ prior votes still count; creators may lose **`PROPOSAL_UPDATED`** ability if stripped of EDITOR. Same “live context” philosophy as §5.5.
+
 ---
 
 **Implementation note:** The codebase is authoritative for exact selectors, storage layout, and edge cases; this doc and the RFCs describe intended behaviour and history—if they diverge, trust **`src/`** and tests.
