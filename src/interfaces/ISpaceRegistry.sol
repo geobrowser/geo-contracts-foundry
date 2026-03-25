@@ -28,7 +28,7 @@ interface ISpaceRegistry is ISemver {
   }
 
   /**
-   * @notice Emitted when a user calls the enter function
+   * @notice Emitted when a user calls the enter function, and for other registry flows
    * @param fromSpaceId The from space ID involved
    * @param toSpaceId The to space ID involved
    * @param action An action, which is passed to the space contract

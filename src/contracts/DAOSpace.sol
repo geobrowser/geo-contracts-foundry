@@ -525,7 +525,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID casting the vote
    * @param _data The encoded vote data containing proposal ID, proposal version and vote option
    * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
-   * Fast path can execute immediately if threshold met; slow path requires voting period to end.
+   * After a supporting vote, execution runs immediately when `canExecuteProposal` is true: fast path when the
+   * flat yes threshold is met; slow path when quorum and support are satisfied, including early execution when
+   * the universal percentage threshold is exceeded before `lastDate` (see `isSupportThresholdReached`).
    */
   function _voteProposal(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct vote
