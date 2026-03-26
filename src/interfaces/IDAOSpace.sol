@@ -41,6 +41,7 @@ interface IDAOSpace is ISpace {
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param duration Voting window duration in seconds (slow path)
    * @param disableFastPathAccessForNewMembers If true, newly added members are restricted from the fast path; if false, they have fast path access by default
+   * @param executionGracePeriod Seconds after `lastDate` during which a passed proposal may still be executed; snapshotted per proposal version as `executeBy`
    */
   struct VotingSettings {
     uint256 partialPercentageSupportThreshold;
@@ -49,6 +50,7 @@ interface IDAOSpace is ISpace {
     uint256 quorum;
     uint256 duration;
     bool disableFastPathAccessForNewMembers;
+    uint256 executionGracePeriod;
   }
 
   /**
@@ -60,6 +62,7 @@ interface IDAOSpace is ISpace {
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
    * @param startDate Timestamp when voting starts
    * @param lastDate Last voting timestamp
+   * @param executeBy Inclusive upper bound timestamp for execution; after this time the proposal cannot be executed even if support threshold is met
    */
   struct ProposalParameters {
     VotingMode votingMode;
@@ -69,6 +72,7 @@ interface IDAOSpace is ISpace {
     uint256 quorum;
     uint256 startDate;
     uint256 lastDate;
+    uint256 executeBy;
   }
 
   /**
@@ -302,7 +306,7 @@ interface IDAOSpace is ISpace {
    * @notice Checks if a proposal can be executed
    * @param _proposalId The ID of the proposal to check
    * @return _canExecuteProposal True if the proposal can be executed, false otherwise
-   * @dev Returns false if proposal doesn't exist, already executed, or threshold not met.
+   * @dev Returns false if proposal doesn't exist, already executed, threshold not met, or `block.timestamp` is after `executeBy`.
    */
   function canExecuteProposal(bytes16 _proposalId) external view returns (bool _canExecuteProposal);
 
@@ -385,6 +389,12 @@ interface IDAOSpace is ISpace {
    * @return _minimumVotingDuration The minimum voting duration in seconds
    */
   function MINIMUM_VOTING_DURATION() external view returns (uint256 _minimumVotingDuration);
+
+  /**
+   * @notice Minimum allowed execution grace period (seconds after voting ends)
+   * @return _minimumExecutionGracePeriod The minimum execution grace period in seconds
+   */
+  function MINIMUM_EXECUTION_GRACE_PERIOD() external view returns (uint256 _minimumExecutionGracePeriod);
 
   /**
    * @notice Returns the ratio base used for percentage calculations

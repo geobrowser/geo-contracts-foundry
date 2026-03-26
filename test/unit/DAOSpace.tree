@@ -1,6 +1,7 @@
 UnitDAOSpace::constants
 └── when deployed
     ├── it sets MINIMUM_VOTING_DURATION to 1 minutes
+    ├── it sets MINIMUM_EXECUTION_GRACE_PERIOD to 1 hour
     ├── it sets RATIO_BASE to 10e6
     ├── it sets FAST_PATH_RESTRICTED to keccak256('FAST_PATH_RESTRICTED')
     ├── it sets SPACE_REGISTRY to keccak256('SPACE_REGISTRY')
@@ -68,6 +69,7 @@ UnitDAOSpace::write
 │   │   │       ├── it sets the proposal creator to _fromSpaceId
 │   │   │       ├── it sets the proposal start date to block.timestamp
 │   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │   │       ├── it sets the proposal voting mode to the slow path
 │   │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -95,6 +97,7 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal creator to _fromSpaceId
 │   │           ├── it sets the proposal start date to block.timestamp
 │   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │           ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │           ├── it sets the proposal voting mode to the fast path
 │   │           ├── it sets the proposal quorum to votingSettings.quorum
 │   │           ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -139,6 +142,7 @@ UnitDAOSpace::write
 │   │       │       ├── it updates the proposal flat support threshold to votingSettings.flatSupportThreshold
 │   │       │       ├── it updates the proposal start date to block.timestamp
 │   │       │       ├── it updates the proposal last date to block.timestamp plus votingSettings.duration
+│   │       │       ├── it updates executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │       │       └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
 │   │       └── when the current _fromSpaceId vote equals abstain
 │   │           └── it increases the proposal abstain vote tally by one
@@ -184,6 +188,7 @@ UnitDAOSpace::write
 │   │       ├── it sets the proposal creator to _fromSpaceId
 │   │       ├── it sets the proposal start date to block.timestamp
 │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
+│   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │       ├── it sets the proposal voting mode to the fast path
 │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -290,6 +295,8 @@ UnitDAOSpace::updateVotingSettings
 │   │   └── it reverts with InvalidSetting
 │   ├── when duration is less than MINIMUM_VOTING_DURATION
 │   │   └── it reverts with InvalidSetting
+│   ├── when executionGracePeriod is less than MINIMUM_EXECUTION_GRACE_PERIOD
+│   │   └── it reverts with InvalidSetting
 │   └── when input params are valid
 │       ├── it updates the voting settings
 │       └── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
@@ -321,7 +328,9 @@ UnitDAOSpace::canExecuteProposal
 │   └── it returns false
 ├── when support threshold is not reached
 │   └── it returns false
-└── when support threshold is reached
+├── when past executeBy
+│   └── it returns false
+└── when proposal is executable
     └── it returns true
 
 UnitDAOSpace::isSupportThresholdReached

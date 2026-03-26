@@ -15,6 +15,7 @@ contract MockDAOSpace is DAOSpace {
     bytes16 _creatorSpaceId,
     uint256 _startDate,
     uint256 _lastDate,
+    uint256 _executeBy,
     VotingMode _votingMode,
     uint256 _quorum,
     uint256 _partialPercentageSupportThreshold,
@@ -34,6 +35,7 @@ contract MockDAOSpace is DAOSpace {
     proposal_.parameters.partialPercentageSupportThreshold = _partialPercentageSupportThreshold;
     proposal_.parameters.universalPercentageSupportThreshold = _universalPercentageSupportThreshold;
     proposal_.parameters.flatSupportThreshold = _flatSupportThreshold;
+    proposal_.parameters.executeBy = _executeBy;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
     }

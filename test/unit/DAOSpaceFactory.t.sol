@@ -49,7 +49,8 @@ contract UnitDAOSpaceFactory is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      disableFastPathAccessForNewMembers: true
+      disableFastPathAccessForNewMembers: true,
+      executionGracePeriod: 7 days
     });
 
     // when deployed
@@ -182,6 +183,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     __votingSettings.flatSupportThreshold = bound(__votingSettings.flatSupportThreshold, 0, 1);
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
     __votingSettings.duration = bound(__votingSettings.duration, 1 minutes, 200 days);
+    __votingSettings.executionGracePeriod = bound(__votingSettings.executionGracePeriod, 1 hours, 200 days);
 
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
@@ -249,6 +251,7 @@ contract UnitDAOSpaceFactory is TestHelper {
     __votingSettings.flatSupportThreshold = bound(__votingSettings.flatSupportThreshold, 0, 1);
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, 1);
     __votingSettings.duration = bound(__votingSettings.duration, 1 minutes, 200 days);
+    __votingSettings.executionGracePeriod = bound(__votingSettings.executionGracePeriod, 1 hours, 200 days);
 
     uint256 _daoSpaceProxyNonce = vm.getNonce(address(daoSpaceFactoryProxy));
     address _daoSpaceProxy = vm.computeCreateAddress(address(daoSpaceFactoryProxy), _daoSpaceProxyNonce);
