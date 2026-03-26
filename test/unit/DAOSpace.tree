@@ -326,7 +326,7 @@ UnitDAOSpace::canExecuteProposal
 │   └── it returns false
 ├── when proposal has already been executed
 │   └── it returns false
-├── when proposal is not executable
+├── when support threshold is not reached
 │   └── it returns false
 ├── when past executeBy
 │   └── it returns false

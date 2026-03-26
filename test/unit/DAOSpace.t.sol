@@ -3140,7 +3140,7 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
   }
 
-  function test_CanExecuteProposal_WhenProposalIsNotExecutable() external {
+  function test_CanExecuteProposal_WhenSupportThresholdIsNotReached() external {
     // Create proposal where the threshold is not reached
     daoSpaceProxy.workaround_createProposal(
       _proposalId,
