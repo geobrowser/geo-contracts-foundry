@@ -2023,7 +2023,8 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
 
-    vm.warp(vm.getBlockTimestamp() + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
@@ -2071,8 +2072,8 @@ contract UnitDAOSpace is TestHelper {
     // set vote to yes
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
 
-    // warp to after last date
-    vm.warp(vm.getBlockTimestamp() + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _randomCallerSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _randomCallerSpaceId));
@@ -2143,8 +2144,8 @@ contract UnitDAOSpace is TestHelper {
     // set vote to yes
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
 
-    // warp to after last date
-    vm.warp(vm.getBlockTimestamp() + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     // it reverts with ActionReverted
     vm.expectRevert(IDAOSpace.ActionReverted.selector);
