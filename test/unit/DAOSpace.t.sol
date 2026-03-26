@@ -51,7 +51,8 @@ contract UnitDAOSpace is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      disableFastPathAccessForNewMembers: true
+      disableFastPathAccessForNewMembers: true,
+      executionGracePeriod: 7 days
     });
     _initialEditors = new bytes16[](2);
     _initialEditors[0] = _initialEditorASpaceId;
@@ -189,6 +190,9 @@ contract UnitDAOSpace is TestHelper {
   function test_Constants_WhenDeployed() external view {
     // it sets MINIMUM_VOTING_DURATION to 1 minute
     assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 1 minutes);
+
+    // it sets MINIMUM_EXECUTION_GRACE_PERIOD to 1 hour
+    assertEq(daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD(), 1 hours);
 
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
@@ -929,7 +933,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -952,6 +957,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the slow path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
@@ -1108,7 +1116,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -1131,6 +1140,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
@@ -1691,7 +1703,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: block.timestamp,
-          lastDate: block.timestamp + _votingSettings.duration
+          lastDate: block.timestamp + _votingSettings.duration,
+          executeBy: block.timestamp + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -1727,6 +1740,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it updates the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, block.timestamp + _votingSettings.duration);
+
+    // it updates executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
   }
 
   modifier whenTheCurrent_fromSpaceIdVoteEqualsAbstain() {
@@ -1878,7 +1894,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: block.timestamp,
-          lastDate: block.timestamp + _votingSettings.duration
+          lastDate: block.timestamp + _votingSettings.duration,
+          executeBy: block.timestamp + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -2155,7 +2172,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2303,7 +2321,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -2325,6 +2344,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
@@ -2531,7 +2553,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 2,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2548,7 +2571,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 2,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2566,7 +2590,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2910,6 +2935,18 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
+  function test_UpdateVotingSettings_WhenExecutionGracePeriodIsLessThanMINIMUM_EXECUTION_GRACE_PERIOD(uint256 _executionGracePeriod)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_executionGracePeriod < daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD());
+    _votingSettings.executionGracePeriod = _executionGracePeriod;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
   function test_UpdateVotingSettings_WhenInputParamsAreValid(
     IDAOSpace.VotingSettings memory __votingSettings
   ) external whenCalledByDAO {
@@ -2923,6 +2960,8 @@ contract UnitDAOSpace is TestHelper {
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, daoSpaceProxy.totalEditors());
     __votingSettings.duration =
       bound(__votingSettings.duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), type(uint256).max);
+    __votingSettings.executionGracePeriod =
+      bound(__votingSettings.executionGracePeriod, daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD(), type(uint256).max);
 
     // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
@@ -3093,6 +3132,29 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_setTally(_proposalId, 0, 0, 0);
 
     // it returns false
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenPastExecuteBy() external {
+    vm.warp(100 days);
+    uint256 _lastDate = block.timestamp - 14 days;
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      block.timestamp - 15 days,
+      _lastDate,
+      IDAOSpace.VotingMode.Fast,
+      daoSpaceProxy.votingSettings().quorum,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      0,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 2, 0, 0);
+
+    // it returns false (support met but execution window ended)
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
   }
 
