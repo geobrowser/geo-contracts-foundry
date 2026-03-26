@@ -2619,8 +2619,6 @@ contract UnitDAOSpace is TestHelper {
   function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId) external whenCalledByDAO {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
-    vm.assume(_newMemberSpaceId != _initialEditorASpaceId);
-    vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
 
