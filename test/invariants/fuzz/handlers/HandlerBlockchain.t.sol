@@ -10,7 +10,7 @@ contract HandlerBlockchain is Test {
   uint256 internal constant _MAX_ROLL_DELTA = 1_000_000;
 
   function handler_warp(uint256 _delta) external {
-    vm.warp(block.timestamp + bound(_delta, 0, _MAX_WARP_DELTA));
+    vm.warp(vm.getBlockTimestamp() + bound(_delta, 0, _MAX_WARP_DELTA));
   }
 
   function handler_roll(uint256 _delta) external {
