@@ -2616,27 +2616,13 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId)
-    external
-    whenCalledByDAO
-    whenDisableFastPathAccessForNewMembersIsTrue
-  {
+  function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId) external whenCalledByDAO {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
     vm.assume(_newMemberSpaceId != _initialEditorASpaceId);
     vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
-
-    // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
-      bytes32(_newMemberSpaceId),
-      abi.encode(_newMemberSpaceId)
-    );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
