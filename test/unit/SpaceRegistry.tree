@@ -122,8 +122,10 @@ UnitSpaceRegistry::overrideSpaceId
 │   ├── it emits Action with SPACE_ID_OVERRIDDEN
 │   ├── when _account is zero address
 │   │   └── it reverts with OverrideZero
-│   └── when _spaceId is zero
-│       └── it reverts with OverrideZero
+│   ├── when _spaceId is zero
+│   │   └── it reverts with OverrideZero
+│   └── when _account is registry address
+│       └── it reverts with InvalidAccount
 └── when called by non-owner
     └── it reverts with OwnableUnauthorizedAccount
 

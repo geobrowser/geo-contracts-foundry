@@ -172,6 +172,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   function overrideSpaceId(address _account, bytes16 _spaceId) external virtual onlyOwner {
     if (_account == address(0) || _spaceId == bytes16(0)) revert OverrideZero();
+    if (_account == address(this)) revert InvalidAccount();
 
     SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
 

@@ -659,6 +659,7 @@ contract UnitSpaceRegistry is TestHelper {
 
   function test_OverrideSpaceId_WhenCalledByOwner(address _account, bytes16 _oldSpaceId) external whenCalledByOwner {
     vm.assume(_account != address(0));
+    vm.assume(_account != address(spaceRegistryProxy));
     vm.assume(_account != _fromSpace);
     vm.assume(_oldSpaceId != _fromSpaceId);
 
@@ -692,6 +693,11 @@ contract UnitSpaceRegistry is TestHelper {
   function test_OverrideSpaceId_When_spaceIdIsZero() external whenCalledByOwner {
     vm.expectRevert(ISpaceRegistry.OverrideZero.selector);
     spaceRegistryProxy.overrideSpaceId(_fromSpace, bytes16(0));
+  }
+
+  function test_OverrideSpaceId_When_accountIsRegistryAddress() external whenCalledByOwner {
+    vm.expectRevert(ISpaceRegistry.InvalidAccount.selector);
+    spaceRegistryProxy.overrideSpaceId(address(spaceRegistryProxy), _fromSpaceId);
   }
 
   function test_OverrideSpaceId_WhenCalledByNon_owner(address _account, bytes16 _spaceId) external {
