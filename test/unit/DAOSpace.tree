@@ -26,6 +26,8 @@ UnitDAOSpace::initialize
 │   │   ├── it calls enter on the spaceRegistry with the EDITS_PUBLISHED action
 │   │   ├── it calls enter on the spaceRegistry with the TOPIC_SET action
 │   │   ├── it calls enter on the spaceRegistry with the EDITOR_ADDED action
+│   │   ├── it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+│   │   ├── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action
 │   │   ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 │   │   ├── it sets totalEditors
 │   │   ├── it sets the voting settings
@@ -124,6 +126,7 @@ UnitDAOSpace::write
 │   │       ├── when the current _fromSpaceId vote equals yes
 │   │       │   ├── it increases the proposal yes vote tally by one
 │   │       │   └── when the proposal can be executed
+│   │       │       ├── it calls enter on the spaceRegistry with the PROPOSAL_EXECUTED action
 │   │       │       ├── it sets the proposal executed to true
 │   │       │       └── it loops over the stored proposal actions and performs the external calls
 │   │       ├── when the current _fromSpaceId vote equals no
@@ -240,7 +243,8 @@ UnitDAOSpace::addMember
 │       ├── it calls enter on the spaceRegistry with the MEMBER_ADDED action
 │       └── when disableFastPathAccessForNewMembers is true
 │           ├── when _newMember is not an editor
-│           │   └── it grants FastPathRestricted to new member
+│           │   ├── it grants FastPathRestricted to new member
+│           │   └── it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action
 │           └── when _newMember is already an editor
 │               └── it does not grant FastPathRestricted to new member
 └── when called by non-DAO

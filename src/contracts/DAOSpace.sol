@@ -556,7 +556,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
       // Immediate execution if possible
-      if (canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
+      if (canExecuteProposal(_proposalId)) {
+        _ping(ActionsConstants.PROPOSAL_EXECUTED, bytes32(_proposalId), abi.encode(_proposalId));
+        _executeProposal(_proposalId);
+      }
     } else if (_voteOption == VoteOption.No) {
       proposal_.tally.no = proposal_.tally.no + 1;
 
@@ -713,7 +716,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     _revokeRole(FAST_PATH_RESTRICTED, _oldRestrictedSpaceId);
 
-    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_oldRestrictedSpaceId), '');
+    _ping(
+      ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_oldRestrictedSpaceId), abi.encode(_oldRestrictedSpaceId)
+    );
   }
 
   /**
@@ -761,6 +766,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if ($_.votingSettings.disableFastPathAccessForNewMembers && !hasRole(EDITOR, _newMemberSpaceId)) {
       _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
+      _ping(ActionsConstants.SPACE_FAST_PATH_RESTRICTED, bytes32(_newMemberSpaceId), abi.encode(_newMemberSpaceId));
     }
     _grantRole(MEMBER, _newMemberSpaceId);
 

@@ -116,7 +116,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock for _grantRole call
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _spaceRegistrySpaceId);
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      _spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      _spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -129,22 +150,17 @@ contract UnitDAOSpace is TestHelper {
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock for _grantRole call
-    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _spaceRegistrySpaceId);
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when deployed and delegate called
@@ -302,7 +318,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock _grantRole call
+    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -315,22 +352,17 @@ contract UnitDAOSpace is TestHelper {
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock _grantRole call
-    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when delegate called
@@ -439,6 +471,14 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.VOTING_SETTINGS_UPDATED,
       '',
       abi.encode(_votingSettings)
+    );
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
     );
     _mockEnter(
       __spaceRegistry,
@@ -707,7 +747,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock _grantRole call
+    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -720,22 +781,17 @@ contract UnitDAOSpace is TestHelper {
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock _grantRole call
-    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when delegate called
@@ -1495,6 +1551,26 @@ contract UnitDAOSpace is TestHelper {
     );
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _randomCallerSpaceId));
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_EXECUTED action (immediate execution ping)
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_EXECUTED,
+      bytes32(_proposalId),
+      abi.encode(_proposalId)
+    );
+
+    // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action (new member policy)
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_randomCallerSpaceId),
+      abi.encode(_randomCallerSpaceId)
+    );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
@@ -2540,11 +2616,27 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId) external whenCalledByDAO {
+  function test_AddMember_When_newMemberIsNotAMember(bytes16 _newMemberSpaceId)
+    external
+    whenCalledByDAO
+    whenDisableFastPathAccessForNewMembersIsTrue
+  {
     vm.assume(_newMemberSpaceId != _initialMemberASpaceId);
     vm.assume(_newMemberSpaceId != _initialMemberBSpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorASpaceId);
+    vm.assume(_newMemberSpaceId != _initialEditorBSpaceId);
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _newMemberSpaceId));
+
+    // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_newMemberSpaceId),
+      abi.encode(_newMemberSpaceId)
+    );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
@@ -2580,6 +2672,14 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
 
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_newMemberSpaceId),
+      abi.encode(_newMemberSpaceId)
+    );
     _mockEnter(
       _spaceRegistry,
       _daoSpaceProxySpaceId,
@@ -2719,7 +2819,7 @@ contract UnitDAOSpace is TestHelper {
       _daoSpaceProxySpaceId,
       ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED,
       bytes32(_oldRestrictedSpaceId),
-      ''
+      abi.encode(_oldRestrictedSpaceId)
     );
     daoSpaceProxy.unrestrictSpace(_oldRestrictedSpaceId);
 
