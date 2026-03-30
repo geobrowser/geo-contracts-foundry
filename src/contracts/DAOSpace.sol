@@ -25,6 +25,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   uint256 public constant MINIMUM_VOTING_DURATION = 1 minutes;
 
   /// @inheritdoc IDAOSpace
+  uint256 public constant MINIMUM_EXECUTION_GRACE_PERIOD = 1 hours;
+
+  /// @inheritdoc IDAOSpace
   uint256 public constant RATIO_BASE = 10e6;
 
   /// @inheritdoc IDAOSpace
@@ -135,6 +138,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_votingSettings.flatSupportThreshold > $_.totalEditors) revert InvalidSetting();
       if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
       if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
+      if (_votingSettings.executionGracePeriod < MINIMUM_EXECUTION_GRACE_PERIOD) revert InvalidSetting();
       $_.votingSettings = _votingSettings;
     }
 
@@ -251,13 +255,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   /// @inheritdoc IDAOSpace
   function canExecuteProposal(bytes16 _proposalId) public view virtual returns (bool _canExecuteProposal) {
     Proposal storage proposal_ = _getLatestProposalStorage(_proposalId);
-
     // Proposal does not exist
     if (proposal_.creator == bytes16(0)) return false;
     // The proposal has not been executed already
     if (proposal_.executed) return false;
     // Support threshold not reached
     if (!isSupportThresholdReached(_proposalId)) return false;
+    // Execution window ended (snapshotted at proposal version creation)
+    if (block.timestamp > proposal_.parameters.executeBy) return false;
     return true;
   }
 
@@ -431,6 +436,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_votingSettings.flatSupportThreshold > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.quorum > $_.totalEditors) revert InvalidSetting();
     if (_votingSettings.duration < MINIMUM_VOTING_DURATION) revert InvalidSetting();
+    if (_votingSettings.executionGracePeriod < MINIMUM_EXECUTION_GRACE_PERIOD) revert InvalidSetting();
 
     $_.votingSettings = _votingSettings;
 
@@ -512,6 +518,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     proposal_.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
     proposal_.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
     proposal_.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
+    proposal_.parameters.executeBy = proposal_.parameters.lastDate + $_.votingSettings.executionGracePeriod;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
     }
@@ -525,7 +532,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @param _fromSpaceId The space ID casting the vote
    * @param _data The encoded vote data containing proposal ID, proposal version and vote option
    * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
-   * Fast path can execute immediately if threshold met; slow path requires voting period to end.
+   * After a supporting vote, execution runs immediately when `canExecuteProposal` is true: fast path when the
+   * flat yes threshold is met; slow path when quorum and support are satisfied, including early execution when
+   * the universal percentage threshold is exceeded before `lastDate` (see `isSupportThresholdReached`).
    */
   function _voteProposal(bytes16 _fromSpaceId, bytes calldata _data) internal virtual {
     // Decode data to construct vote
@@ -554,7 +563,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
       // Immediate execution if possible
-      if (canExecuteProposal(_proposalId)) _executeProposal(_proposalId);
+      if (canExecuteProposal(_proposalId)) {
+        _ping(ActionsConstants.PROPOSAL_EXECUTED, bytes32(_proposalId), abi.encode(_proposalId));
+        _executeProposal(_proposalId);
+      }
     } else if (_voteOption == VoteOption.No) {
       proposal_.tally.no = proposal_.tally.no + 1;
 
@@ -572,6 +584,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         // Reset duration and block times
         proposal_.parameters.startDate = block.timestamp;
         proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
+        proposal_.parameters.executeBy = proposal_.parameters.lastDate + $_.votingSettings.executionGracePeriod;
 
         // Ping the registry to emit the updated proposal settings
         _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
@@ -711,7 +724,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     _revokeRole(FAST_PATH_RESTRICTED, _oldRestrictedSpaceId);
 
-    _ping(ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_oldRestrictedSpaceId), '');
+    _ping(
+      ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED, bytes32(_oldRestrictedSpaceId), abi.encode(_oldRestrictedSpaceId)
+    );
   }
 
   /**
@@ -759,6 +774,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     if ($_.votingSettings.disableFastPathAccessForNewMembers && !hasRole(EDITOR, _newMemberSpaceId)) {
       _grantRole(FAST_PATH_RESTRICTED, _newMemberSpaceId);
+      _ping(ActionsConstants.SPACE_FAST_PATH_RESTRICTED, bytes32(_newMemberSpaceId), abi.encode(_newMemberSpaceId));
     }
     _grantRole(MEMBER, _newMemberSpaceId);
 

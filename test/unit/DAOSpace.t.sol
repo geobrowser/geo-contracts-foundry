@@ -51,7 +51,8 @@ contract UnitDAOSpace is TestHelper {
       flatSupportThreshold: 1,
       quorum: 1,
       duration: 2 days,
-      disableFastPathAccessForNewMembers: true
+      disableFastPathAccessForNewMembers: true,
+      executionGracePeriod: 7 days
     });
     _initialEditors = new bytes16[](2);
     _initialEditors[0] = _initialEditorASpaceId;
@@ -116,7 +117,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock for _grantRole call
+    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _spaceRegistrySpaceId);
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      _spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      _spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -129,22 +151,17 @@ contract UnitDAOSpace is TestHelper {
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock for _grantRole call
-    _mockAddressToSpaceId(_spaceRegistry, _spaceRegistry, _spaceRegistrySpaceId);
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       _spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when deployed and delegate called
@@ -173,6 +190,9 @@ contract UnitDAOSpace is TestHelper {
   function test_Constants_WhenDeployed() external view {
     // it sets MINIMUM_VOTING_DURATION to 1 minute
     assertEq(daoSpaceProxy.MINIMUM_VOTING_DURATION(), 1 minutes);
+
+    // it sets MINIMUM_EXECUTION_GRACE_PERIOD to 1 hour
+    assertEq(daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD(), 1 hours);
 
     // it sets RATIO_BASE to 10e6
     assertEq(daoSpaceProxy.RATIO_BASE(), 10e6);
@@ -302,7 +322,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock _grantRole call
+    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -315,22 +356,17 @@ contract UnitDAOSpace is TestHelper {
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock _grantRole call
-    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when delegate called
@@ -439,6 +475,14 @@ contract UnitDAOSpace is TestHelper {
       ActionsConstants.VOTING_SETTINGS_UPDATED,
       '',
       abi.encode(_votingSettings)
+    );
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
     );
     _mockEnter(
       __spaceRegistry,
@@ -707,7 +751,28 @@ contract UnitDAOSpace is TestHelper {
       ''
     );
 
-    // it calls enter on the spaceRegistry with the MEMBER_ADDED action
+    // mock _grantRole call
+    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
+
+    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.VOTING_SETTINGS_UPDATED,
+      '',
+      abi.encode(_votingSettings)
+    );
+
+    // it calls enter with SPACE_FAST_PATH_RESTRICTED then MEMBER_ADDED for each initial member (disable fast path)
+    _mockEnter(
+      __spaceRegistry,
+      _predictedDAOSpaceProxySpaceId,
+      _predictedDAOSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_initialMemberASpaceId),
+      abi.encode(_initialMemberASpaceId)
+    );
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
@@ -720,22 +785,17 @@ contract UnitDAOSpace is TestHelper {
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
       bytes32(_initialMemberBSpaceId),
-      ''
+      abi.encode(_initialMemberBSpaceId)
     );
-
-    // mock _grantRole call
-    _mockAddressToSpaceId(__spaceRegistry, __spaceRegistry, _getSpaceId(__spaceRegistry));
-
-    // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
       __spaceRegistry,
       _predictedDAOSpaceProxySpaceId,
       _predictedDAOSpaceProxySpaceId,
-      ActionsConstants.VOTING_SETTINGS_UPDATED,
-      '',
-      abi.encode(_votingSettings)
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_initialMemberBSpaceId),
+      ''
     );
 
     // when delegate called
@@ -837,6 +897,7 @@ contract UnitDAOSpace is TestHelper {
       _randomCallerSpaceId,
       1,
       1,
+      1,
       IDAOSpace.VotingMode.Slow,
       1,
       1,
@@ -873,7 +934,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -896,6 +958,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the slow path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
@@ -947,6 +1012,7 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _randomCallerSpaceId,
+      1,
       1,
       1,
       IDAOSpace.VotingMode.Fast,
@@ -1052,7 +1118,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -1075,6 +1142,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
@@ -1133,8 +1203,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _latestProposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1164,8 +1235,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp - 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() - 1,
+      vm.getBlockTimestamp() + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1195,8 +1267,9 @@ contract UnitDAOSpace is TestHelper {
       true,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1224,8 +1297,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1255,8 +1329,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _randomCallerSpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1292,8 +1367,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1323,8 +1399,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1358,8 +1435,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1393,8 +1471,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1438,8 +1517,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       2,
       1,
@@ -1484,8 +1564,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1495,6 +1576,26 @@ contract UnitDAOSpace is TestHelper {
     );
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _randomCallerSpaceId));
+
+    // it calls enter on the spaceRegistry with the PROPOSAL_EXECUTED action (immediate execution ping)
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_EXECUTED,
+      bytes32(_proposalId),
+      abi.encode(_proposalId)
+    );
+
+    // it calls enter on the spaceRegistry with the SPACE_FAST_PATH_RESTRICTED action (new member policy)
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_randomCallerSpaceId),
+      abi.encode(_randomCallerSpaceId)
+    );
 
     // it calls enter on the spaceRegistry with the MEMBER_ADDED action
     _mockEnter(
@@ -1541,8 +1642,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       1,
       1,
@@ -1577,8 +1679,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1e5,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + 1e5,
+      vm.getBlockTimestamp() + 1e5 + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
       1,
       1,
@@ -1594,11 +1697,12 @@ contract UnitDAOSpace is TestHelper {
     assertEq(_parameters.partialPercentageSupportThreshold, 1);
     assertEq(_parameters.universalPercentageSupportThreshold, 1);
     assertEq(_parameters.flatSupportThreshold, 1);
-    assertEq(_parameters.startDate, block.timestamp);
-    assertEq(_parameters.lastDate, block.timestamp + 1e5);
+    assertEq(_parameters.startDate, vm.getBlockTimestamp());
+    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + 1e5);
+    assertEq(_parameters.executeBy, vm.getBlockTimestamp() + 1e5 + _votingSettings.executionGracePeriod);
 
     // warp forwards to ensure start date is reset
-    vm.warp(block.timestamp + 100);
+    vm.warp(vm.getBlockTimestamp() + 100);
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
@@ -1614,8 +1718,9 @@ contract UnitDAOSpace is TestHelper {
           universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
-          startDate: block.timestamp,
-          lastDate: block.timestamp + _votingSettings.duration
+          startDate: vm.getBlockTimestamp(),
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -1647,10 +1752,13 @@ contract UnitDAOSpace is TestHelper {
     assertEq(_parameters.flatSupportThreshold, daoSpaceProxy.votingSettings().flatSupportThreshold);
 
     // it updates the proposal start date to block.timestamp
-    assertEq(_parameters.startDate, block.timestamp);
+    assertEq(_parameters.startDate, vm.getBlockTimestamp());
 
     // it updates the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(_parameters.lastDate, block.timestamp + _votingSettings.duration);
+    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it updates executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
   }
 
   modifier whenTheCurrent_fromSpaceIdVoteEqualsAbstain() {
@@ -1675,8 +1783,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1717,8 +1826,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1746,8 +1856,9 @@ contract UnitDAOSpace is TestHelper {
       true,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1775,8 +1886,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       1,
       1,
@@ -1801,8 +1913,9 @@ contract UnitDAOSpace is TestHelper {
           universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
-          startDate: block.timestamp,
-          lastDate: block.timestamp + _votingSettings.duration
+          startDate: vm.getBlockTimestamp(),
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -1867,8 +1980,9 @@ contract UnitDAOSpace is TestHelper {
       true,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1898,8 +2012,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode(_votingMode),
       1,
       1,
@@ -1908,7 +2023,8 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
 
-    vm.warp(block.timestamp + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
@@ -1942,8 +2058,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       1,
       1,
@@ -1955,8 +2072,8 @@ contract UnitDAOSpace is TestHelper {
     // set vote to yes
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
 
-    // warp to after last date
-    vm.warp(block.timestamp + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _randomCallerSpaceId));
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.MEMBER(), _randomCallerSpaceId));
@@ -2013,8 +2130,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + 1,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       0,
       1,
@@ -2026,8 +2144,8 @@ contract UnitDAOSpace is TestHelper {
     // set vote to yes
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
 
-    // warp to after last date
-    vm.warp(block.timestamp + 2);
+    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     // it reverts with ActionReverted
     vm.expectRevert(IDAOSpace.ActionReverted.selector);
@@ -2079,7 +2197,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2142,6 +2261,7 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _randomCallerSpaceId,
+      1,
       1,
       1,
       IDAOSpace.VotingMode.Fast,
@@ -2227,7 +2347,8 @@ contract UnitDAOSpace is TestHelper {
           flatSupportThreshold: _votingSettings.flatSupportThreshold,
           quorum: _votingSettings.quorum,
           startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration
+          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
+          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
         })
       )
     );
@@ -2249,6 +2370,9 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal last date to block.timestamp plus votingSettings.duration
     assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+
+    // it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
@@ -2455,7 +2579,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 2,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2472,7 +2597,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 2,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2490,7 +2616,8 @@ contract UnitDAOSpace is TestHelper {
         flatSupportThreshold: 0,
         quorum: 0,
         duration: _votingSettings.duration,
-        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers
+        disableFastPathAccessForNewMembers: _votingSettings.disableFastPathAccessForNewMembers,
+        executionGracePeriod: _votingSettings.executionGracePeriod
       })
     );
 
@@ -2580,6 +2707,14 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _newMemberSpaceId));
 
     bytes16 _daoSpaceProxySpaceId = _getSpaceId(address(daoSpaceProxy));
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.SPACE_FAST_PATH_RESTRICTED,
+      bytes32(_newMemberSpaceId),
+      abi.encode(_newMemberSpaceId)
+    );
     _mockEnter(
       _spaceRegistry,
       _daoSpaceProxySpaceId,
@@ -2719,7 +2854,7 @@ contract UnitDAOSpace is TestHelper {
       _daoSpaceProxySpaceId,
       ActionsConstants.SPACE_FAST_PATH_UNRESTRICTED,
       bytes32(_oldRestrictedSpaceId),
-      ''
+      abi.encode(_oldRestrictedSpaceId)
     );
     daoSpaceProxy.unrestrictSpace(_oldRestrictedSpaceId);
 
@@ -2824,6 +2959,18 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.updateVotingSettings(_votingSettings);
   }
 
+  function test_UpdateVotingSettings_WhenExecutionGracePeriodIsLessThanMINIMUM_EXECUTION_GRACE_PERIOD(uint256 _executionGracePeriod)
+    external
+    whenCalledByDAO
+  {
+    vm.assume(_executionGracePeriod < daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD());
+    _votingSettings.executionGracePeriod = _executionGracePeriod;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    daoSpaceProxy.updateVotingSettings(_votingSettings);
+  }
+
   function test_UpdateVotingSettings_WhenInputParamsAreValid(
     IDAOSpace.VotingSettings memory __votingSettings
   ) external whenCalledByDAO {
@@ -2837,6 +2984,8 @@ contract UnitDAOSpace is TestHelper {
     __votingSettings.quorum = bound(__votingSettings.quorum, 0, daoSpaceProxy.totalEditors());
     __votingSettings.duration =
       bound(__votingSettings.duration, daoSpaceProxy.MINIMUM_VOTING_DURATION(), type(uint256).max);
+    __votingSettings.executionGracePeriod =
+      bound(__votingSettings.executionGracePeriod, daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD(), type(uint256).max);
 
     // it calls enter on the spaceRegistry with the VOTING_SETTINGS_UPDATED action
     _mockEnter(
@@ -2974,12 +3123,13 @@ contract UnitDAOSpace is TestHelper {
       true,
       1,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
-      daoSpaceProxy.votingSettings().quorum,
-      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
       0,
       new IDAOSpace.Action[](0)
     );
@@ -2995,12 +3145,13 @@ contract UnitDAOSpace is TestHelper {
       false,
       1,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
-      daoSpaceProxy.votingSettings().quorum,
-      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
       1,
       new IDAOSpace.Action[](0)
     );
@@ -3010,19 +3161,49 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
   }
 
-  function test_CanExecuteProposal_WhenSupportThresholdIsReached() external {
+  function test_CanExecuteProposal_WhenPastExecuteBy(uint256 _executeBy) external {
+    _executeBy = bound(
+      _executeBy,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod + 365 days
+    );
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      _executeBy,
+      IDAOSpace.VotingMode.Fast,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
+      0,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 2, 0, 0);
+
+    vm.warp(_executeBy + 1);
+
+    // it returns false (support met but execution window ended)
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenProposalIsExecutable() external {
     // Create proposal where the threshold has been reached
     daoSpaceProxy.workaround_createProposal(
       _proposalId,
       false,
       1,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + daoSpaceProxy.votingSettings().duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
-      daoSpaceProxy.votingSettings().quorum,
-      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
       0,
       new IDAOSpace.Action[](0)
     );
@@ -3054,13 +3235,14 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       _quorum,
-      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().universalPercentageSupportThreshold,
-      daoSpaceProxy.votingSettings().flatSupportThreshold,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
+      _votingSettings.flatSupportThreshold,
       new IDAOSpace.Action[](0)
     );
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, _no, _abstain);
@@ -3092,8 +3274,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       _quorum,
       daoSpaceProxy.RATIO_BASE(),
@@ -3132,8 +3315,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       _quorum,
       _votingSettings.partialPercentageSupportThreshold,
@@ -3143,7 +3327,7 @@ contract UnitDAOSpace is TestHelper {
     );
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, _no, _abstain);
     daoSpaceProxy.workaround_setTotalEditors(_yes + _no + _abstain + _none);
-    vm.warp(block.timestamp + _votingSettings.duration);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration);
 
     // it returns false
     assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
@@ -3179,8 +3363,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       _quorum,
       _partialPercentageSupportThreshold,
@@ -3190,7 +3375,7 @@ contract UnitDAOSpace is TestHelper {
     );
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, _no, _abstain);
     daoSpaceProxy.workaround_setTotalEditors(_yes + _no + _abstain + _none);
-    vm.warp(block.timestamp + _votingSettings.duration + 1);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     // it returns false
     assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
@@ -3226,8 +3411,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Slow,
       _quorum,
       _partialPercentageSupportThreshold,
@@ -3237,7 +3423,7 @@ contract UnitDAOSpace is TestHelper {
     );
     daoSpaceProxy.workaround_setTally(_proposalId, _yes, _no, _abstain);
     daoSpaceProxy.workaround_setTotalEditors(_yes + _no + _abstain + _none);
-    vm.warp(block.timestamp + _votingSettings.duration + 1);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
     // it returns true
     assertTrue(daoSpaceProxy.isSupportThresholdReached(_proposalId));
@@ -3259,8 +3445,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
       _votingSettings.quorum,
       _votingSettings.partialPercentageSupportThreshold,
@@ -3286,8 +3473,9 @@ contract UnitDAOSpace is TestHelper {
       false,
       _proposalVersion,
       _initialEditorASpaceId,
-      block.timestamp,
-      block.timestamp + _votingSettings.duration,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
       IDAOSpace.VotingMode.Fast,
       _votingSettings.quorum,
       _votingSettings.partialPercentageSupportThreshold,
