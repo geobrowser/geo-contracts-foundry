@@ -70,7 +70,11 @@ event Action(
 - The `subject` field provides more granular flags
     - E.g. Up-Vote/Down-Vote group and object Ids that aren’t passed in data.
     - This field may be left empty.
-- The `data` is always `abi.encoded`, and either:
-    - contains the payload for onchain execution
-    - contains the payload for offchain execution
-    - This field may also be left empty
+- The `data` field is normally `abi.encoded` structured payload (or empty), for on- or off-chain execution.
+
+Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
+
+## Exceptions
+
+- Some `Action` events may have modified `_data` fields when emitted via the `overrideAction` function. This allows indexers to identify those actions that occurred before transplantation occurred. These modified events are:
+    - Proposal Created: `abi.encode(bytes16 proposalId, VotingMode, IDAOSpace.Action[], bool proposalTransplanted)`
