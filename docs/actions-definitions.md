@@ -52,8 +52,8 @@ event Action(
 | Subspace Unverified | `keccak256('GOVERNANCE.SUBSPACE_UNVERIFIED')` | `bytes32(spaceId)` | empty |
 | Subspace Related | `keccak256('GOVERNANCE.SUBSPACE_RELATED')` | `bytes32(spaceId)` | empty |
 | Subspace Unrelated | `keccak256('GOVERNANCE.SUBSPACE_UNRELATED')` | `bytes32(spaceId)` | empty |
-| Subspace Topic Set | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_SET')` | `bytes32((bytes16(spaceId)) << 128)  bytes32(bytes16(topicId))` | empty |
-| Subspace Topic Unset | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_UNSET')` | `bytes32((bytes16(spaceId)) << 128)  bytes32(bytes16(topicId))` | empty |
+| Subspace Topic Set | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_SET')` | packed `bytes32`: high 16 bytes = `spaceId`, low 16 bytes = `topicId` | empty |
+| Subspace Topic Unset | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_UNSET')` | packed `bytes32`: high 16 bytes = `spaceId`, low 16 bytes = `topicId` | empty |
 | Upvoted | `keccak256('PERMISSIONLESS.UPVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (off-chain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
 | Downvoted | `keccak256('PERMISSIONLESS.DOWNVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (off-chain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
 | Unvoted | `keccak256('PERMISSIONLESS.UNVOTED')` | 4-byte `objectType` + `bytes16` `objectId` | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
