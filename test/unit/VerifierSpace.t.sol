@@ -343,6 +343,22 @@ contract UnitVerifierSpace is TestHelper {
     assertEq(verifierSpaceProxy.version(), '1.0.0');
   }
 
+  function test_DomainSeparatorV4_WhenCalled() external view {
+    bytes32 _typeHash = keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
+    assertEq(
+      verifierSpaceProxy.domainSeparatorV4(),
+      keccak256(
+        abi.encode(
+          _typeHash,
+          keccak256(bytes(verifierSpaceProxy.name())),
+          keccak256(bytes(verifierSpaceProxy.version())),
+          block.chainid,
+          address(verifierSpaceProxy)
+        )
+      )
+    );
+  }
+
   function _mockValidWriters(bytes16 _spaceId, bool _valid) internal {
     verifierSpaceProxy.workaround_setValidWriters(_spaceId, _valid);
   }

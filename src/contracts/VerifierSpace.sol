@@ -107,6 +107,11 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     _replayNonce = $_.replayNonce;
   }
 
+  /// @inheritdoc IVerifierSpace
+  function domainSeparatorV4() public view returns (bytes32 _domainSeparator) {
+    _domainSeparator = _domainSeparatorV4();
+  }
+
   /// @inheritdoc ISpace
   function fetch(bytes32, bytes32 _subjectInput, bytes calldata) public pure virtual returns (bytes32 _subjectOutput) {
     _subjectOutput = _subjectInput;
@@ -136,6 +141,18 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
     VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
     $_.validWriters[_spaceId] = _valid;
     emit ValidWriterSet(_spaceId, _valid);
+  }
+
+  /// @inheritdoc EIP712Upgradeable
+  /// @dev Delegates to `ISemver` `name()` so the domain matches the implementation after a beacon upgrade.
+  function _EIP712Name() internal view virtual override returns (string memory) {
+    return name();
+  }
+
+  /// @inheritdoc EIP712Upgradeable
+  /// @dev Delegates to `ISemver` `version()` so the domain matches the implementation after a beacon upgrade.
+  function _EIP712Version() internal view virtual override returns (string memory) {
+    return version();
   }
 
   /**

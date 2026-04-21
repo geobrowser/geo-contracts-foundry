@@ -6,11 +6,14 @@ import {IntegrationBase} from 'test/integration/IntegrationBase.t.sol';
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';
 import {MockDAOSpaceV2} from 'test/integration/mocks/MockDAOSpaceV2.sol';
-import {MockNewImplementation} from 'test/integration/mocks/MockNewImplementation.sol';
+import {MockVerifierSpaceV2} from 'test/integration/mocks/MockVerifierSpaceV2.sol';
 
 import 'script/Constants.s.sol' as Constants;
 
 contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
+  bytes32 internal constant _EIP712_DOMAIN_TYPEHASH =
+    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
+
   // Spaces
   MockDAOSpaceV2 public daoSpaceImplementationBis;
   MockDAOSpaceV2 public daoSpaceProxyA;
@@ -49,7 +52,7 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     _daoSpaceProxyAId = _daoSpaceProxyId;
     _daoSpaceProxyBId = spaceRegistryProxy.addressToSpaceId(address(daoSpaceProxyB));
 
-    verifierSpaceImplementationBis = VerifierSpace(address(new MockNewImplementation()));
+    verifierSpaceImplementationBis = new MockVerifierSpaceV2();
     daoSpaceImplementationBis = new MockDAOSpaceV2();
   }
 
@@ -107,6 +110,16 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(verifierSpaceProxyA.version(), '1.0.0');
     assertEq(verifierSpaceProxyB.version(), '1.0.0');
 
+    // Domain separator used in `verify` must match the domain implied by current `name()` / `version()` (not init-time storage alone).
+    assertEq(
+      verifierSpaceProxyA.domainSeparatorV4(),
+      _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyA, verifierSpaceProxyA.version())
+    );
+    assertEq(
+      verifierSpaceProxyB.domainSeparatorV4(),
+      _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyB, verifierSpaceProxyB.version())
+    );
+
     vm.prank(Constants.GEO_GEO_MULTISIG_COUNCIL);
     verifierSpaceBeacon.upgradeTo(address(verifierSpaceImplementationBis));
 
@@ -114,5 +127,37 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
     assertEq(verifierSpaceImplementationBis.version(), '2.0.0');
     assertEq(verifierSpaceProxyA.version(), '2.0.0');
     assertEq(verifierSpaceProxyB.version(), '2.0.0');
+
+    assertEq(
+      verifierSpaceProxyA.domainSeparatorV4(),
+      _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyA, verifierSpaceProxyA.version())
+    );
+    assertEq(
+      verifierSpaceProxyB.domainSeparatorV4(),
+      _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyB, verifierSpaceProxyB.version())
+    );
+    // If verification still used the domain from `__EIP712_init` at first deploy, it would stay on 1.0.0 while views report 2.0.0.
+    assertTrue(
+      verifierSpaceProxyA.domainSeparatorV4() != _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyA, '1.0.0')
+    );
+    assertTrue(
+      verifierSpaceProxyB.domainSeparatorV4() != _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyB, '1.0.0')
+    );
+  }
+
+  /// @notice Replicates OZ `_buildDomainSeparator` for the given semver strings (same inputs `verify` uses via overrides).
+  function _expectedVerifierSpaceDomainSeparator(
+    VerifierSpace _proxy,
+    string memory _version
+  ) internal view returns (bytes32) {
+    return keccak256(
+      abi.encode(
+        _EIP712_DOMAIN_TYPEHASH,
+        keccak256(bytes(_proxy.name())),
+        keccak256(bytes(_version)),
+        block.chainid,
+        address(_proxy)
+      )
+    );
   }
 }
