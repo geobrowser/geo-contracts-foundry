@@ -161,9 +161,14 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotExecute
 │   │   └── when the proposal can be executed
 │   │       ├── it sets the proposal executed to true
-│   │       ├── it loops over the stored proposal actions and performs the external calls
-│   │       └── when an external call fails
-│   │           └── it reverts with ActionReverted
+│   │       ├── when the target address has contract code
+│   │       │   ├── it performs each action via function calls with value
+│   │       │   └── when an external call fails
+│   │       │       └── it reverts with Errors.FailedCall
+│   │       └── when the target address has no contract code
+│   │           ├── it sends native value and ignores data
+│   │           └── when an external call fails
+│   │               └── it reverts with Errors.InsufficientBalance
 │   ├── when _action equals SPACE_LEFT
 │   │   ├── when the role specified is MEMBER and the _fromSpaceId is a member
 │   │   │   ├── it revokes the role of MEMBER from the _fromSpaceId

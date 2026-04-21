@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+import {Address} from '@openzeppelin/contracts/utils/Address.sol';
+
 import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
@@ -649,8 +651,15 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Action memory _action;
     for (uint256 _i; _i < _actionsLength; _i++) {
       _action = _actions[_i];
-      (bool _success,) = (_action.to).call{value: _action.value}(_action.data);
-      if (!_success) revert ActionReverted();
+      if (_action.to.code.length > 0) {
+        // Checks for insufficient balance
+        // Upon reversion, does so with the specific error returned, or a general `FailedCall`
+        Address.functionCallWithValue(payable(_action.to), _action.data, _action.value);
+      } else {
+        // Checks for insufficient balance
+        // Even if non-empty, `_action.data` is ignored
+        Address.sendValue(payable(_action.to), _action.value);
+      }
     }
   }
 

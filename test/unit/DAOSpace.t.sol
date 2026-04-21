@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {Errors} from '@openzeppelin/contracts/utils/Errors.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
@@ -2014,7 +2015,60 @@ contract UnitDAOSpace is TestHelper {
     when_actionEqualsPROPOSAL_EXECUTED
     whenTheProposalCanBeExecuted
   {
-    // proposal set up to add randomCaller as an editor and member
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
+    });
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
+      IDAOSpace.VotingMode.Slow,
+      1,
+      1,
+      1,
+      1,
+      _actions
+    );
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
+
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.MEMBER_ADDED,
+      bytes32(_randomCallerSpaceId),
+      ''
+    );
+
+    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
+
+    bytes memory _executeProposalData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
+
+    (bool _executed,,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+
+    // it sets the proposal executed to true
+    assertTrue(_executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  modifier whenTheTargetAddressHasContractCode() {
+    _;
+  }
+
+  function test_Write_WhenTheTargetAddressHasContractCode(bytes32 _subject)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_EXECUTED
+    whenTheProposalCanBeExecuted
+    whenTheTargetAddressHasContractCode
+  {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
     _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCallerSpaceId))
@@ -2088,8 +2142,8 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsPROPOSAL_EXECUTED
     whenTheProposalCanBeExecuted
+    whenTheTargetAddressHasContractCode
   {
-    // proposal set up to with a deliberately faulty call
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
       to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.registerSpaceId, (bytes32(0), ''))
@@ -2112,12 +2166,106 @@ contract UnitDAOSpace is TestHelper {
 
     // set vote to yes
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
-
-    // warp past lastDate (snapshotted as now + voting duration) while still before executeBy
     vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
-    // it reverts with ActionReverted
-    vm.expectRevert(IDAOSpace.ActionReverted.selector);
+    // it reverts with Errors.FailedCall
+    vm.expectRevert(Errors.FailedCall.selector);
+
+    bytes memory _executeProposalData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
+  }
+
+  modifier whenTheTargetAddressHasNoContractCode() {
+    _;
+  }
+
+  function test_Write_WhenTheTargetAddressHasNoContractCode(bytes32 _subject)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_EXECUTED
+    whenTheProposalCanBeExecuted
+    whenTheTargetAddressHasNoContractCode
+  {
+    address _eoaRecipient = makeAddr('eoaNoCodeRecipient');
+    assertEq(_eoaRecipient.code.length, 0);
+
+    uint256 _sendAmount = 1 ether;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: _eoaRecipient, value: _sendAmount, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCallerSpaceId))
+    });
+
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
+      IDAOSpace.VotingMode.Slow,
+      1,
+      1,
+      1,
+      1,
+      _actions
+    );
+
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
+
+    vm.deal(address(daoSpaceProxy), _sendAmount);
+    uint256 _recipientBalanceBefore = _eoaRecipient.balance;
+
+    bytes memory _executeProposalData = abi.encode(_proposalId);
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
+
+    (bool _executed,,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertTrue(_executed);
+
+    // it sends native value and ignores data
+    assertEq(_eoaRecipient.balance - _recipientBalanceBefore, _sendAmount);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceProxy.EDITOR(), _randomCallerSpaceId));
+  }
+
+  function test_Write_WhenAnExternalCallFails_WhenTheTargetAddressHasNoContractCode(bytes32 _subject)
+    external
+    whenCalledBySpaceRegistry
+    when_actionEqualsPROPOSAL_EXECUTED
+    whenTheProposalCanBeExecuted
+    whenTheTargetAddressHasNoContractCode
+  {
+    address _eoaRecipient = makeAddr('eoaNoCodeRecipientB');
+    assertEq(_eoaRecipient.code.length, 0);
+
+    uint256 _sendAmount = 1 ether;
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      to: _eoaRecipient, value: _sendAmount, data: abi.encodeCall(IDAOSpace.addEditor, (_randomCallerSpaceId))
+    });
+
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
+      IDAOSpace.VotingMode.Slow,
+      1,
+      1,
+      1,
+      1,
+      _actions
+    );
+
+    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
+
+    vm.deal(address(daoSpaceProxy), 0);
+
+    vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientBalance.selector, uint256(0), uint256(_sendAmount)));
 
     bytes memory _executeProposalData = abi.encode(_proposalId);
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
