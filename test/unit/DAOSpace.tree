@@ -17,8 +17,6 @@ UnitDAOSpace::constructor
 UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
-│   ├── it grants the SPACE_REGISTRY role to the registry
-│   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
 │   ├── it sets ping as a valid fast path action
