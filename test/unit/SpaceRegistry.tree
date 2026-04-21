@@ -22,6 +22,8 @@ UnitSpaceRegistry::initialize
 UnitSpaceRegistry::enter
 ├── when spaceIds are active
 │   ├── when caller is not fromSpaceId
+│   │   ├── when from space has no code
+│   │   │   └── it reverts with InvalidCaller
 │   │   └── it calls fromSpaceId to verify
 │   └── when caller is not toSpaceId
 │       ├── when _action is not permissionless
