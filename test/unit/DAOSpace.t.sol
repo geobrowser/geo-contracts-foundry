@@ -2009,55 +2009,6 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
-  function test_Write_WhenTheProposalCanBeExecuted_WhenTheProposalCanBeExecuted(bytes32 _subject)
-    external
-    whenCalledBySpaceRegistry
-    when_actionEqualsPROPOSAL_EXECUTED
-    whenTheProposalCanBeExecuted
-  {
-    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
-    _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId))
-    });
-    daoSpaceProxy.workaround_createProposal(
-      _proposalId,
-      false,
-      _proposalVersion,
-      _initialEditorASpaceId,
-      vm.getBlockTimestamp(),
-      vm.getBlockTimestamp() + _votingSettings.duration,
-      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
-      IDAOSpace.VotingMode.Slow,
-      1,
-      1,
-      1,
-      1,
-      _actions
-    );
-    daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
-    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
-
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.MEMBER_ADDED,
-      bytes32(_randomCallerSpaceId),
-      ''
-    );
-
-    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
-
-    bytes memory _executeProposalData = abi.encode(_proposalId);
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
-
-    (bool _executed,,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
-
-    // it sets the proposal executed to true
-    assertTrue(_executed);
-    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
-  }
-
   modifier whenTheTargetAddressHasContractCode() {
     _;
   }
@@ -2221,7 +2172,10 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_EXECUTED, _subject, _executeProposalData);
 
     (bool _executed,,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+
+    // it sets the proposal executed to true
     assertTrue(_executed);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
 
     // it sends native value and ignores data
     assertEq(_eoaRecipient.balance - _recipientBalanceBefore, _sendAmount);
