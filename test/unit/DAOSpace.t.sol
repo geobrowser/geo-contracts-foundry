@@ -2168,7 +2168,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.workaround_setFormerVote(_proposalId, _initialEditorASpaceId, IDAOSpace.VoteOption.Yes);
     vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1);
 
-    // it reverts with Errors.FailedCall
+    // it reverts with an appropriate error
     vm.expectRevert(Errors.FailedCall.selector);
 
     bytes memory _executeProposalData = abi.encode(_proposalId);
@@ -2265,6 +2265,7 @@ contract UnitDAOSpace is TestHelper {
 
     vm.deal(address(daoSpaceProxy), 0);
 
+    // it reverts with an appropriate error
     vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientBalance.selector, uint256(0), uint256(_sendAmount)));
 
     bytes memory _executeProposalData = abi.encode(_proposalId);
