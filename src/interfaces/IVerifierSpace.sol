@@ -60,6 +60,8 @@ interface IVerifierSpace is ISpace {
    * @param _initializerData The encoded initializer data:
    *        _spaceRegistry The address of the space registry contract
    *        _owner The address of the owner
+   * @dev Skips `__EIP712_init`: the EIP712 domain already comes from `name()` / `version()` overrides, so extra
+   *      storage would only add gas without changing signatures.
    */
   function initialize(bytes calldata _initializerData) external;
 
@@ -98,8 +100,8 @@ interface IVerifierSpace is ISpace {
 
   /**
    * @notice EIP-712 v4 domain separator used by `verify` with `_hashTypedDataV4`
-   * @dev Matches OpenZeppelin `EIP712` and follows `name()` / `version()` via `_EIP712Name` / `_EIP712Version` overrides
-   *      so it stays aligned with `ISemver` after beacon upgrades (init-time EIP-712 storage alone would go stale).
+   * @dev OpenZeppelin EIP712 uses `name()` and `version()` (semver), so the signing domain tracks the live
+   *      implementation after beacon upgrades. `initialize` skips `__EIP712_init` because nothing extra needs storing.
    * @return _domainSeparator The domain separator for this proxy
    */
   function domainSeparatorV4() external view returns (bytes32 _domainSeparator);

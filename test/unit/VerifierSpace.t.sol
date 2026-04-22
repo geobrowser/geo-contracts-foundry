@@ -116,10 +116,6 @@ contract UnitVerifierSpace is TestHelper {
     // it sets owner
     assertEq(verifierSpaceProxy.owner(), __owner);
 
-    // it initializes EIP712
-    assertEq(verifierSpaceProxy.exposed__EIP712NameHash(), keccak256('VERIFIER_SPACE'));
-    assertEq(verifierSpaceProxy.exposed__EIP712VersionHash(), keccak256(bytes(verifierSpaceProxy.version())));
-
     // it sets spaceRegistry
     assertEq(address(verifierSpaceProxy.spaceRegistry()), address(__spaceRegistry));
 

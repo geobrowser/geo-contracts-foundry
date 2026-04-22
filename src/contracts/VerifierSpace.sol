@@ -43,7 +43,6 @@ contract VerifierSpace is OwnableUpgradeable, EIP712Upgradeable, IVerifierSpace 
 
     // Initialise
     __Ownable_init(_owner);
-    __EIP712_init(name(), version());
 
     // Set Space Registry and register new Verifier Space
     VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
