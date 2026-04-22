@@ -662,13 +662,15 @@ contract UnitSpaceRegistry is TestHelper {
   function test_OverrideSpaceId_WhenCalledByOwner(
     address _account,
     bytes16 _oldSpaceId,
-    address _proposedRecipient
+    address _proposedRecipient,
+    address _vacatedSlotProposedRecipient
   ) external whenCalledByOwner {
     vm.assume(_account != address(0));
     vm.assume(_account != address(spaceRegistryProxy));
     vm.assume(_account != _fromSpace);
     vm.assume(_oldSpaceId != _fromSpaceId);
     vm.assume(_proposedRecipient != address(0));
+    vm.assume(_vacatedSlotProposedRecipient != address(0));
 
     // set initial relationship
     _mockAddressToSpaceId(_fromSpace, _fromSpaceId);
@@ -677,6 +679,8 @@ contract UnitSpaceRegistry is TestHelper {
     _mockSpaceIdToAddress(_oldSpaceId, _account);
     _mockSpaceIdToProposedAddress(_fromSpaceId, _proposedRecipient);
     _mockArchivedSpaceIds(_fromSpaceId, true);
+    _mockSpaceIdToProposedAddress(_oldSpaceId, _vacatedSlotProposedRecipient);
+    _mockArchivedSpaceIds(_oldSpaceId, true);
 
     // it emits Action with SPACE_ID_OVERRIDDEN (_oldSpaceId, _spaceId)
     vm.expectEmit();
@@ -694,6 +698,8 @@ contract UnitSpaceRegistry is TestHelper {
     assertEq(spaceRegistryProxy.spaceIdToAddress(_oldSpaceId), address(0));
     assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_fromSpaceId), address(0));
     assertFalse(spaceRegistryProxy.archivedSpaceIds(_fromSpaceId));
+    assertEq(spaceRegistryProxy.spaceIdToProposedAddress(_oldSpaceId), address(0));
+    assertFalse(spaceRegistryProxy.archivedSpaceIds(_oldSpaceId));
   }
 
   function test_OverrideSpaceId_When_accountIsZeroAddress() external whenCalledByOwner {
