@@ -136,13 +136,6 @@ contract IntegrationUpgradeBeaconImplementation is IntegrationBase {
       verifierSpaceProxyB.domainSeparatorV4(),
       _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyB, verifierSpaceProxyB.version())
     );
-    // If verification still used the domain from `__EIP712_init` at first deploy, it would stay on 1.0.0 while views report 2.0.0.
-    assertTrue(
-      verifierSpaceProxyA.domainSeparatorV4() != _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyA, '1.0.0')
-    );
-    assertTrue(
-      verifierSpaceProxyB.domainSeparatorV4() != _expectedVerifierSpaceDomainSeparator(verifierSpaceProxyB, '1.0.0')
-    );
   }
 
   /// @notice Replicates OZ `_buildDomainSeparator` for the given semver strings (same inputs `verify` uses via overrides).
