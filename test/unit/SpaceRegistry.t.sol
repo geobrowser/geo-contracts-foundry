@@ -161,45 +161,21 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  modifier whenCallerIsNotFromSpaceId() {
-    // when caller is not fromSpaceId
-    vm.startPrank(_toSpace);
-    _;
-    vm.stopPrank();
-  }
-
   function test_Enter_WhenCallerIsNotFromSpaceId(
     bytes32 _action,
     bytes32 _subject,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpaceIdsAreActive whenCallerIsNotFromSpaceId {
+  ) external whenSpaceIdsAreActive {
+    // when caller is not fromSpaceId
+    vm.startPrank(_toSpace);
+
     // it calls fromSpaceId to verify
     _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subject, _data, _signature);
 
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature);
-  }
 
-  function test_Enter_WhenFromSpaceHasNoCode(
-    address _eoaFromSpace,
-    bytes32 _action,
-    bytes32 _subject,
-    bytes calldata _data,
-    bytes calldata _signature
-  ) external whenCallerIsNotFromSpaceId {
-    _assumeFuzzable(_eoaFromSpace);
-    vm.assume(_eoaFromSpace.code.length == 0);
-    vm.assume(_eoaFromSpace != _toSpace);
-
-    _mockAddressToSpaceId(_eoaFromSpace, _fromSpaceId);
-    _mockAddressToSpaceId(_toSpace, _toSpaceId);
-    _mockSpaceIdToAddress(_fromSpaceId, _eoaFromSpace);
-    _mockSpaceIdToAddress(_toSpaceId, _toSpace);
-
-    // it reverts with InvalidCaller
-    vm.expectRevert(ISpaceRegistry.InvalidCaller.selector);
-
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature);
+    vm.stopPrank();
   }
 
   modifier whenCallerIsNotToSpaceId() {

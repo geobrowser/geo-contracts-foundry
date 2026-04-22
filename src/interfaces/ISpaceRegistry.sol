@@ -81,8 +81,6 @@ interface ISpaceRegistry is ISemver {
    * @param _subject The subject that is passed to the space contract
    * @param _data The arbitrary data for space contract execution
    * @param _signature The signature for account verification
-   * @dev When `msg.sender` is not the resolved `from` space address, `verify` is called on that address; reverts with
-   *      `InvalidCaller()` if it has no contract code.
    */
   function enter(
     bytes16 _fromSpaceId,

@@ -68,7 +68,6 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     // If msg.sender is not the from space
     // Then pass the msg.sender, to space ID, action, subject, data, and signature to the from space
     if (msg.sender != _fromSpace) {
-      if (_fromSpace.code.length == 0) revert InvalidCaller();
       ISpace(_fromSpace).verify(msg.sender, _toSpaceId, _action, _subject, _data, _signature);
     }
 
