@@ -185,11 +185,6 @@ interface IDAOSpace is ISpace {
   error CanNotExecute();
 
   /**
-   * @notice Thrown when an action within a proposal reverts during execution
-   */
-  error ActionReverted();
-
-  /**
    * @notice Thrown when a fast path proposal contains more than one action
    * @dev Fast path limited to single action
    */

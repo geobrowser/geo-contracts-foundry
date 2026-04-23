@@ -11,7 +11,6 @@ UnitVerifierSpace::initialize
 ├── when delegate called
 │   ├── when owner is not zero address
 │   │   ├── it sets owner
-│   │   ├── it initializes EIP712
 │   │   ├── it sets spaceRegistry
 │   │   ├── it calls spaceRegistry to register space ID
 │   │   ├── it sets validWriters
@@ -62,3 +61,7 @@ UnitVerifierSpace::name
 UnitVerifierSpace::version
 └── when called
     └── it returns semantic version
+
+UnitVerifierSpace::domainSeparatorV4
+└── when called
+    └── it returns the EIP-712 domain separator for current name and version

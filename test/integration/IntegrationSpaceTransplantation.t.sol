@@ -39,7 +39,6 @@ contract IntegrationSpaceTransplantation is IntegrationBase {
     assertEq(spaceRegistryProxy.addressToSpaceId(address(_transplantProxy)), bytes16(0));
     assertEq(spaceRegistryProxy.spaceIdToAddress(_transplantSpaceId), address(0));
 
-    assertTrue(_transplantProxy.hasRole(daoSpaceImplementation.DAO(), _transplantSpaceId));
     assertTrue(_transplantProxy.hasRole(daoSpaceImplementation.MEMBER(), _initialSpaceMembers[0]));
     assertTrue(_transplantProxy.hasRole(daoSpaceImplementation.EDITOR(), _initialSpaceEditors[0]));
 

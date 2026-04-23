@@ -17,8 +17,6 @@ UnitDAOSpace::constructor
 UnitDAOSpace::initialize
 ├── when delegate called
 │   ├── it sets the spaceRegistry
-│   ├── it grants the SPACE_REGISTRY role to the registry
-│   ├── it grants itself the DAO role
 │   ├── it sets addMember as a valid fast path action
 │   ├── it sets removeMember as a valid fast path action
 │   ├── it sets ping as a valid fast path action
@@ -162,10 +160,16 @@ UnitDAOSpace::write
 │   │   ├── when the support threshold has not been reached
 │   │   │   └── it reverts with CanNotExecute
 │   │   └── when the proposal can be executed
-│   │       ├── it sets the proposal executed to true
-│   │       ├── it loops over the stored proposal actions and performs the external calls
-│   │       └── when an external call fails
-│   │           └── it reverts with ActionReverted
+│   │       ├── when the target address has contract code
+│   │       │   ├── it sets the proposal executed to true
+│   │       │   ├── it performs each action via function calls with value
+│   │       │   └── when an external call fails
+│   │       │       └── it reverts with an appropriate error
+│   │       └── when the target address has no contract code
+│   │           ├── it sets the proposal executed to true
+│   │           ├── it sends native value and ignores data
+│   │           └── when an external call fails
+│   │               └── it reverts with an appropriate error
 │   ├── when _action equals SPACE_LEFT
 │   │   ├── when the role specified is MEMBER and the _fromSpaceId is a member
 │   │   │   ├── it revokes the role of MEMBER from the _fromSpaceId

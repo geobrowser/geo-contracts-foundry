@@ -181,10 +181,14 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     bytes16 _oldSpaceId = $_.addressToSpaceId[_account];
     $_.addressToSpaceId[_oldAccount] = bytes16(0);
     $_.spaceIdToAddress[_oldSpaceId] = address(0);
+    $_.spaceIdToProposedAddress[_oldSpaceId] = address(0);
+    $_.archivedSpaceIds[_oldSpaceId] = false;
 
     // Add new relationship
     $_.addressToSpaceId[_account] = _spaceId;
     $_.spaceIdToAddress[_spaceId] = _account;
+    $_.spaceIdToProposedAddress[_spaceId] = address(0);
+    $_.archivedSpaceIds[_spaceId] = false;
 
     // Action event emissions
     emit Action(_oldSpaceId, _spaceId, ActionsConstants.SPACE_ID_OVERRIDDEN, bytes32(bytes20(_account)), '');

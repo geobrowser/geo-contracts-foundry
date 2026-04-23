@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.30;
 
+import {Address} from '@openzeppelin/contracts/utils/Address.sol';
+
 import {SpaceAccessControl} from 'contracts/utils/SpaceAccessControl.sol';
 
 import {IDAOSpace} from 'interfaces/IDAOSpace.sol';
@@ -59,7 +61,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    */
   modifier onlyRole(bytes32 _role) {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-    if (!hasRole(_role, $_.spaceRegistry.addressToSpaceId(msg.sender))) revert InvalidCaller();
+    if (_role == SPACE_REGISTRY) {
+      if (msg.sender != address($_.spaceRegistry)) revert InvalidCaller();
+    } else if (_role == DAO) {
+      if (msg.sender != address(this)) revert InvalidCaller();
+    } else if (!hasRole(_role, $_.spaceRegistry.addressToSpaceId(msg.sender))) {
+      revert InvalidCaller();
+    }
     _;
   }
 
@@ -141,10 +149,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       if (_votingSettings.executionGracePeriod < MINIMUM_EXECUTION_GRACE_PERIOD) revert InvalidSetting();
       $_.votingSettings = _votingSettings;
     }
-
-    // Grant further roles for access control
-    _grantRole(SPACE_REGISTRY, _spaceRegistry.addressToSpaceId(address(_spaceRegistry)));
-    _grantRole(DAO, _daoSpaceId);
 
     // Set the initial fast path actions
     $_.actionIsFastPathValid[IDAOSpace.addMember.selector] = true;
@@ -647,8 +651,15 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Action memory _action;
     for (uint256 _i; _i < _actionsLength; _i++) {
       _action = _actions[_i];
-      (bool _success,) = (_action.to).call{value: _action.value}(_action.data);
-      if (!_success) revert ActionReverted();
+      if (_action.to.code.length > 0) {
+        // Checks for insufficient balance
+        // Upon reversion, does so with the specific error returned, or a general `FailedCall`
+        Address.functionCallWithValue(payable(_action.to), _action.data, _action.value);
+      } else {
+        // Checks for insufficient balance
+        // Even if non-empty, `_action.data` is ignored
+        Address.sendValue(payable(_action.to), _action.value);
+      }
     }
   }
 
