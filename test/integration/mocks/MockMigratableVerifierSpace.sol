@@ -9,30 +9,6 @@ import {VerifierSpace} from 'contracts/VerifierSpace.sol';
  */
 contract MockMigratableVerifierSpace is VerifierSpace {
   /**
-   * @notice Enters the Space Registry to emit an Action event
-   * @dev Must be called by the owner
-   * @param _action An action identifier
-   * @param _subject A subject identifier
-   * @param _data Some extra arbitrary data that may hold additional information
-   * @dev _from and _to are always the DAO's address
-   */
-  function ping(bytes32 _action, bytes32 _subject, bytes calldata _data) external virtual onlyOwner {
-    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
-    bytes16 _verifierSpaceId = $_.spaceRegistry.addressToSpaceId(address(this));
-
-    $_.spaceRegistry.enter(_verifierSpaceId, _verifierSpaceId, _action, _subject, _data, '');
-  }
-
-  /**
-   * @notice Creates a new space by registering a space ID for this address
-   * @dev Must be called by the owner
-   */
-  function register() external virtual onlyOwner {
-    VerifierSpaceStorage storage $_ = _getVerifierSpaceStorage();
-    $_.spaceRegistry.registerSpaceId(typeId(), abi.encode(version()));
-  }
-
-  /**
    * @notice Archives its space ID from the registry
    * @dev Must be called by the owner
    */

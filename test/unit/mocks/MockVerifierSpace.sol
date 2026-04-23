@@ -13,14 +13,6 @@ contract MockVerifierSpace is VerifierSpace {
     $_.validWriters[_spaceId] = _valid;
   }
 
-  function exposed__EIP712NameHash() external view returns (bytes32 _nameHash) {
-    _nameHash = _EIP712NameHash();
-  }
-
-  function exposed__EIP712VersionHash() external view returns (bytes32 _versionHash) {
-    _versionHash = _EIP712VersionHash();
-  }
-
   function exposed__VERIFIER_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _verifierSpaceStorageLocation) {
     _verifierSpaceStorageLocation = _VERIFIER_SPACE_STORAGE_LOCATION;
   }
