@@ -503,12 +503,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Snapshots voting window timers from global settings and emits updated proposal parameters
    * @param _proposalId The proposal identifier
    * @param _proposal The proposal storage to update
-   * @dev No-op if timers were already started. Skipped when a fast-path first `No` vote escalates in the same
-   * call (escalation sets timers and emits `PROPOSAL_SETTINGS_SELECTED` once).
+   * @dev Call only while `parameters.startDate` is zero. A fast-path first `No` vote does not call this; escalation
+   * sets timers and emits `PROPOSAL_SETTINGS_SELECTED` once in `_voteProposal`.
    */
   function _startProposalVotingWindow(bytes16 _proposalId, Proposal storage _proposal) internal {
-    if (_proposal.parameters.startDate != 0) return;
-
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
     _proposal.parameters.startDate = block.timestamp;
     _proposal.parameters.lastDate = block.timestamp + $_.votingSettings.duration;

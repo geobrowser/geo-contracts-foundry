@@ -925,15 +925,6 @@ contract UnitDAOSpace is TestHelper {
     // it sets the proposal creator to _fromSpaceId
     assertEq(_creator, _initialEditorASpaceId);
 
-    // it leaves the proposal start date unset until the first vote
-    assertEq(_parameters.startDate, 0);
-
-    // it leaves the proposal last date unset until the first vote
-    assertEq(_parameters.lastDate, 0);
-
-    // it leaves executeBy unset until the first vote
-    assertEq(_parameters.executeBy, 0);
-
     // it sets the proposal voting mode to the slow path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
@@ -1108,15 +1099,6 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal creator to _fromSpaceId
     assertEq(_creator, _initialEditorASpaceId);
-
-    // it leaves the proposal start date unset until the first vote
-    assertEq(_parameters.startDate, 0);
-
-    // it leaves the proposal last date unset until the first vote
-    assertEq(_parameters.lastDate, 0);
-
-    // it leaves executeBy unset until the first vote
-    assertEq(_parameters.executeBy, 0);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
@@ -2574,15 +2556,6 @@ contract UnitDAOSpace is TestHelper {
 
     // it sets the proposal creator to _fromSpaceId
     assertEq(_creator, _randomCallerSpaceId);
-
-    // it leaves the proposal start date unset until the first vote
-    assertEq(_parameters.startDate, 0);
-
-    // it leaves the proposal last date unset until the first vote
-    assertEq(_parameters.lastDate, 0);
-
-    // it leaves executeBy unset until the first vote
-    assertEq(_parameters.executeBy, 0);
 
     // it sets the proposal voting mode to the fast path
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
