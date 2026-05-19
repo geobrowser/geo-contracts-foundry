@@ -60,9 +60,9 @@ interface IDAOSpace is ISpace {
    * @param universalPercentageSupportThreshold Universal percentage (relative) support threshold for slow path early execution (0-10e6, where 10e6 = 100% of total editors)
    * @param flatSupportThreshold Flat count (absolute) support threshold for fast path early execution (number of yes votes)
    * @param quorum The minimum number of votes (participation) required for a slow path proposal
-   * @param startDate Timestamp when voting starts
-   * @param lastDate Last voting timestamp
-   * @param executeBy Inclusive upper bound timestamp for execution; after this time the proposal cannot be executed even if support threshold is met
+   * @param startDate Timestamp when voting starts; zero until the first cast vote
+   * @param lastDate Last voting timestamp; zero until the first cast vote
+   * @param executeBy Inclusive upper bound timestamp for execution; zero until the first cast vote. After this time the proposal cannot be executed even if support threshold is met
    */
   struct ProposalParameters {
     VotingMode votingMode;
@@ -294,6 +294,8 @@ interface IDAOSpace is ISpace {
    * @notice Checks if a proposal has reached its support threshold
    * @param _proposalId ID of the proposal to check
    * @return _isSupportThresholdReached True if support threshold is reached
+   * @dev May return true while `canExecuteProposal` is false when `parameters.startDate` is zero (slow path also
+   * skips the `lastDate` duration gate until the first vote). Prefer `canExecuteProposal` for execution readiness.
    */
   function isSupportThresholdReached(bytes16 _proposalId) external view returns (bool _isSupportThresholdReached);
 
@@ -301,7 +303,7 @@ interface IDAOSpace is ISpace {
    * @notice Checks if a proposal can be executed
    * @param _proposalId The ID of the proposal to check
    * @return _canExecuteProposal True if the proposal can be executed, false otherwise
-   * @dev Returns false if proposal doesn't exist, already executed, threshold not met, or `block.timestamp` is after `executeBy`.
+   * @dev Returns false if proposal doesn't exist, already executed, threshold not met, or `block.timestamp` is after `executeBy` (when set).
    */
   function canExecuteProposal(bytes16 _proposalId) external view returns (bool _canExecuteProposal);
 

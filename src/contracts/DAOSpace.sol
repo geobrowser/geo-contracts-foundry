@@ -265,7 +265,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (proposal_.executed) return false;
     // Support threshold not reached
     if (!isSupportThresholdReached(_proposalId)) return false;
-    // Execution window ended (snapshotted at proposal version creation)
+    // Voting window has not started
+    if (proposal_.parameters.startDate == 0) return false;
+    // Execution window ended (snapshotted when voting starts on first vote)
     if (block.timestamp > proposal_.parameters.executeBy) return false;
     return true;
   }
@@ -298,8 +300,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         return true;
       }
 
-      // Duration check
-      if (block.timestamp <= proposal_.parameters.lastDate) return false;
+      // Duration check (skipped until voting window starts on first vote)
+      if (proposal_.parameters.lastDate != 0 && block.timestamp <= proposal_.parameters.lastDate) return false;
 
       _effectiveSupportThreshold =
         _computeEffectiveSupportThreshold(proposal_.parameters.partialPercentageSupportThreshold);
@@ -498,11 +500,30 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
   }
 
   /**
+   * @notice Snapshots voting window timers from global settings and emits updated proposal parameters
+   * @param _proposalId The proposal identifier
+   * @param _proposal The proposal storage to update
+   * @dev No-op if timers were already started. Skipped when a fast-path first `No` vote escalates in the same
+   * call (escalation sets timers and emits `PROPOSAL_SETTINGS_SELECTED` once).
+   */
+  function _startProposalVotingWindow(bytes16 _proposalId, Proposal storage _proposal) internal {
+    if (_proposal.parameters.startDate != 0) return;
+
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _proposal.parameters.startDate = block.timestamp;
+    _proposal.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
+    _proposal.parameters.executeBy = _proposal.parameters.lastDate + $_.votingSettings.executionGracePeriod;
+
+    _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(_proposal.parameters));
+  }
+
+  /**
    * @notice Creates or updates a governance proposal
    * @param _fromSpaceId The space ID setting the proposal
    * @param _proposalId The proposal identifier
    * @param _votingMode The voting mode (slow or fast) of the proposal
    * @param _actions The actions to be undertaken if the proposal is successful
+   * @dev `startDate`, `lastDate`, and `executeBy` remain zero until the first vote (see `_startProposalVotingWindow`).
    */
   function _setProposal(
     bytes16 _fromSpaceId,
@@ -515,14 +536,11 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     uint8 _latestProposalVersion = ++$_.latestProposalVersion[_proposalId];
     Proposal storage proposal_ = _getProposalStorage(_proposalId, _latestProposalVersion);
     proposal_.creator = _fromSpaceId;
-    proposal_.parameters.startDate = block.timestamp;
-    proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
     proposal_.parameters.votingMode = _votingMode;
     proposal_.parameters.quorum = $_.votingSettings.quorum;
     proposal_.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
     proposal_.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
     proposal_.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
-    proposal_.parameters.executeBy = proposal_.parameters.lastDate + $_.votingSettings.executionGracePeriod;
     for (uint256 _i; _i < _actions.length; _i++) {
       proposal_.actions.push(_actions[_i]);
     }
@@ -535,7 +553,9 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Votes on a proposal
    * @param _fromSpaceId The space ID casting the vote
    * @param _data The encoded vote data containing proposal ID, proposal version and vote option
-   * @dev Only editors can vote. Vote replacement allowed. "No" vote on fast path escalates to slow path.
+   * @dev Only editors can vote. Vote replacement allowed. While `parameters.startDate` is zero for this proposal
+   * version, the first vote snapshots `startDate`, `lastDate`, and `executeBy` from `VotingSettings` (except a first
+   * fast-path `No`, where escalation sets them once). "No" vote on fast path escalates to slow path.
    * After a supporting vote, execution runs immediately when `canExecuteProposal` is true: fast path when the
    * flat yes threshold is met; slow path when quorum and support are satisfied, including early execution when
    * the universal percentage threshold is exceeded before `lastDate` (see `isSupportThresholdReached`).
@@ -549,6 +569,14 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (!_canVote(_fromSpaceId, _proposalId, _proposalVersion, _voteOption)) revert CanNotVote();
 
     Proposal storage proposal_ = _getProposalStorage(_proposalId, _proposalVersion);
+
+    bool _firstVoteEscalatesOnNo = proposal_.parameters.startDate == 0
+      && proposal_.parameters.votingMode == VotingMode.Fast && _voteOption == VoteOption.No;
+
+    if (proposal_.parameters.startDate == 0 && !_firstVoteEscalatesOnNo) {
+      _startProposalVotingWindow(_proposalId, proposal_);
+    }
+
     // Remove the previous vote
     VoteOption _state = proposal_.voters[_fromSpaceId];
     if (_state == VoteOption.Yes) {
@@ -842,8 +870,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_latestProposalVersion == 0) return false;
     // Vote is not for the current proposal version
     if (_proposalVersion != _latestProposalVersion) return false;
-    // The proposal voting period has already ended
-    if (block.timestamp > proposal_.parameters.lastDate) return false;
+    // The proposal voting period has already ended (timers unset until first vote)
+    if (proposal_.parameters.lastDate != 0 && block.timestamp > proposal_.parameters.lastDate) return false;
     // The proposal has already been executed
     if (proposal_.executed) return false;
     // The voter votes `None` which is not allowed

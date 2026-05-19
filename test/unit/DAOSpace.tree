@@ -65,9 +65,9 @@ UnitDAOSpace::write
 │   │   │   └── when _createProposal params are valid
 │   │   │       ├── it increments the proposal version
 │   │   │       ├── it sets the proposal creator to _fromSpaceId
-│   │   │       ├── it sets the proposal start date to block.timestamp
-│   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+│   │   │       ├── it leaves the proposal start date unset until the first vote
+│   │   │       ├── it leaves the proposal last date unset until the first vote
+│   │   │       ├── it leaves executeBy unset until the first vote
 │   │   │       ├── it sets the proposal voting mode to the slow path
 │   │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -93,9 +93,9 @@ UnitDAOSpace::write
 │   │       └── when _createProposal params are valid
 │   │           ├── it increments the proposal version
 │   │           ├── it sets the proposal creator to _fromSpaceId
-│   │           ├── it sets the proposal start date to block.timestamp
-│   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │           ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+│   │           ├── it leaves the proposal start date unset until the first vote
+│   │           ├── it leaves the proposal last date unset until the first vote
+│   │           ├── it leaves executeBy unset until the first vote
 │   │           ├── it sets the proposal voting mode to the fast path
 │   │           ├── it sets the proposal quorum to votingSettings.quorum
 │   │           ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -103,6 +103,12 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal flat support threshold to votingSettings.flatSupportThreshold
 │   │           ├── it stores the decoded proposal actions
 │   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
+│   ├── when past duration before first vote
+│   │   └── it can still vote and starts the voting window
+│   ├── when first vote
+│   │   └── it starts the voting window from block.timestamp
+│   ├── when first vote on fast path is no and timers were unset
+│   │   └── it emits proposal settings selected once when escalating
 │   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal does not exist
 │   │   │   └── it reverts with CanNotVote
@@ -190,9 +196,9 @@ UnitDAOSpace::write
 │   │   └── when the request can be made
 │   │       ├── it increments the proposal version
 │   │       ├── it sets the proposal creator to _fromSpaceId
-│   │       ├── it sets the proposal start date to block.timestamp
-│   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
+│   │       ├── it leaves the proposal start date unset until the first vote
+│   │       ├── it leaves the proposal last date unset until the first vote
+│   │       ├── it leaves executeBy unset until the first vote
 │   │       ├── it sets the proposal voting mode to the fast path
 │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -331,6 +337,8 @@ UnitDAOSpace::canExecuteProposal
 ├── when proposal has already been executed
 │   └── it returns false
 ├── when support threshold is not reached
+│   └── it returns false
+├── when timers not started
 │   └── it returns false
 ├── when past executeBy
 │   └── it returns false
