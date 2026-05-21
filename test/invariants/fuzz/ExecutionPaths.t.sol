@@ -418,6 +418,43 @@ contract ExecutionPaths is Setup {
 
   // ==================== Regression Tests ====================
 
+  /// Deferred voting window: proposals stay open with zero timers until the first vote
+  function test_regression_deferred_voting_window_until_first_vote() public {
+    address _daoSpace = daoSpaceActors[0];
+    address _voter = eoaActors[0];
+    DAOSpace _dao = DAOSpace(_daoSpace);
+
+    vm.prank(_voter);
+    handlerSpaceRegistry.handler_registerSpaceId();
+    assertTrue(handlerSpaceRegistry.lastTxSucceeded(), 'registration should succeed');
+
+    vm.prank(_voter);
+    handlerDAOSpace.handler_daoSpace_addEditor(0, 0);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'addEditor should succeed');
+
+    vm.prank(_voter);
+    handlerDAOSpace.handler_daoSpace_createProposal(0, 0);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'createProposal should succeed');
+
+    bytes16 _proposalId = handlerDAOSpace.ghost_activeProposals(_daoSpace, 0);
+    (,, IDAOSpace.ProposalParameters memory _params,,) = _dao.getLatestProposalInformation(_proposalId);
+    assertEq(_params.startDate, 0, 'timers unset at creation');
+    assertEq(_params.lastDate, 0, 'timers unset at creation');
+    assertEq(_params.executeBy, 0, 'timers unset at creation');
+
+    vm.warp(block.timestamp + 30 days);
+    assertFalse(_dao.canExecuteProposal(_proposalId), 'cannot execute before voting window starts');
+
+    vm.prank(_voter);
+    handlerDAOSpace.handler_daoSpace_vote(0, 0, 1);
+    assertTrue(handlerDAOSpace.lastTxSucceeded(), 'first vote should succeed');
+
+    (,, _params,,) = _dao.getLatestProposalInformation(_proposalId);
+    assertGt(_params.startDate, 0, 'timers start on first vote');
+    assertGt(_params.lastDate, _params.startDate, 'lastDate follows startDate');
+    assertGt(_params.executeBy, _params.lastDate, 'executeBy follows lastDate');
+  }
+
   /// Test the previously found H-0 "vote-migrate-vote again" vulnerability
   function test_regression_vote_migrate_vote_again() public {
     address _daoSpace = daoSpaceActors[0];

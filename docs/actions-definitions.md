@@ -71,6 +71,7 @@ event Action(
     - E.g. Up-Vote/Down-Vote group and object Ids that aren’t passed in data.
     - This field may be left empty.
 - The `data` field is normally `abi.encoded` structured payload (or empty), for on- or off-chain execution.
+- On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
 
 Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
 

@@ -65,9 +65,6 @@ UnitDAOSpace::write
 │   │   │   └── when _createProposal params are valid
 │   │   │       ├── it increments the proposal version
 │   │   │       ├── it sets the proposal creator to _fromSpaceId
-│   │   │       ├── it sets the proposal start date to block.timestamp
-│   │   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │   │       ├── it sets the proposal voting mode to the slow path
 │   │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -93,9 +90,6 @@ UnitDAOSpace::write
 │   │       └── when _createProposal params are valid
 │   │           ├── it increments the proposal version
 │   │           ├── it sets the proposal creator to _fromSpaceId
-│   │           ├── it sets the proposal start date to block.timestamp
-│   │           ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │           ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │           ├── it sets the proposal voting mode to the fast path
 │   │           ├── it sets the proposal quorum to votingSettings.quorum
 │   │           ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -108,7 +102,7 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when _proposalVersion is not latestProposalVersion
 │   │   │   └── it reverts with CanNotVote
-│   │   ├── when the block timestamp is greater than the last date 
+│   │   ├── when the block timestamp is greater than the last date when set
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the proposal has been executed
 │   │   │   └── it reverts with CanNotVote
@@ -118,6 +112,8 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotVote
 │   │   └── when _vote params are valid
 │   │       ├── it stores the current _fromSpaceId vote
+│   │       ├── when first vote
+│   │       │   └── it starts the voting window from block.timestamp
 │   │       ├── when the former _fromSpaceId vote equals yes
 │   │       │   └── it decreases the proposal yes vote tally by one
 │   │       ├── when the former _fromSpaceId vote equals no
@@ -190,9 +186,6 @@ UnitDAOSpace::write
 │   │   └── when the request can be made
 │   │       ├── it increments the proposal version
 │   │       ├── it sets the proposal creator to _fromSpaceId
-│   │       ├── it sets the proposal start date to block.timestamp
-│   │       ├── it sets the proposal last date to block.timestamp plus votingSettings.duration
-│   │       ├── it sets executeBy to lastDate plus votingSettings.executionGracePeriod
 │   │       ├── it sets the proposal voting mode to the fast path
 │   │       ├── it sets the proposal quorum to votingSettings.quorum
 │   │       ├── it sets the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
@@ -330,6 +323,8 @@ UnitDAOSpace::canExecuteProposal
 │   └── it returns false
 ├── when proposal has already been executed
 │   └── it returns false
+├── when timers not started
+│   └── it returns false
 ├── when support threshold is not reached
 │   └── it returns false
 ├── when past executeBy
@@ -343,6 +338,8 @@ UnitDAOSpace::isSupportThresholdReached
 │   │   └── it returns false
 │   ├── when the yes votes are greater than the universal percentage support threshold
 │   │   └── it returns true
+│   ├── when the proposal last date is zero
+│   │   └── it returns false
 │   ├── when the block timestamp is less than or equal to the proposal last date
 │   │   └── it returns false
 │   ├── when the yes votes are not greater than the partial percentage support threshold
