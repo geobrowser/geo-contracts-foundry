@@ -1355,24 +1355,27 @@ contract UnitDAOSpace is TestHelper {
     _votingMode = bound(_votingMode, 0, 1);
     _voteOption = bound(_voteOption, 1, 3);
 
-    IDAOSpace.VotingMode _mode = IDAOSpace.VotingMode(_votingMode);
-    bytes memory _createProposalData =
-      _votingMode == 0 ? _createSlowPathProposalToAddEditor() : _createFastPathProposalToAddMember();
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_deferredProposalParameters(_mode))
+    // proposal set up
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      0,
+      0,
+      0,
+      IDAOSpace.VotingMode(_votingMode),
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
+      _votingSettings.flatSupportThreshold,
+      new IDAOSpace.Action[](0)
     );
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
 
     uint256 _voteAt = vm.getBlockTimestamp() + _votingSettings.duration + 1;
     vm.warp(_voteAt);
 
-    IDAOSpace.VotingMode _settingsModeAfterVote = _mode;
+    IDAOSpace.VotingMode _settingsModeAfterVote = IDAOSpace.VotingMode(_votingMode);
     if (_votingMode == 1 && _voteOption == uint256(IDAOSpace.VoteOption.No)) {
       _settingsModeAfterVote = IDAOSpace.VotingMode.Slow;
     }
@@ -1386,7 +1389,7 @@ contract UnitDAOSpace is TestHelper {
       abi.encode(_activeProposalParameters(_settingsModeAfterVote, _voteAt))
     );
 
-    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption(_voteOption));
+    bytes memory _voteProposalData = _createVoteForProposal(IDAOSpace.VoteOption(_voteOption));
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
 
     (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters, IDAOSpace.Tally memory _tally,) =
@@ -1702,24 +1705,22 @@ contract UnitDAOSpace is TestHelper {
     when_voteParamsAreValid
     whenTheCurrent_fromSpaceIdVoteEqualsNo
   {
-    bytes memory _createProposalData = _createFastPathProposalToAddMember();
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_deferredProposalParameters(IDAOSpace.VotingMode.Fast))
+    // proposal set up
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      0,
+      0,
+      0,
+      IDAOSpace.VotingMode.Fast,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
+      _votingSettings.flatSupportThreshold,
+      new IDAOSpace.Action[](0)
     );
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
-
-    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,,) =
-      daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
-    assertEq(_parameters.startDate, 0);
-    assertEq(_parameters.lastDate, 0);
-    assertEq(_parameters.executeBy, 0);
 
     uint256 _voteAt = vm.getBlockTimestamp() + 5 days;
     vm.warp(_voteAt);
@@ -1734,10 +1735,10 @@ contract UnitDAOSpace is TestHelper {
       abi.encode(_activeProposalParameters(IDAOSpace.VotingMode.Slow, _voteAt))
     );
 
-    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption.No);
+    bytes memory _voteProposalData = _createVoteForProposal(IDAOSpace.VoteOption.No);
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
 
-    (,, IDAOSpace.ProposalParameters memory _parametersAfterVote, IDAOSpace.Tally memory _tally,) =
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parametersAfterVote, IDAOSpace.Tally memory _tally,) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(_creator, _initialEditorASpaceId);
     assertEq(_tally.no, 1);

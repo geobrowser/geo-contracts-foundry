@@ -264,7 +264,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     // The proposal has not been executed already
     if (proposal_.executed) return false;
     // Voting window has not started
-    if (proposal_.parameters.startDate == 0) return false;
+    if (proposal_.parameters.lastDate == 0) return false;
     // Support threshold not reached
     if (!isSupportThresholdReached(_proposalId)) return false;
     // Execution window ended (snapshotted when voting starts on first vote)
