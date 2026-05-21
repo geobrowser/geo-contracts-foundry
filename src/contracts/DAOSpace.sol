@@ -503,7 +503,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Snapshots voting window timers from global settings and emits updated proposal parameters
    * @param _proposalId The proposal identifier
    * @param _proposal The proposal storage to update
-   * @dev Call only while `parameters.startDate` is zero. A fast-path first `No` vote does not call this; escalation
+   * @dev Call only while `parameters.lastDate` is zero. A fast-path first `No` vote does not call this; escalation
    * sets timers and emits `PROPOSAL_SETTINGS_SELECTED` once in `_voteProposal`.
    */
   function _startProposalVotingWindow(bytes16 _proposalId, Proposal storage _proposal) internal virtual {
@@ -571,7 +571,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @notice Votes on a proposal
    * @param _fromSpaceId The space ID casting the vote
    * @param _data The encoded vote data containing proposal ID, proposal version and vote option
-   * @dev Only editors can vote. Vote replacement allowed. While `parameters.startDate` is zero for this proposal
+   * @dev Only editors can vote. Vote replacement allowed. While `parameters.lastDate` is zero for this proposal
    * version, the first vote snapshots `startDate`, `lastDate`, and `executeBy` from `VotingSettings` (except a first
    * fast-path `No`, where escalation sets them once). "No" vote on fast path escalates to slow path.
    * After a supporting vote, execution runs immediately when `canExecuteProposal` is true: fast path when the
@@ -605,7 +605,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
-      if (proposal_.parameters.startDate == 0) {
+      if (proposal_.parameters.lastDate == 0) {
         _startProposalVotingWindow(_proposalId, proposal_);
       }
 
@@ -620,13 +620,13 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       // Fast path to slow path if rejection occurs
       if (proposal_.parameters.votingMode == VotingMode.Fast) {
         _escalateProposal(_proposalId, proposal_);
-      } else if (proposal_.parameters.startDate == 0) {
+      } else if (proposal_.parameters.lastDate == 0) {
         _startProposalVotingWindow(_proposalId, proposal_);
       }
     } else {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
 
-      if (proposal_.parameters.startDate == 0) {
+      if (proposal_.parameters.lastDate == 0) {
         _startProposalVotingWindow(_proposalId, proposal_);
       }
     }

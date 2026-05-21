@@ -222,7 +222,6 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     assertGt(_fastPathProposal.parameters.lastDate, _fastPathProposal.parameters.startDate);
     assertGt(_fastPathProposal.parameters.executeBy, _fastPathProposal.parameters.lastDate);
 
-    vm.warp(_fastPathProposal.parameters.lastDate + 1);
     vm.expectRevert(IDAOSpace.CanNotVote.selector);
     // Vote: Abstain
     _voteProposal({

@@ -294,9 +294,9 @@ interface IDAOSpace is ISpace {
    * @notice Checks if a proposal has reached its support threshold
    * @param _proposalId ID of the proposal to check
    * @return _isSupportThresholdReached True if support threshold is reached
-   * @dev Threshold-only view: does not check whether the voting window has started (`parameters.startDate`), whether
-   * the proposal was executed, or `parameters.executeBy`. On the slow path, the partial percentage threshold applies
-   * only after `parameters.lastDate`; when `lastDate` is zero, only the universal threshold is evaluated. Prefer
+   * @dev Threshold-only view: does not check whether voting timers are snapshotted (`parameters.lastDate` is zero),
+   * whether the proposal was executed, or `parameters.executeBy`. On the slow path, the partial percentage threshold
+   * applies only after `parameters.lastDate`; when `lastDate` is zero, only the universal threshold is evaluated. Prefer
    * `canExecuteProposal` for execution readiness.
    */
   function isSupportThresholdReached(bytes16 _proposalId) external view returns (bool _isSupportThresholdReached);
@@ -305,7 +305,8 @@ interface IDAOSpace is ISpace {
    * @notice Checks if a proposal can be executed
    * @param _proposalId The ID of the proposal to check
    * @return _canExecuteProposal True if the proposal can be executed, false otherwise
-   * @dev Returns false if proposal doesn't exist, already executed, voting window has not started, threshold not met, or `block.timestamp` is after `executeBy` (when set).
+   * @dev Returns false if proposal doesn't exist, already executed, `parameters.lastDate` is zero (voting timers unset),
+   * threshold not met, or `block.timestamp` is after `executeBy`.
    */
   function canExecuteProposal(bytes16 _proposalId) external view returns (bool _canExecuteProposal);
 
