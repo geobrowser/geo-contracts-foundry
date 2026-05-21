@@ -452,6 +452,7 @@ contract ExecutionPaths is Setup {
     (,, _params,,) = _dao.getLatestProposalInformation(_proposalId);
     assertGt(_params.startDate, 0, 'timers start on first vote');
     assertGt(_params.lastDate, _params.startDate, 'lastDate follows startDate');
+    assertGt(_params.executeBy, _params.lastDate, 'executeBy follows lastDate');
   }
 
   /// Test the previously found H-0 "vote-migrate-vote again" vulnerability

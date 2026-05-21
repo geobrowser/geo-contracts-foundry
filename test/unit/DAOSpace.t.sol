@@ -1122,140 +1122,6 @@ contract UnitDAOSpace is TestHelper {
     assertEq(_actions[0].data, abi.encodeCall(IDAOSpace.addMember, (_randomCallerSpaceId)));
   }
 
-  function test_Write_WhenPastDurationBeforeFirstVote(
-    bytes32 _subject,
-    uint256 _votingMode,
-    uint256 _voteOption
-  ) external whenCalledBySpaceRegistry {
-    _votingMode = bound(_votingMode, 0, 1);
-    _voteOption = bound(_voteOption, 1, 3);
-
-    IDAOSpace.VotingMode _mode = IDAOSpace.VotingMode(_votingMode);
-    bytes memory _createProposalData =
-      _votingMode == 0 ? _createSlowPathProposalToAddEditor() : _createFastPathProposalToAddMember();
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_deferredProposalParameters(_mode))
-    );
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
-
-    uint256 _voteAt = vm.getBlockTimestamp() + _votingSettings.duration + 1;
-    vm.warp(_voteAt);
-
-    IDAOSpace.VotingMode _settingsModeAfterVote = _mode;
-    if (_votingMode == 1 && _voteOption == uint256(IDAOSpace.VoteOption.No)) {
-      _settingsModeAfterVote = IDAOSpace.VotingMode.Slow;
-    }
-
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_activeProposalParameters(_settingsModeAfterVote, _voteAt))
-    );
-
-    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption(_voteOption));
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
-
-    (,, IDAOSpace.ProposalParameters memory _parameters, IDAOSpace.Tally memory _tally,) =
-      daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertGt(_parameters.startDate, 0);
-    assertGt(_parameters.lastDate, _parameters.startDate);
-    assertGt(_parameters.executeBy, _parameters.lastDate);
-    assertEq(_tally.yes + _tally.no + _tally.abstain, 1);
-    if (_votingMode == 1 && _voteOption == uint256(IDAOSpace.VoteOption.No)) {
-      assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
-    }
-  }
-
-  function test_Write_WhenFirstVote(bytes32 _subject, uint256 _votingMode) external whenCalledBySpaceRegistry {
-    _votingMode = bound(_votingMode, 0, 1);
-
-    IDAOSpace.VotingMode _mode = IDAOSpace.VotingMode(_votingMode);
-    uint256 _voteAt = vm.getBlockTimestamp() + 3 days;
-    bytes memory _createProposalData =
-      _votingMode == 0 ? _createSlowPathProposalToAddEditor() : _createFastPathProposalToAddMember();
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_deferredProposalParameters(_mode))
-    );
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
-
-    vm.warp(_voteAt);
-
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_activeProposalParameters(_mode, _voteAt))
-    );
-
-    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption.Yes);
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
-
-    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,,) =
-      daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(_creator, _initialEditorASpaceId);
-    assertEq(_parameters.startDate, _voteAt);
-    assertEq(_parameters.lastDate, _voteAt + _votingSettings.duration);
-    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
-  }
-
-  function test_Write_WhenFirstVoteOnFastPathIsNoAndTimersWereUnset(bytes32 _subject)
-    external
-    whenCalledBySpaceRegistry
-  {
-    bytes memory _createProposalData = _createFastPathProposalToAddMember();
-    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_deferredProposalParameters(IDAOSpace.VotingMode.Fast))
-    );
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
-
-    uint256 _voteAt = vm.getBlockTimestamp() + 5 days;
-    vm.warp(_voteAt);
-
-    _mockEnter(
-      _spaceRegistry,
-      _daoSpaceProxySpaceId,
-      _daoSpaceProxySpaceId,
-      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
-      bytes32(_proposalId),
-      abi.encode(_activeProposalParameters(IDAOSpace.VotingMode.Slow, _voteAt))
-    );
-
-    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption.No);
-    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
-
-    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters, IDAOSpace.Tally memory _tally,) =
-      daoSpaceProxy.getLatestProposalInformation(_proposalId);
-    assertEq(_creator, _initialEditorASpaceId);
-    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
-    assertEq(_parameters.startDate, _voteAt);
-    assertEq(_parameters.lastDate, _voteAt + _votingSettings.duration);
-    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
-    assertEq(_tally.no, 1);
-  }
-
   /// WRITE - PROPOSAL_VOTED ///
 
   modifier when_actionEqualsPROPOSAL_VOTED() {
@@ -1309,7 +1175,7 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
   }
 
-  function test_Write_WhenTheBlockTimestampIsGreaterThanTheLastDate(
+  function test_Write_WhenTheBlockTimestampIsGreaterThanTheLastDateWhenSet(
     bytes32 _subject,
     uint256 _voteOption,
     uint256 _votingMode
@@ -1319,7 +1185,7 @@ contract UnitDAOSpace is TestHelper {
 
     uint256 _now = vm.getBlockTimestamp();
 
-    // proposal set up with a voting window that ends one second after creation
+    // proposal set up with lastDate set; voting window ends one second after creation
     daoSpaceProxy.workaround_createProposal(
       _proposalId,
       false,
@@ -1443,6 +1309,10 @@ contract UnitDAOSpace is TestHelper {
     _;
   }
 
+  modifier whenFirstVote() {
+    _;
+  }
+
   function test_Write_When_voteParamsAreValid(
     bytes32 _subject,
     uint256 _voteOption,
@@ -1475,6 +1345,74 @@ contract UnitDAOSpace is TestHelper {
     // it stores the current _fromSpaceId vote
     IDAOSpace.VoteOption _storedVoteOption = daoSpaceProxy.getLatestProposalVote(_proposalId, _initialEditorASpaceId);
     assertEq(uint256(_storedVoteOption), _voteOption);
+  }
+
+  function test_Write_WhenFirstVote(
+    bytes32 _subject,
+    uint256 _votingMode,
+    uint256 _voteOption
+  ) external whenCalledBySpaceRegistry when_actionEqualsPROPOSAL_VOTED when_voteParamsAreValid whenFirstVote {
+    _votingMode = bound(_votingMode, 0, 1);
+    _voteOption = bound(_voteOption, 1, 3);
+
+    IDAOSpace.VotingMode _mode = IDAOSpace.VotingMode(_votingMode);
+    bytes memory _createProposalData =
+      _votingMode == 0 ? _createSlowPathProposalToAddEditor() : _createFastPathProposalToAddMember();
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(_deferredProposalParameters(_mode))
+    );
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
+
+    uint256 _voteAt = vm.getBlockTimestamp() + _votingSettings.duration + 1;
+    vm.warp(_voteAt);
+
+    IDAOSpace.VotingMode _settingsModeAfterVote = _mode;
+    if (_votingMode == 1 && _voteOption == uint256(IDAOSpace.VoteOption.No)) {
+      _settingsModeAfterVote = IDAOSpace.VotingMode.Slow;
+    }
+
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(_activeProposalParameters(_settingsModeAfterVote, _voteAt))
+    );
+
+    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption(_voteOption));
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
+
+    (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters, IDAOSpace.Tally memory _tally,) =
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
+
+    // it starts the voting window from block.timestamp
+    assertEq(_creator, _initialEditorASpaceId);
+    assertEq(_parameters.startDate, _voteAt);
+    assertEq(_parameters.lastDate, _voteAt + _votingSettings.duration);
+    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
+    if (_voteOption == uint256(IDAOSpace.VoteOption.Yes)) {
+      assertEq(_tally.yes, 1);
+      assertEq(_tally.no, 0);
+      assertEq(_tally.abstain, 0);
+    } else if (_voteOption == uint256(IDAOSpace.VoteOption.No)) {
+      assertEq(_tally.yes, 0);
+      assertEq(_tally.no, 1);
+      assertEq(_tally.abstain, 0);
+    } else {
+      assertEq(_tally.yes, 0);
+      assertEq(_tally.no, 0);
+      assertEq(_tally.abstain, 1);
+    }
+    if (_votingMode == 1 && _voteOption == uint256(IDAOSpace.VoteOption.No)) {
+      assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+    }
   }
 
   function test_Write_WhenTheFormer_fromSpaceIdVoteEqualsYes(
@@ -1762,37 +1700,29 @@ contract UnitDAOSpace is TestHelper {
     whenCalledBySpaceRegistry
     when_actionEqualsPROPOSAL_VOTED
     when_voteParamsAreValid
+    whenTheCurrent_fromSpaceIdVoteEqualsNo
   {
-    // proposal set up
-    daoSpaceProxy.workaround_createProposal(
-      _proposalId,
-      false,
-      _proposalVersion,
-      _initialEditorASpaceId,
-      vm.getBlockTimestamp(),
-      vm.getBlockTimestamp() + 1e5,
-      vm.getBlockTimestamp() + 1e5 + _votingSettings.executionGracePeriod,
-      IDAOSpace.VotingMode.Fast,
-      1,
-      1,
-      1,
-      1,
-      new IDAOSpace.Action[](0)
+    bytes memory _createProposalData = _createFastPathProposalToAddMember();
+    _mockAddressToSpaceId(_spaceRegistry, address(daoSpaceProxy), _daoSpaceProxySpaceId);
+    _mockEnter(
+      _spaceRegistry,
+      _daoSpaceProxySpaceId,
+      _daoSpaceProxySpaceId,
+      ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
+      bytes32(_proposalId),
+      abi.encode(_deferredProposalParameters(IDAOSpace.VotingMode.Fast))
     );
+    daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_CREATED, _subject, _createProposalData);
 
     (, bytes16 _creator, IDAOSpace.ProposalParameters memory _parameters,,) =
       daoSpaceProxy.getLatestProposalInformation(_proposalId);
     assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Fast));
-    assertEq(_parameters.quorum, 1);
-    assertEq(_parameters.partialPercentageSupportThreshold, 1);
-    assertEq(_parameters.universalPercentageSupportThreshold, 1);
-    assertEq(_parameters.flatSupportThreshold, 1);
-    assertEq(_parameters.startDate, vm.getBlockTimestamp());
-    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + 1e5);
-    assertEq(_parameters.executeBy, vm.getBlockTimestamp() + 1e5 + _votingSettings.executionGracePeriod);
+    assertEq(_parameters.startDate, 0);
+    assertEq(_parameters.lastDate, 0);
+    assertEq(_parameters.executeBy, 0);
 
-    // warp forwards to ensure start date is reset
-    vm.warp(vm.getBlockTimestamp() + 100);
+    uint256 _voteAt = vm.getBlockTimestamp() + 5 days;
+    vm.warp(_voteAt);
 
     // it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
     _mockEnter(
@@ -1801,54 +1731,46 @@ contract UnitDAOSpace is TestHelper {
       _daoSpaceProxySpaceId,
       ActionsConstants.PROPOSAL_SETTINGS_SELECTED,
       bytes32(_proposalId),
-      abi.encode(
-        IDAOSpace.ProposalParameters({
-          votingMode: IDAOSpace.VotingMode.Slow,
-          partialPercentageSupportThreshold: _votingSettings.partialPercentageSupportThreshold,
-          universalPercentageSupportThreshold: _votingSettings.universalPercentageSupportThreshold,
-          flatSupportThreshold: _votingSettings.flatSupportThreshold,
-          quorum: _votingSettings.quorum,
-          startDate: vm.getBlockTimestamp(),
-          lastDate: vm.getBlockTimestamp() + _votingSettings.duration,
-          executeBy: vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod
-        })
-      )
+      abi.encode(_activeProposalParameters(IDAOSpace.VotingMode.Slow, _voteAt))
     );
 
-    // vote no
-    bytes memory _voteProposalData = _createVoteForProposal(IDAOSpace.VoteOption.No);
+    bytes memory _voteProposalData = abi.encode(_proposalId, uint8(1), IDAOSpace.VoteOption.No);
     daoSpaceProxy.write(_initialEditorASpaceId, ActionsConstants.PROPOSAL_VOTED, _subject, _voteProposalData);
 
-    (, _creator, _parameters,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    (,, IDAOSpace.ProposalParameters memory _parametersAfterVote, IDAOSpace.Tally memory _tally,) =
+      daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_creator, _initialEditorASpaceId);
+    assertEq(_tally.no, 1);
 
     // it updates the proposal voting mode to the slow path
-    assertEq(uint256(_parameters.votingMode), uint256(IDAOSpace.VotingMode.Slow));
+    assertEq(uint256(_parametersAfterVote.votingMode), uint256(IDAOSpace.VotingMode.Slow));
 
     // it updates the proposal quorum to votingSettings.quorum
-    assertEq(_parameters.quorum, _votingSettings.quorum);
+    assertEq(_parametersAfterVote.quorum, _votingSettings.quorum);
 
     // it updates the proposal partial percentage support threshold to votingSettings.partialPercentageSupportThreshold
     assertEq(
-      _parameters.partialPercentageSupportThreshold, daoSpaceProxy.votingSettings().partialPercentageSupportThreshold
+      _parametersAfterVote.partialPercentageSupportThreshold,
+      daoSpaceProxy.votingSettings().partialPercentageSupportThreshold
     );
 
     // it updates the proposal universal percentage support threshold to votingSettings.universalPercentageSupportThreshold
     assertEq(
-      _parameters.universalPercentageSupportThreshold,
+      _parametersAfterVote.universalPercentageSupportThreshold,
       daoSpaceProxy.votingSettings().universalPercentageSupportThreshold
     );
 
     // it updates the proposal flat support threshold to votingSettings.flatSupportThreshold
-    assertEq(_parameters.flatSupportThreshold, daoSpaceProxy.votingSettings().flatSupportThreshold);
+    assertEq(_parametersAfterVote.flatSupportThreshold, daoSpaceProxy.votingSettings().flatSupportThreshold);
 
     // it updates the proposal start date to block.timestamp
-    assertEq(_parameters.startDate, vm.getBlockTimestamp());
+    assertEq(_parametersAfterVote.startDate, _voteAt);
 
     // it updates the proposal last date to block.timestamp plus votingSettings.duration
-    assertEq(_parameters.lastDate, vm.getBlockTimestamp() + _votingSettings.duration);
+    assertEq(_parametersAfterVote.lastDate, _voteAt + _votingSettings.duration);
 
     // it updates executeBy to lastDate plus votingSettings.executionGracePeriod
-    assertEq(_parameters.executeBy, _parameters.lastDate + _votingSettings.executionGracePeriod);
+    assertEq(_parametersAfterVote.executeBy, _parametersAfterVote.lastDate + _votingSettings.executionGracePeriod);
   }
 
   modifier whenTheCurrent_fromSpaceIdVoteEqualsAbstain() {
@@ -3304,29 +3226,6 @@ contract UnitDAOSpace is TestHelper {
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
   }
 
-  function test_CanExecuteProposal_WhenSupportThresholdIsNotReached() external {
-    // Create proposal where the threshold is not reached
-    daoSpaceProxy.workaround_createProposal(
-      _proposalId,
-      false,
-      1,
-      _initialEditorASpaceId,
-      vm.getBlockTimestamp(),
-      vm.getBlockTimestamp() + _votingSettings.duration,
-      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
-      IDAOSpace.VotingMode.Fast,
-      _votingSettings.quorum,
-      _votingSettings.partialPercentageSupportThreshold,
-      _votingSettings.universalPercentageSupportThreshold,
-      1,
-      new IDAOSpace.Action[](0)
-    );
-    daoSpaceProxy.workaround_setTally(_proposalId, 0, 0, 0);
-
-    // it returns false
-    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
-  }
-
   function test_CanExecuteProposal_WhenTimersNotStarted(uint256 _votingMode) external {
     _votingMode = bound(_votingMode, 0, 1);
 
@@ -3346,6 +3245,29 @@ contract UnitDAOSpace is TestHelper {
       new IDAOSpace.Action[](0)
     );
     daoSpaceProxy.workaround_setTally(_proposalId, _votingSettings.flatSupportThreshold + 1, 0, 0);
+
+    // it returns false
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+  }
+
+  function test_CanExecuteProposal_WhenSupportThresholdIsNotReached() external {
+    // Create proposal where the threshold is not reached
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      1,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      vm.getBlockTimestamp() + _votingSettings.duration,
+      vm.getBlockTimestamp() + _votingSettings.duration + _votingSettings.executionGracePeriod,
+      IDAOSpace.VotingMode.Fast,
+      _votingSettings.quorum,
+      _votingSettings.partialPercentageSupportThreshold,
+      _votingSettings.universalPercentageSupportThreshold,
+      1,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 0, 0, 0);
 
     // it returns false
     assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
@@ -3479,6 +3401,29 @@ contract UnitDAOSpace is TestHelper {
 
     // it returns true
     assertTrue(daoSpaceProxy.isSupportThresholdReached(_proposalId));
+  }
+
+  function test_IsSupportThresholdReached_WhenTheProposalLastDateIsZero() external whenTheProposalVotingModeIsSlow {
+    daoSpaceProxy.workaround_createProposal(
+      _proposalId,
+      false,
+      _proposalVersion,
+      _initialEditorASpaceId,
+      vm.getBlockTimestamp(),
+      0,
+      0,
+      IDAOSpace.VotingMode.Slow,
+      1,
+      _votingSettings.partialPercentageSupportThreshold,
+      daoSpaceProxy.RATIO_BASE(),
+      _votingSettings.flatSupportThreshold,
+      new IDAOSpace.Action[](0)
+    );
+    daoSpaceProxy.workaround_setTally(_proposalId, 1, 0, 0);
+    daoSpaceProxy.workaround_setTotalEditors(2);
+
+    // it returns false
+    assertFalse(daoSpaceProxy.isSupportThresholdReached(_proposalId));
   }
 
   function test_IsSupportThresholdReached_WhenTheBlockTimestampIsLessThanOrEqualToTheProposalLastDate(

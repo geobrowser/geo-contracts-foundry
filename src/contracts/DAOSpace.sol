@@ -263,10 +263,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (proposal_.creator == bytes16(0)) return false;
     // The proposal has not been executed already
     if (proposal_.executed) return false;
-    // Support threshold not reached
-    if (!isSupportThresholdReached(_proposalId)) return false;
     // Voting window has not started
     if (proposal_.parameters.startDate == 0) return false;
+    // Support threshold not reached
+    if (!isSupportThresholdReached(_proposalId)) return false;
     // Execution window ended (snapshotted when voting starts on first vote)
     if (block.timestamp > proposal_.parameters.executeBy) return false;
     return true;
@@ -300,8 +300,8 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
         return true;
       }
 
-      // Duration check (skipped until voting window starts on first vote)
-      if (proposal_.parameters.lastDate != 0 && block.timestamp <= proposal_.parameters.lastDate) return false;
+      // Duration check (partial threshold only after the snapshotted voting window ends)
+      if (proposal_.parameters.lastDate == 0 || block.timestamp <= proposal_.parameters.lastDate) return false;
 
       _effectiveSupportThreshold =
         _computeEffectiveSupportThreshold(proposal_.parameters.partialPercentageSupportThreshold);
@@ -506,8 +506,28 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @dev Call only while `parameters.startDate` is zero. A fast-path first `No` vote does not call this; escalation
    * sets timers and emits `PROPOSAL_SETTINGS_SELECTED` once in `_voteProposal`.
    */
-  function _startProposalVotingWindow(bytes16 _proposalId, Proposal storage _proposal) internal {
+  function _startProposalVotingWindow(bytes16 _proposalId, Proposal storage _proposal) internal virtual {
     DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _proposal.parameters.startDate = block.timestamp;
+    _proposal.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
+    _proposal.parameters.executeBy = _proposal.parameters.lastDate + $_.votingSettings.executionGracePeriod;
+
+    _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(_proposal.parameters));
+  }
+
+  /**
+   * @notice Escalates a fast-path proposal to slow-path settings and restarts the voting window
+   * @param _proposalId The proposal identifier
+   * @param _proposal The proposal storage to update
+   * @dev Call when a `No` vote is cast on a fast-path proposal. Sets timers and emits `PROPOSAL_SETTINGS_SELECTED`.
+   */
+  function _escalateProposal(bytes16 _proposalId, Proposal storage _proposal) internal virtual {
+    DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
+    _proposal.parameters.votingMode = VotingMode.Slow;
+    _proposal.parameters.quorum = $_.votingSettings.quorum;
+    _proposal.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
+    _proposal.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
+    _proposal.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
     _proposal.parameters.startDate = block.timestamp;
     _proposal.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
     _proposal.parameters.executeBy = _proposal.parameters.lastDate + $_.votingSettings.executionGracePeriod;
@@ -568,13 +588,6 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     Proposal storage proposal_ = _getProposalStorage(_proposalId, _proposalVersion);
 
-    bool _firstVoteEscalatesOnNo = proposal_.parameters.startDate == 0
-      && proposal_.parameters.votingMode == VotingMode.Fast && _voteOption == VoteOption.No;
-
-    if (proposal_.parameters.startDate == 0 && !_firstVoteEscalatesOnNo) {
-      _startProposalVotingWindow(_proposalId, proposal_);
-    }
-
     // Remove the previous vote
     VoteOption _state = proposal_.voters[_fromSpaceId];
     if (_state == VoteOption.Yes) {
@@ -592,6 +605,10 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     if (_voteOption == VoteOption.Yes) {
       proposal_.tally.yes = proposal_.tally.yes + 1;
 
+      if (proposal_.parameters.startDate == 0) {
+        _startProposalVotingWindow(_proposalId, proposal_);
+      }
+
       // Immediate execution if possible
       if (canExecuteProposal(_proposalId)) {
         _ping(ActionsConstants.PROPOSAL_EXECUTED, bytes32(_proposalId), abi.encode(_proposalId));
@@ -602,25 +619,16 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
       // Fast path to slow path if rejection occurs
       if (proposal_.parameters.votingMode == VotingMode.Fast) {
-        DAOSpaceStorage storage $_ = _getDAOSpaceStorage();
-        // Update voting mode
-        proposal_.parameters.votingMode = VotingMode.Slow;
-        // Update quorum
-        proposal_.parameters.quorum = $_.votingSettings.quorum;
-        // Update thresholds
-        proposal_.parameters.partialPercentageSupportThreshold = $_.votingSettings.partialPercentageSupportThreshold;
-        proposal_.parameters.universalPercentageSupportThreshold = $_.votingSettings.universalPercentageSupportThreshold;
-        proposal_.parameters.flatSupportThreshold = $_.votingSettings.flatSupportThreshold;
-        // Reset duration and block times
-        proposal_.parameters.startDate = block.timestamp;
-        proposal_.parameters.lastDate = block.timestamp + $_.votingSettings.duration;
-        proposal_.parameters.executeBy = proposal_.parameters.lastDate + $_.votingSettings.executionGracePeriod;
-
-        // Ping the registry to emit the updated proposal settings
-        _ping(ActionsConstants.PROPOSAL_SETTINGS_SELECTED, bytes32(_proposalId), abi.encode(proposal_.parameters));
+        _escalateProposal(_proposalId, proposal_);
+      } else if (proposal_.parameters.startDate == 0) {
+        _startProposalVotingWindow(_proposalId, proposal_);
       }
     } else {
       proposal_.tally.abstain = proposal_.tally.abstain + 1;
+
+      if (proposal_.parameters.startDate == 0) {
+        _startProposalVotingWindow(_proposalId, proposal_);
+      }
     }
   }
 

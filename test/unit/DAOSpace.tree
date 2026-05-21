@@ -97,18 +97,12 @@ UnitDAOSpace::write
 │   │           ├── it sets the proposal flat support threshold to votingSettings.flatSupportThreshold
 │   │           ├── it stores the decoded proposal actions
 │   │           └── it calls enter on the spaceRegistry with the PROPOSAL_SETTINGS_SELECTED action
-│   ├── when past duration before first vote
-│   │   └── it can still vote and starts the voting window
-│   ├── when first vote
-│   │   └── it starts the voting window from block.timestamp
-│   ├── when first vote on fast path is no and timers were unset
-│   │   └── it emits proposal settings selected once when escalating
 │   ├── when _action equals PROPOSAL_VOTED
 │   │   ├── when the proposal does not exist
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when _proposalVersion is not latestProposalVersion
 │   │   │   └── it reverts with CanNotVote
-│   │   ├── when the block timestamp is greater than the last date 
+│   │   ├── when the block timestamp is greater than the last date when set
 │   │   │   └── it reverts with CanNotVote
 │   │   ├── when the proposal has been executed
 │   │   │   └── it reverts with CanNotVote
@@ -118,6 +112,8 @@ UnitDAOSpace::write
 │   │   │   └── it reverts with CanNotVote
 │   │   └── when _vote params are valid
 │   │       ├── it stores the current _fromSpaceId vote
+│   │       ├── when first vote
+│   │       │   └── it starts the voting window from block.timestamp
 │   │       ├── when the former _fromSpaceId vote equals yes
 │   │       │   └── it decreases the proposal yes vote tally by one
 │   │       ├── when the former _fromSpaceId vote equals no
@@ -327,9 +323,9 @@ UnitDAOSpace::canExecuteProposal
 │   └── it returns false
 ├── when proposal has already been executed
 │   └── it returns false
-├── when support threshold is not reached
-│   └── it returns false
 ├── when timers not started
+│   └── it returns false
+├── when support threshold is not reached
 │   └── it returns false
 ├── when past executeBy
 │   └── it returns false
@@ -342,6 +338,8 @@ UnitDAOSpace::isSupportThresholdReached
 │   │   └── it returns false
 │   ├── when the yes votes are greater than the universal percentage support threshold
 │   │   └── it returns true
+│   ├── when the proposal last date is zero
+│   │   └── it returns false
 │   ├── when the block timestamp is less than or equal to the proposal last date
 │   │   └── it returns false
 │   ├── when the yes votes are not greater than the partial percentage support threshold

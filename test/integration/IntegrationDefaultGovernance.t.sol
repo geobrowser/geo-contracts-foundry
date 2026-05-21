@@ -21,45 +21,34 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     vm.selectFork(_geoForkId);
   }
 
-  function test_DefaultGovernance_DeferredVotingWindow() external {
-    bytes16 _slowProposalId = 'slow-deferred';
-    _createSlowPathProposal(_slowProposalId, _verifierSpaceProxyId);
+  function test_DefaultGovernance_ExecutionGracePeriodAndExecuteBy() external {
+    IDAOSpace.VotingSettings memory _deployedVotingSettings = daoSpaceProxy.votingSettings();
+    assertEq(_deployedVotingSettings.executionGracePeriod, _votingSettings.executionGracePeriod);
 
-    (,, IDAOSpace.ProposalParameters memory _slowParams,,) = daoSpaceProxy.getLatestProposalInformation(_slowProposalId);
-    assertEq(_slowParams.startDate, 0);
-    assertEq(_slowParams.lastDate, 0);
-    assertEq(_slowParams.executeBy, 0);
-
-    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1 days);
-    assertFalse(daoSpaceProxy.canExecuteProposal(_slowProposalId));
-
+    bytes16 _proposalId = 'exec-grace';
+    _createSlowPathProposal(_proposalId, _verifierSpaceProxyId);
     _voteProposal({
-      _voterSpaceId: _eoaSpaceId,
-      _proposalId: _slowProposalId,
-      _proposalVersion: 1,
-      _voteOption: IDAOSpace.VoteOption.Yes
+      _voterSpaceId: _eoaSpaceId, _proposalId: _proposalId, _proposalVersion: 1, _voteOption: IDAOSpace.VoteOption.Yes
     });
 
-    (,, _slowParams,,) = daoSpaceProxy.getLatestProposalInformation(_slowProposalId);
-    assertGt(_slowParams.startDate, 0);
-    assertGt(_slowParams.lastDate, _slowParams.startDate);
+    (,, IDAOSpace.ProposalParameters memory _params,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertEq(_params.executeBy, _params.lastDate + _deployedVotingSettings.executionGracePeriod);
 
-    bytes16 _fastProposalId = 'fast-deferred';
-    _createFastPathProposal(_fastProposalId, _verifierSpaceProxyId);
+    vm.warp(_params.lastDate + 1);
+    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
 
-    (,, IDAOSpace.ProposalParameters memory _fastParams,,) = daoSpaceProxy.getLatestProposalInformation(_fastProposalId);
-    assertEq(_fastParams.startDate, 0);
+    vm.warp(_params.executeBy + 1);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_proposalId));
+    vm.expectRevert(IDAOSpace.CanNotExecute.selector);
+    _executeProposal(_proposalId);
 
-    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1 days);
-    _voteProposal({
-      _voterSpaceId: _eoaSpaceId,
-      _proposalId: _fastProposalId,
-      _proposalVersion: 1,
-      _voteOption: IDAOSpace.VoteOption.Abstain
-    });
+    vm.warp(_params.executeBy);
+    assertTrue(daoSpaceProxy.canExecuteProposal(_proposalId));
+    _executeProposal(_proposalId);
 
-    (,, _fastParams,,) = daoSpaceProxy.getLatestProposalInformation(_fastProposalId);
-    assertGt(_fastParams.startDate, 0);
+    (bool _executed,,,,) = daoSpaceProxy.getLatestProposalInformation(_proposalId);
+    assertTrue(_executed);
+    assertFalse(daoSpaceProxy.hasRole(daoSpaceImplementation.EDITOR(), _verifierSpaceProxyId));
   }
 
   function test_DefaultGovernance_CreateProposals() external {
@@ -91,6 +80,70 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   }
 
   function test_DefaultGovernance_VoteProposals() external {
+    // Deferred voting window: slow path
+    bytes16 _slowDeferredProposalId = 'slow-deferred';
+    _createSlowPathProposal(_slowDeferredProposalId, _verifierSpaceProxyId);
+
+    (,, IDAOSpace.ProposalParameters memory _slowDeferredParams,,) =
+      daoSpaceProxy.getLatestProposalInformation(_slowDeferredProposalId);
+    assertEq(_slowDeferredParams.startDate, 0);
+    assertEq(_slowDeferredParams.lastDate, 0);
+    assertEq(_slowDeferredParams.executeBy, 0);
+
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1 days);
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowDeferredProposalId));
+
+    _voteProposal({
+      _voterSpaceId: _eoaSpaceId,
+      _proposalId: _slowDeferredProposalId,
+      _proposalVersion: 1,
+      _voteOption: IDAOSpace.VoteOption.Yes
+    });
+
+    (,, _slowDeferredParams,,) = daoSpaceProxy.getLatestProposalInformation(_slowDeferredProposalId);
+    assertGt(_slowDeferredParams.startDate, 0);
+    assertGt(_slowDeferredParams.lastDate, _slowDeferredParams.startDate);
+    assertGt(_slowDeferredParams.executeBy, _slowDeferredParams.lastDate);
+
+    vm.warp(_slowDeferredParams.lastDate + 1);
+    vm.expectRevert(IDAOSpace.CanNotVote.selector);
+    _voteProposal({
+      _voterSpaceId: _eoaSpaceId,
+      _proposalId: _slowDeferredProposalId,
+      _proposalVersion: 1,
+      _voteOption: IDAOSpace.VoteOption.No
+    });
+
+    // Deferred voting window: fast path
+    bytes16 _fastDeferredProposalId = 'fast-deferred';
+    _createFastPathProposal(_fastDeferredProposalId, _verifierSpaceProxyId);
+
+    (,, IDAOSpace.ProposalParameters memory _fastDeferredParams,,) =
+      daoSpaceProxy.getLatestProposalInformation(_fastDeferredProposalId);
+    assertEq(_fastDeferredParams.startDate, 0);
+
+    vm.warp(vm.getBlockTimestamp() + _votingSettings.duration + 1 days);
+    _voteProposal({
+      _voterSpaceId: _eoaSpaceId,
+      _proposalId: _fastDeferredProposalId,
+      _proposalVersion: 1,
+      _voteOption: IDAOSpace.VoteOption.Abstain
+    });
+
+    (,, _fastDeferredParams,,) = daoSpaceProxy.getLatestProposalInformation(_fastDeferredProposalId);
+    assertGt(_fastDeferredParams.startDate, 0);
+    assertGt(_fastDeferredParams.lastDate, _fastDeferredParams.startDate);
+    assertGt(_fastDeferredParams.executeBy, _fastDeferredParams.lastDate);
+
+    vm.warp(_fastDeferredParams.lastDate + 1);
+    vm.expectRevert(IDAOSpace.CanNotVote.selector);
+    _voteProposal({
+      _voterSpaceId: _eoaSpaceId,
+      _proposalId: _fastDeferredProposalId,
+      _proposalVersion: 1,
+      _voteOption: IDAOSpace.VoteOption.Yes
+    });
+
     // Proposal 0: Path escalation
     bytes16 _pathEscalationProposalId = '0';
     _createFastPathProposal(_pathEscalationProposalId, _verifierSpaceProxyId);
@@ -327,15 +380,51 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     // Proposal 0: Slow path
     bytes16 _slowPathProposalId = '0';
     _createSlowPathProposal(_slowPathProposalId, _verifierSpaceProxyId);
+    // Vote: Yes (starts voting window on version 1)
+    _voteProposal({
+      _voterSpaceId: _eoaSpaceId,
+      _proposalId: _slowPathProposalId,
+      _proposalVersion: 1,
+      _voteOption: IDAOSpace.VoteOption.Yes
+    });
+
+    (,, IDAOSpace.ProposalParameters memory _v1Params, IDAOSpace.Tally memory _v1Tally,) =
+      daoSpaceProxy.getProposalInformation(_slowPathProposalId, 1);
+    assertGt(_v1Params.startDate, 0);
+    assertGt(_v1Params.lastDate, _v1Params.startDate);
+    assertGt(_v1Params.executeBy, _v1Params.lastDate);
+    assertEq(_v1Tally.yes, 1);
+    assertEq(uint8(daoSpaceProxy.getProposalVote(_slowPathProposalId, 1, _eoaSpaceId)), uint8(IDAOSpace.VoteOption.Yes));
+
+    vm.warp(_v1Params.lastDate + 1);
+
     // Update: Fast path
     _updateProposalPath(_slowPathProposalId, IDAOSpace.VotingMode.Fast, _verifierSpaceProxyId);
 
     Proposal memory _slowPathProposal;
-    (, _slowPathProposal.creator, _slowPathProposal.parameters,,) =
+    (, _slowPathProposal.creator, _slowPathProposal.parameters, _slowPathProposal.tally,) =
       daoSpaceProxy.getLatestProposalInformation(_slowPathProposalId);
     assertEq(_slowPathProposal.creator, _eoaSpaceId);
     assertEq(uint8(_slowPathProposal.parameters.votingMode), uint8(IDAOSpace.VotingMode.Fast));
     assertEq(daoSpaceProxy.latestProposalVersion(_slowPathProposalId), 2);
+    assertEq(_slowPathProposal.parameters.startDate, 0);
+    assertEq(_slowPathProposal.parameters.lastDate, 0);
+    assertEq(_slowPathProposal.parameters.executeBy, 0);
+    assertEq(_slowPathProposal.tally.yes, 0);
+    assertEq(_slowPathProposal.tally.no, 0);
+    assertEq(_slowPathProposal.tally.abstain, 0);
+    assertEq(
+      uint8(daoSpaceProxy.getLatestProposalVote(_slowPathProposalId, _eoaSpaceId)), uint8(IDAOSpace.VoteOption.None)
+    );
+    assertFalse(daoSpaceProxy.canExecuteProposal(_slowPathProposalId));
+
+    (,, IDAOSpace.ProposalParameters memory _v1ParamsAfter, IDAOSpace.Tally memory _v1TallyAfter,) =
+      daoSpaceProxy.getProposalInformation(_slowPathProposalId, 1);
+    assertEq(_v1ParamsAfter.startDate, _v1Params.startDate);
+    assertEq(_v1ParamsAfter.lastDate, _v1Params.lastDate);
+    assertEq(_v1ParamsAfter.executeBy, _v1Params.executeBy);
+    assertEq(_v1TallyAfter.yes, 1);
+    assertEq(uint8(daoSpaceProxy.getProposalVote(_slowPathProposalId, 1, _eoaSpaceId)), uint8(IDAOSpace.VoteOption.Yes));
   }
 
   function test_DefaultGovernance_RequestMembership() external {
