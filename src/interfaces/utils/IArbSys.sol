@@ -12,5 +12,5 @@ interface IArbSys {
    * @param _calldataForL2 Encoded call data for the L2 contract
    * @return _messageId Identifier for the queued message
    */
-  function sendTxToL1(address _destination, bytes calldata _calldataForL2) external returns (uint256 _messageId);
+  function sendTxToL1(address _destination, bytes calldata _calldataForL2) external payable returns (uint256 _messageId);
 }
