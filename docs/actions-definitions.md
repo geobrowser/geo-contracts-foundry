@@ -2,7 +2,7 @@ This document outlines how to both encode and interpret an `Action` event from t
 
 ```solidity
 /**
- * @notice Emitted from `SpaceRegistry` (`enter`, lifecycle methods, `overrideAction`, re-entrant `enter` e.g. `DAOSpace._ping`)
+ * @notice Emitted from `SpaceRegistry` (`enter`, lifecycle methods, `setL2IncentivesPayer`, `overrideAction`, re-entrant `enter` e.g. `DAOSpace._ping`)
  */
 event Action(
   bytes16 indexed fromSpaceId,
@@ -25,6 +25,7 @@ event Action(
 | Space Type Declared | `keccak256('GOVERNANCE.SPACE_TYPE_DECLARED')` | `_type` e.g. `keccak256('DAO_SPACE')` | `_version` e.g. `abi.encode('1.0.0')` |
 | Permissionless Action Added | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_ADDED')` | `keccak256('PERMISSIONLESS.<NAME>')` allowed | empty |
 | Permissionless Action Removed | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED')` | `keccak256('PERMISSIONLESS.<NAME>')` disallowed | empty |
+| L2 Incentives Payer Set | `keccak256('GOVERNANCE.L2_INCENTIVES_PAYER_SET')` | `bytes32(targetId)` — L2 canonical id for the space: `bytes32(uint256(uint160(spaceAddress)))` (not GEO `bytes16` space id; must match geo-incentives) | `abi.encode(address payer, uint256 l2MessageId)` |
 | Voting Settings Updated | `keccak256('GOVERNANCE.VOTING_SETTINGS_UPDATED')` | `bytes32(0)` | `abi.encode(VotingSettings)` |
 | Proposal Created | `keccak256('GOVERNANCE.PROPOSAL_CREATED')` | `bytes32(proposalId)` | `abi.encode(bytes16 proposalId, VotingMode, IDAOSpace.Action[])` |
 | Proposal Settings Selected | `keccak256('GOVERNANCE.PROPOSAL_SETTINGS_SELECTED')` | `bytes32(proposalId)` | `abi.encode(ProposalParameters)` |

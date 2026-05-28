@@ -31,6 +31,9 @@ bytes32 constant PERMISSIONLESS_ACTION_ADDED = keccak256('GOVERNANCE.PERMISSIONL
 /// @dev The ID of the action when a permissionless action is removed from the space registry
 bytes32 constant PERMISSIONLESS_ACTION_REMOVED = keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED');
 
+/// @dev The ID of the action when a space sets an L2 incentives payer via cross-chain messaging
+bytes32 constant L2_INCENTIVES_PAYER_SET = keccak256('GOVERNANCE.L2_INCENTIVES_PAYER_SET');
+
 /// @dev The ID of the action to update the voting settings
 bytes32 constant VOTING_SETTINGS_UPDATED = keccak256('GOVERNANCE.VOTING_SETTINGS_UPDATED');
 

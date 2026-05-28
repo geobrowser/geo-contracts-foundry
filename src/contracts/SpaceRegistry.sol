@@ -4,8 +4,10 @@ pragma solidity 0.8.30;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
+import {IL2PaymentManager} from 'interfaces/IL2PaymentManager.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {IArbSys} from 'interfaces/utils/IArbSys.sol';
 import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -26,6 +28,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
    */
   bytes32 internal constant _SPACE_REGISTRY_STORAGE_LOCATION =
     0xa1b85c99b52a518d0806b31f4568cbd8c3970d0ca846714c1d12666d5d19bc00;
+
+  /// @notice Arbitrum ArbSys precompile for L3 → L2 messaging
+  IArbSys internal constant _ARB_SYS = IArbSys(address(100));
 
   /**
    * @notice Constructor
@@ -217,6 +222,36 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   function setPermissionlessAction(bytes32 _action, bool _isPermissionless) external virtual onlyOwner {
     _isPermissionless ? _permissionlessActionAdded(_action) : _permissionlessActionRemoved(_action);
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function setL2PaymentManager(address _l2PaymentManager) external virtual onlyOwner {
+    _getSpaceRegistryStorage().l2PaymentManager = _l2PaymentManager;
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function setL2IncentivesPayer(address _payer) external virtual {
+    if (_payer == address(0)) revert InvalidPayer();
+
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    if ($_.l2PaymentManager == address(0)) revert L2PaymentManagerNotSet();
+
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
+    if (!activeSpaceIds(_spaceId)) revert SpaceNotActive();
+
+    bytes32 _targetId = bytes32(uint256(uint160(msg.sender)));
+    bytes memory _calldataForL2 = abi.encodeCall(IL2PaymentManager.setPayer, (_targetId, _payer));
+
+    uint256 _l2MessageId = _ARB_SYS.sendTxToL1($_.l2PaymentManager, _calldataForL2);
+
+    emit Action(
+      _spaceId, _spaceId, ActionsConstants.L2_INCENTIVES_PAYER_SET, _targetId, abi.encode(_payer, _l2MessageId)
+    );
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function l2PaymentManager() external view returns (address _l2PaymentManager) {
+    _l2PaymentManager = _getSpaceRegistryStorage().l2PaymentManager;
   }
 
   /// @inheritdoc ISpaceRegistry

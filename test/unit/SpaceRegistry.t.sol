@@ -7,8 +7,10 @@ import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
+import {IL2PaymentManager} from 'interfaces/IL2PaymentManager.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {IArbSys} from 'interfaces/utils/IArbSys.sol';
 import {MockSpaceRegistry} from 'test/unit/mocks/MockSpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -23,7 +25,14 @@ contract UnitSpaceRegistry is TestHelper {
   address internal _fromSpace = makeAddr('_fromSpace');
   address internal _toSpace = makeAddr('_toSpace');
 
+  address internal constant _ARB_SYS = address(100);
+
+  address internal _l2PaymentManager = makeAddr('_l2PaymentManager');
+  address internal _incentivesSpace = makeAddr('_incentivesSpace');
+  address internal _incentivesPayer = makeAddr('_incentivesPayer');
+
   bytes16 internal _fromSpaceId = bytes16(keccak256('_fromSpaceId'));
+  bytes16 internal _incentivesSpaceId = bytes16(keccak256('_incentivesSpaceId'));
   bytes16 internal _toSpaceId = bytes16(keccak256('_toSpaceId'));
 
   bytes32 internal _permissionlessAction = bytes32(keccak256('_permissionlessAction'));
@@ -877,6 +886,88 @@ contract UnitSpaceRegistry is TestHelper {
 
     // it returns semantic version
     assertEq(spaceRegistryProxy.version(), '1.0.0');
+  }
+
+  function test_SetL2PaymentManager_WhenCalledByOwner() external {
+    vm.prank(_owner);
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+    assertEq(spaceRegistryProxy.l2PaymentManager(), _l2PaymentManager);
+  }
+
+  function test_SetL2PaymentManager_WhenCalledByNon_owner() external {
+    vm.prank(_randomCaller);
+    vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, _randomCaller));
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+  }
+
+  function test_SetL2IncentivesPayer_WhenCallerIsActiveRegisteredSpace() external {
+    _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
+    _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
+
+    vm.prank(_owner);
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+
+    bytes32 _targetId = bytes32(uint256(uint160(_incentivesSpace)));
+    bytes memory _calldataForL2 = abi.encodeCall(IL2PaymentManager.setPayer, (_targetId, _incentivesPayer));
+
+    vm.mockCall(
+      _ARB_SYS, abi.encodeCall(IArbSys.sendTxToL1, (_l2PaymentManager, _calldataForL2)), abi.encode(uint256(42))
+    );
+
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      _incentivesSpaceId,
+      _incentivesSpaceId,
+      ActionsConstants.L2_INCENTIVES_PAYER_SET,
+      _targetId,
+      abi.encode(_incentivesPayer, uint256(42))
+    );
+
+    vm.prank(_incentivesSpace);
+    spaceRegistryProxy.setL2IncentivesPayer(_incentivesPayer);
+  }
+
+  function test_SetL2IncentivesPayer_WhenCallerIsNotRegistered() external {
+    vm.prank(_owner);
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+
+    vm.prank(_incentivesSpace);
+    vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
+    spaceRegistryProxy.setL2IncentivesPayer(_incentivesPayer);
+  }
+
+  function test_SetL2IncentivesPayer_WhenCallerIsArchived() external {
+    _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
+    _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
+    _mockArchivedSpaceIds(_incentivesSpaceId, true);
+
+    vm.prank(_owner);
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+
+    vm.prank(_incentivesSpace);
+    vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
+    spaceRegistryProxy.setL2IncentivesPayer(_incentivesPayer);
+  }
+
+  function test_SetL2IncentivesPayer_WhenL2PaymentManagerIsNotSet() external {
+    _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
+    _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
+
+    vm.prank(_incentivesSpace);
+    vm.expectRevert(ISpaceRegistry.L2PaymentManagerNotSet.selector);
+    spaceRegistryProxy.setL2IncentivesPayer(_incentivesPayer);
+  }
+
+  function test_SetL2IncentivesPayer_WhenPayerIsZeroAddress() external {
+    _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
+    _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
+
+    vm.prank(_owner);
+    spaceRegistryProxy.setL2PaymentManager(_l2PaymentManager);
+
+    vm.prank(_incentivesSpace);
+    vm.expectRevert(ISpaceRegistry.InvalidPayer.selector);
+    spaceRegistryProxy.setL2IncentivesPayer(address(0));
   }
 
   function test__authorizeUpgrade_WhenCalledByOwner(address _newImplementation) external {
