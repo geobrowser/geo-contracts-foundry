@@ -34,7 +34,7 @@ contract IntegrationL2IncentivesPayer is IntegrationBase {
     emit ISpaceRegistry.Action(
       _daoSpaceProxyId,
       _daoSpaceProxyId,
-      ActionsConstants.L2_INCENTIVES_PAYER_SET,
+      ActionsConstants.L2_INCENTIVES_PAYER_ENQUEUED,
       _targetId,
       abi.encode(_payer, uint256(1))
     );

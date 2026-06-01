@@ -186,7 +186,7 @@ interface ISpaceRegistry is ISemver {
 
   /**
    * @notice Queues an L2 PaymentManager.setPayer call for the caller space's incentives target
-   * @dev Callable only by an active registered space (msg.sender). Emits `Action` with `GOVERNANCE.L2_INCENTIVES_PAYER_SET`.
+   * @dev Callable only by an active registered space (msg.sender). Emits `Action` with `GOVERNANCE.L2_INCENTIVES_PAYER_ENQUEUED`.
    *      L2 incentives (PaymentManager, Rewarder, StakingManager) key state by a canonical `bytes32` target id. For spaces,
    *      geo-incentives (`StakingRegistry.getTargetId`) defines that id as `bytes32(bytes16 spaceId)`. L3 must use the same
    *      encoding in cross-chain calldata and in the Action `subject` so `setPayer`, merkle rewards, allocations, and claims

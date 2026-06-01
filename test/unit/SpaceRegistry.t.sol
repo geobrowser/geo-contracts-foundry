@@ -891,14 +891,6 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_SetPaymentManager_WhenCalledByOwner() external {
-    vm.prank(_owner);
-    spaceRegistryProxy.setPaymentManager(_paymentManager);
-
-    // it sets paymentManager
-    assertEq(spaceRegistryProxy.paymentManager(), _paymentManager);
-  }
-
-  function test_SetPaymentManager_WhenCalledByOwner_WhenEmitsActionWithPaymentManagerSet() external {
     vm.expectEmit();
     emit ISpaceRegistry.Action(
       bytes16(0), bytes16(0), ActionsConstants.PAYMENT_MANAGER_SET, bytes32(bytes20(_paymentManager)), ''
@@ -906,6 +898,9 @@ contract UnitSpaceRegistry is TestHelper {
 
     vm.prank(_owner);
     spaceRegistryProxy.setPaymentManager(_paymentManager);
+
+    // it sets paymentManager
+    assertEq(spaceRegistryProxy.paymentManager(), _paymentManager);
   }
 
   function test_SetPaymentManager_WhenCalledByNon_owner() external {
@@ -931,7 +926,7 @@ contract UnitSpaceRegistry is TestHelper {
     emit ISpaceRegistry.Action(
       _incentivesSpaceId,
       _incentivesSpaceId,
-      ActionsConstants.L2_INCENTIVES_PAYER_SET,
+      ActionsConstants.L2_INCENTIVES_PAYER_ENQUEUED,
       _targetId,
       abi.encode(_incentivesPayer, uint256(42))
     );

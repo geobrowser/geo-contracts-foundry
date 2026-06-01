@@ -179,7 +179,7 @@ UnitSpaceRegistry::setPaymentManager
 
 UnitSpaceRegistry::setL2IncentivesPayer
 ├── when caller is active registered space
-│   └── it sends setPayer to L2 and emits Action with L2_INCENTIVES_PAYER_SET
+│   └── it sends setPayer to L2 and emits Action with L2_INCENTIVES_PAYER_ENQUEUED
 ├── when caller is not registered
 │   └── it reverts with SpaceNotActive
 ├── when caller is archived

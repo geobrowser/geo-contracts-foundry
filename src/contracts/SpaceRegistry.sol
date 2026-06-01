@@ -247,7 +247,7 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     uint256 _l2MessageId = _ARB_SYS.sendTxToL1($_.paymentManager, _calldataForL2);
 
     emit Action(
-      _spaceId, _spaceId, ActionsConstants.L2_INCENTIVES_PAYER_SET, _targetId, abi.encode(_payer, _l2MessageId)
+      _spaceId, _spaceId, ActionsConstants.L2_INCENTIVES_PAYER_ENQUEUED, _targetId, abi.encode(_payer, _l2MessageId)
     );
   }
 
