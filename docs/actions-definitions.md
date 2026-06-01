@@ -25,7 +25,7 @@ event Action(
 | Space Type Declared | `keccak256('GOVERNANCE.SPACE_TYPE_DECLARED')` | `_type` e.g. `keccak256('DAO_SPACE')` | `_version` e.g. `abi.encode('1.0.0')` |
 | Permissionless Action Added | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_ADDED')` | `keccak256('PERMISSIONLESS.<NAME>')` allowed | empty |
 | Permissionless Action Removed | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED')` | `keccak256('PERMISSIONLESS.<NAME>')` disallowed | empty |
-| L2 Incentives Payer Set | `keccak256('GOVERNANCE.L2_INCENTIVES_PAYER_SET')` | `bytes32(targetId)` — L2 canonical id for the space: `bytes32(uint256(uint160(spaceAddress)))` (not GEO `bytes16` space id; must match geo-incentives) | `abi.encode(address payer, uint256 l2MessageId)` |
+| L2 Incentives Payer Set | `keccak256('GOVERNANCE.L2_INCENTIVES_PAYER_SET')` | `bytes32(targetId)` | `abi.encode(address payer, uint256 l2MessageId)` |
 | Voting Settings Updated | `keccak256('GOVERNANCE.VOTING_SETTINGS_UPDATED')` | `bytes32(0)` | `abi.encode(VotingSettings)` |
 | Proposal Created | `keccak256('GOVERNANCE.PROPOSAL_CREATED')` | `bytes32(proposalId)` | `abi.encode(bytes16 proposalId, VotingMode, IDAOSpace.Action[])` |
 | Proposal Settings Selected | `keccak256('GOVERNANCE.PROPOSAL_SETTINGS_SELECTED')` | `bytes32(proposalId)` | `abi.encode(ProposalParameters)` |
@@ -73,6 +73,7 @@ event Action(
     - This field may be left empty.
 - The `data` field is normally `abi.encoded` structured payload (or empty), for on- or off-chain execution.
 - On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
+- **L2 incentives target ids** (e.g. `L2_INCENTIVES_PAYER_SET` subject, Arbitrum `PaymentManager.setPayer`, merkle leaves) use `bytes32(bytes16 spaceId)` — the GEO space UUID from `SpaceRegistry`, not the space contract address. This matches geo-incentives `StakingRegistry` space targets and is stable across space migration.
 
 Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
 

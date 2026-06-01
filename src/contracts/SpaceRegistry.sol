@@ -4,7 +4,7 @@ pragma solidity 0.8.30;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
-import {IL2PaymentManager} from 'interfaces/IL2PaymentManager.sol';
+import {IPaymentManager} from 'interfaces/IPaymentManager.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
 import {IArbSys} from 'interfaces/utils/IArbSys.sol';
@@ -225,8 +225,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function setL2PaymentManager(address _l2PaymentManager) external virtual onlyOwner {
-    _getSpaceRegistryStorage().l2PaymentManager = _l2PaymentManager;
+  function setPaymentManager(address _paymentManager) external virtual onlyOwner {
+    _getSpaceRegistryStorage().paymentManager = _paymentManager;
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -234,15 +234,15 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
     if (_payer == address(0)) revert InvalidPayer();
 
     SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
-    if ($_.l2PaymentManager == address(0)) revert L2PaymentManagerNotSet();
+    if ($_.paymentManager == address(0)) revert PaymentManagerNotSet();
 
     bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
     if (!activeSpaceIds(_spaceId)) revert SpaceNotActive();
 
-    bytes32 _targetId = bytes32(uint256(uint160(msg.sender)));
-    bytes memory _calldataForL2 = abi.encodeCall(IL2PaymentManager.setPayer, (_targetId, _payer));
+    bytes32 _targetId = bytes32(_spaceId);
+    bytes memory _calldataForL2 = abi.encodeCall(IPaymentManager.setPayer, (_targetId, _payer));
 
-    uint256 _l2MessageId = _ARB_SYS.sendTxToL1($_.l2PaymentManager, _calldataForL2);
+    uint256 _l2MessageId = _ARB_SYS.sendTxToL1($_.paymentManager, _calldataForL2);
 
     emit Action(
       _spaceId, _spaceId, ActionsConstants.L2_INCENTIVES_PAYER_SET, _targetId, abi.encode(_payer, _l2MessageId)
@@ -250,8 +250,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function l2PaymentManager() external view returns (address _l2PaymentManager) {
-    _l2PaymentManager = _getSpaceRegistryStorage().l2PaymentManager;
+  function paymentManager() external view returns (address _paymentManager) {
+    _paymentManager = _getSpaceRegistryStorage().paymentManager;
   }
 
   /// @inheritdoc ISpaceRegistry

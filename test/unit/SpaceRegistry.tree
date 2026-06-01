@@ -169,9 +169,9 @@ UnitSpaceRegistry::version
 └── when called
     └── it returns semantic version
 
-UnitSpaceRegistry::setL2PaymentManager
+UnitSpaceRegistry::setPaymentManager
 ├── when called by owner
-│   └── it sets l2PaymentManager
+│   └── it sets paymentManager
 └── when called by non_owner
     └── it reverts with OwnableUnauthorizedAccount
 
@@ -182,8 +182,8 @@ UnitSpaceRegistry::setL2IncentivesPayer
 │   └── it reverts with SpaceNotActive
 ├── when caller is archived
 │   └── it reverts with SpaceNotActive
-├── when l2PaymentManager is not set
-│   └── it reverts with L2PaymentManagerNotSet
+├── when paymentManager is not set
+│   └── it reverts with PaymentManagerNotSet
 └── when payer is zero address
     └── it reverts with InvalidPayer
 
