@@ -4,10 +4,10 @@ pragma solidity 0.8.30;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 
-import {IPaymentManager} from 'interfaces/IPaymentManager.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {IArbSys} from 'interfaces/utils/IArbSys.sol';
+import {IArbSys} from 'interfaces/cross-chain/IArbSys.sol';
+import {IPaymentManager} from 'interfaces/cross-chain/IPaymentManager.sol';
 import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -227,6 +227,8 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   /// @inheritdoc ISpaceRegistry
   function setPaymentManager(address _paymentManager) external virtual onlyOwner {
     _getSpaceRegistryStorage().paymentManager = _paymentManager;
+
+    emit Action(bytes16(0), bytes16(0), ActionsConstants.PAYMENT_MANAGER_SET, bytes32(bytes20(_paymentManager)), '');
   }
 
   /// @inheritdoc ISpaceRegistry
@@ -250,15 +252,15 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
-  function paymentManager() external view returns (address _paymentManager) {
-    _paymentManager = _getSpaceRegistryStorage().paymentManager;
-  }
-
-  /// @inheritdoc ISpaceRegistry
   function generateSpaceId(address _account, uint256 _nonce) public view virtual returns (bytes16 _spaceId) {
     bytes32 _hash = keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid));
     _hash = _hash & ~(bytes32(uint256(0xf0)) << 200) | (bytes32(uint256(0x40)) << 200);
     _spaceId = bytes16(_hash & ~(bytes32(uint256(0xc0)) << 184) | (bytes32(uint256(0x80)) << 184));
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function paymentManager() public view returns (address _paymentManager) {
+    _paymentManager = _getSpaceRegistryStorage().paymentManager;
   }
 
   /// @inheritdoc ISpaceRegistry

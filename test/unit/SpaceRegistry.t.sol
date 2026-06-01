@@ -7,10 +7,10 @@ import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {UnsafeUpgrades} from '@openzeppelin/foundry-upgrades/Upgrades.sol';
 
-import {IPaymentManager} from 'interfaces/IPaymentManager.sol';
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {IArbSys} from 'interfaces/utils/IArbSys.sol';
+import {IArbSys} from 'interfaces/cross-chain/IArbSys.sol';
+import {IPaymentManager} from 'interfaces/cross-chain/IPaymentManager.sol';
 import {MockSpaceRegistry} from 'test/unit/mocks/MockSpaceRegistry.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -55,6 +55,8 @@ contract UnitSpaceRegistry is TestHelper {
       spaceRegistryProxy.exposed__SPACE_REGISTRY_STORAGE_LOCATION(),
       keccak256(abi.encode(uint256(keccak256('geo.storage.SpaceRegistry')) - 1)) & ~bytes32(uint256(0xff))
     );
+    // it sets _ARB_SYS to address(100)
+    assertEq(spaceRegistryProxy.exposed__ARB_SYS(), _ARB_SYS);
   }
 
   function test_Constructor_WhenCalled() external {
@@ -891,7 +893,19 @@ contract UnitSpaceRegistry is TestHelper {
   function test_SetPaymentManager_WhenCalledByOwner() external {
     vm.prank(_owner);
     spaceRegistryProxy.setPaymentManager(_paymentManager);
+
+    // it sets paymentManager
     assertEq(spaceRegistryProxy.paymentManager(), _paymentManager);
+  }
+
+  function test_SetPaymentManager_WhenCalledByOwner_WhenEmitsActionWithPaymentManagerSet() external {
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(
+      bytes16(0), bytes16(0), ActionsConstants.PAYMENT_MANAGER_SET, bytes32(bytes20(_paymentManager)), ''
+    );
+
+    vm.prank(_owner);
+    spaceRegistryProxy.setPaymentManager(_paymentManager);
   }
 
   function test_SetPaymentManager_WhenCalledByNon_owner() external {
@@ -904,8 +918,7 @@ contract UnitSpaceRegistry is TestHelper {
     _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
     _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
 
-    vm.prank(_owner);
-    spaceRegistryProxy.setPaymentManager(_paymentManager);
+    _mockPaymentManager(_paymentManager);
 
     bytes32 _targetId = bytes32(_incentivesSpaceId);
     bytes memory _calldataForL2 = abi.encodeCall(IPaymentManager.setPayer, (_targetId, _incentivesPayer));
@@ -928,8 +941,7 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_SetL2IncentivesPayer_WhenCallerIsNotRegistered() external {
-    vm.prank(_owner);
-    spaceRegistryProxy.setPaymentManager(_paymentManager);
+    _mockPaymentManager(_paymentManager);
 
     vm.prank(_incentivesSpace);
     vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
@@ -941,8 +953,7 @@ contract UnitSpaceRegistry is TestHelper {
     _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
     _mockArchivedSpaceIds(_incentivesSpaceId, true);
 
-    vm.prank(_owner);
-    spaceRegistryProxy.setPaymentManager(_paymentManager);
+    _mockPaymentManager(_paymentManager);
 
     vm.prank(_incentivesSpace);
     vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
@@ -962,8 +973,7 @@ contract UnitSpaceRegistry is TestHelper {
     _mockAddressToSpaceId(_incentivesSpace, _incentivesSpaceId);
     _mockSpaceIdToAddress(_incentivesSpaceId, _incentivesSpace);
 
-    vm.prank(_owner);
-    spaceRegistryProxy.setPaymentManager(_paymentManager);
+    _mockPaymentManager(_paymentManager);
 
     vm.prank(_incentivesSpace);
     vm.expectRevert(ISpaceRegistry.InvalidPayer.selector);
@@ -1002,6 +1012,10 @@ contract UnitSpaceRegistry is TestHelper {
 
   function _mockArchivedSpaceIds(bytes16 _spaceId, bool _isArchived) internal {
     spaceRegistryProxy.workaround_setArchivedSpaceIds(_spaceId, _isArchived);
+  }
+
+  function _mockPaymentManager(address _paymentManager) internal {
+    spaceRegistryProxy.workaround_setPaymentManager(_paymentManager);
   }
 
   function _mockFetch(

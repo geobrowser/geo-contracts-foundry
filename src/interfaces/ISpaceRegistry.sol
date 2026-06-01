@@ -179,6 +179,7 @@ interface ISpaceRegistry is ISemver {
 
   /**
    * @notice Sets the Arbitrum PaymentManager proxy used for cross-chain payer updates
+   * @dev Emits `Action` with `GOVERNANCE.PAYMENT_MANAGER_SET`.
    * @param _paymentManager PaymentManager proxy address
    */
   function setPaymentManager(address _paymentManager) external;

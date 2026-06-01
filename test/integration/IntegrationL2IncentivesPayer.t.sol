@@ -3,9 +3,9 @@ pragma solidity 0.8.30;
 
 import {IntegrationBase} from 'test/integration/IntegrationBase.t.sol';
 
-import {IPaymentManager} from 'interfaces/IPaymentManager.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
-import {IArbSys} from 'interfaces/utils/IArbSys.sol';
+import {IArbSys} from 'interfaces/cross-chain/IArbSys.sol';
+import {IPaymentManager} from 'interfaces/cross-chain/IPaymentManager.sol';
 
 import 'script/Constants.s.sol' as Constants;
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -25,7 +25,6 @@ contract IntegrationL2IncentivesPayer is IntegrationBase {
   }
 
   function test_SetL2IncentivesPayer_WhenDaoSpaceIsActive() external {
-    address _space = address(daoSpaceProxy);
     bytes32 _targetId = bytes32(_daoSpaceProxyId);
     bytes memory _calldataForL2 = abi.encodeCall(IPaymentManager.setPayer, (_targetId, _payer));
 
@@ -40,7 +39,7 @@ contract IntegrationL2IncentivesPayer is IntegrationBase {
       abi.encode(_payer, uint256(1))
     );
 
-    vm.prank(_space);
+    vm.prank(address(daoSpaceProxy));
     spaceRegistryProxy.setL2IncentivesPayer(_payer);
   }
 
