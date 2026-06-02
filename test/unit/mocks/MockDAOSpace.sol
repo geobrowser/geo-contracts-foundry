@@ -81,4 +81,6 @@ contract MockDAOSpace is DAOSpace {
   function exposed__DAO_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _daoSpaceStorageLocation) {
     _daoSpaceStorageLocation = _DAO_SPACE_STORAGE_LOCATION;
   }
+
+  function exposed__onlyRole(bytes32 _role) external onlyRole(_role) {}
 }

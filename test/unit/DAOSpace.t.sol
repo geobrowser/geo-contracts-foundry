@@ -669,6 +669,150 @@ contract UnitDAOSpace is TestHelper {
     );
   }
 
+  function test_Initialize_WhenPartialPercentageSupportThresholdIsGreaterThanRATIO_BASE(
+    address __spaceRegistry,
+    uint256 _partialPercentageSupportThreshold
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_partialPercentageSupportThreshold > daoSpaceImplementation.RATIO_BASE());
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.partialPercentageSupportThreshold = _partialPercentageSupportThreshold;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenUniversalPercentageSupportThresholdIsGreaterThanRATIO_BASE(
+    address __spaceRegistry,
+    uint256 _universalPercentageSupportThreshold
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_universalPercentageSupportThreshold > daoSpaceImplementation.RATIO_BASE());
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.universalPercentageSupportThreshold = _universalPercentageSupportThreshold;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenFlatSupportThresholdIsGreaterThanTotalEditors(
+    address __spaceRegistry,
+    uint256 _flatSupportThreshold
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_flatSupportThreshold > _initialEditors.length);
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.flatSupportThreshold = _flatSupportThreshold;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenQuorumIsGreaterThanTotalEditors(
+    address __spaceRegistry,
+    uint256 _quorum
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_quorum > _initialEditors.length);
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.quorum = _quorum;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenDurationIsLessThanMINIMUM_VOTING_DURATION(
+    address __spaceRegistry,
+    uint256 _duration
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_duration < daoSpaceImplementation.MINIMUM_VOTING_DURATION());
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.duration = _duration;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
+  function test_Initialize_WhenExecutionGracePeriodIsLessThanMINIMUM_EXECUTION_GRACE_PERIOD(
+    address __spaceRegistry,
+    uint256 _executionGracePeriod
+  ) external when_daoSpaceIdIsNon_zero {
+    _assumeFuzzable(__spaceRegistry);
+    vm.assume(_executionGracePeriod < daoSpaceImplementation.MINIMUM_EXECUTION_GRACE_PERIOD());
+    IDAOSpace.VotingSettings memory _vs = _votingSettings;
+    _vs.executionGracePeriod = _executionGracePeriod;
+
+    // it reverts with InvalidSetting
+    vm.expectRevert(IDAOSpace.InvalidSetting.selector);
+    MockDAOSpace(
+      UnsafeUpgrades.deployBeaconProxy(
+        daoSpaceBeacon,
+        abi.encodeCall(
+          IDAOSpace.initialize,
+          (abi.encode(
+              __spaceRegistry, _vs, _initialEditors, _initialMembers, bytes(''), bytes16(0), _transplantDAOSpaceId
+            ))
+        )
+      )
+    );
+  }
+
   function test_Initialize_WhenDelegateCalledAgain(
     address __spaceRegistry,
     bytes memory __publishEditsData,
@@ -825,6 +969,108 @@ contract UnitDAOSpace is TestHelper {
         bytes16(0)
       )
     );
+  }
+
+  modifier whenRoleIsSPACE_REGISTRY() {
+    _;
+  }
+
+  /// _onlyRole ///
+
+  function test__onlyRole_WhenCalledBySpaceRegistry() external whenRoleIsSPACE_REGISTRY {
+    bytes32 _spaceRegistryRole = daoSpaceImplementation.SPACE_REGISTRY();
+    vm.prank(_spaceRegistry);
+
+    // it does not revert
+    daoSpaceProxy.exposed__onlyRole(_spaceRegistryRole);
+  }
+
+  function test__onlyRole_WhenCalledByNon_spaceRegistry(address _caller) external whenRoleIsSPACE_REGISTRY {
+    vm.assume(_caller != _spaceRegistry);
+    bytes32 _spaceRegistryRole = daoSpaceImplementation.SPACE_REGISTRY();
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.exposed__onlyRole(_spaceRegistryRole);
+  }
+
+  modifier whenRoleIsDAO() {
+    _;
+  }
+
+  function test__onlyRole_WhenCalledByDAO() external whenRoleIsDAO {
+    bytes32 _daoRole = daoSpaceImplementation.DAO();
+    vm.prank(address(daoSpaceProxy));
+
+    // it does not revert
+    daoSpaceProxy.exposed__onlyRole(_daoRole);
+  }
+
+  function test__onlyRole_WhenCalledByNon_DAO(address _caller) external whenRoleIsDAO {
+    vm.assume(_caller != address(daoSpaceProxy));
+    bytes32 _daoRole = daoSpaceImplementation.DAO();
+    vm.prank(_caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.exposed__onlyRole(_daoRole);
+  }
+
+  modifier whenRoleIsNeitherSPACE_REGISTRYNorDAO() {
+    _;
+  }
+
+  function test__onlyRole_WhenCallerHasRole(
+    bytes32 __role,
+    address __caller
+  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
+    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
+    vm.assume(__role != daoSpaceImplementation.DAO());
+    _assumeFuzzable(__caller);
+
+    bytes16 __callerSpaceId = _getSpaceId(__caller);
+    _mockAddressToSpaceId(_spaceRegistry, __caller, __callerSpaceId);
+    daoSpaceProxy.workaround_grantRole(__role, __callerSpaceId);
+    assertTrue(daoSpaceProxy.hasRole(__role, __callerSpaceId));
+    vm.prank(__caller);
+
+    // it does not revert
+    daoSpaceProxy.exposed__onlyRole(__role);
+  }
+
+  function test__onlyRole_WhenCallerDoesNotHaveRole(
+    bytes32 __role,
+    address __caller
+  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
+    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
+    vm.assume(__role != daoSpaceImplementation.DAO());
+    _assumeFuzzable(__caller);
+
+    bytes16 __callerSpaceId = _getSpaceId(__caller);
+    _mockAddressToSpaceId(_spaceRegistry, __caller, __callerSpaceId);
+    assertFalse(daoSpaceProxy.hasRole(__role, __callerSpaceId));
+    vm.prank(__caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.exposed__onlyRole(__role);
+  }
+
+  function test__onlyRole_WhenCallerSpaceIdIsNotRegistered(
+    bytes32 __role,
+    address __caller
+  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
+    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
+    vm.assume(__role != daoSpaceImplementation.DAO());
+    _assumeFuzzable(__caller);
+
+    vm.mockCall(_spaceRegistry, abi.encodeCall(ISpaceRegistry.addressToSpaceId, (__caller)), abi.encode(bytes16(0)));
+    vm.prank(__caller);
+
+    // it reverts with InvalidCaller
+    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
+    daoSpaceProxy.exposed__onlyRole(__role);
   }
 
   /// WRITE - PROPOSAL CREATED ///

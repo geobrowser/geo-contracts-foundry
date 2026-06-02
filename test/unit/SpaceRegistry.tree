@@ -24,12 +24,14 @@ UnitSpaceRegistry::enter
 ├── when spaceIds are active
 │   ├── when caller is not fromSpaceId
 │   │   └── it calls fromSpaceId to verify
-│   └── when caller is not toSpaceId
-│       ├── when _action is not permissionless
+│   ├── when _action is permissionless
+│   │   └── it emits Action
+│   └── when _action is not permissionless
+│       ├── when caller is not toSpaceId
 │       │   ├── it calls toSpaceId to fetch _subjectOutput
 │       │   ├── it emits Action
 │       │   └── it calls toSpaceId to write
-│       └── when _action is permissionless
+│       └── when caller is toSpaceId
 │           └── it emits Action
 └── when spaceId is not active
     └── it reverts with SpaceNotActive
