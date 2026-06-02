@@ -6,6 +6,8 @@ import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 import {ISpace} from 'interfaces/ISpace.sol';
 import {ISpaceRegistry} from 'interfaces/ISpaceRegistry.sol';
+import {IArbSys} from 'interfaces/cross-chain/IArbSys.sol';
+import {IPaymentManager} from 'interfaces/cross-chain/IPaymentManager.sol';
 import {ISemver} from 'interfaces/utils/ISemver.sol';
 
 import 'src/ActionsConstants.sol' as ActionsConstants;
@@ -26,6 +28,9 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
    */
   bytes32 internal constant _SPACE_REGISTRY_STORAGE_LOCATION =
     0xa1b85c99b52a518d0806b31f4568cbd8c3970d0ca846714c1d12666d5d19bc00;
+
+  /// @notice Arbitrum ArbSys precompile for L3 → L2 messaging
+  IArbSys internal constant _ARB_SYS = IArbSys(address(100));
 
   /**
    * @notice Constructor
@@ -220,10 +225,42 @@ contract SpaceRegistry is UUPSUpgradeable, OwnableUpgradeable, ISpaceRegistry {
   }
 
   /// @inheritdoc ISpaceRegistry
+  function setPaymentManager(address _paymentManager) external virtual onlyOwner {
+    _getSpaceRegistryStorage().paymentManager = _paymentManager;
+
+    emit Action(bytes16(0), bytes16(0), ActionsConstants.PAYMENT_MANAGER_SET, bytes32(bytes20(_paymentManager)), '');
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function setL2IncentivesPayer(address _payer) external virtual {
+    if (_payer == address(0)) revert InvalidPayer();
+
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    if ($_.paymentManager == address(0)) revert PaymentManagerNotSet();
+
+    bytes16 _spaceId = $_.addressToSpaceId[msg.sender];
+    if (!activeSpaceIds(_spaceId)) revert SpaceNotActive();
+
+    bytes32 _targetId = bytes32(_spaceId);
+    bytes memory _calldataForL2 = abi.encodeCall(IPaymentManager.setPayer, (_targetId, _payer));
+
+    uint256 _l2MessageId = _ARB_SYS.sendTxToL1($_.paymentManager, _calldataForL2);
+
+    emit Action(
+      _spaceId, _spaceId, ActionsConstants.L2_INCENTIVES_PAYER_ENQUEUED, _targetId, abi.encode(_payer, _l2MessageId)
+    );
+  }
+
+  /// @inheritdoc ISpaceRegistry
   function generateSpaceId(address _account, uint256 _nonce) public view virtual returns (bytes16 _spaceId) {
     bytes32 _hash = keccak256(abi.encodePacked('grc20.space', _account, _nonce, block.chainid));
     _hash = _hash & ~(bytes32(uint256(0xf0)) << 200) | (bytes32(uint256(0x40)) << 200);
     _spaceId = bytes16(_hash & ~(bytes32(uint256(0xc0)) << 184) | (bytes32(uint256(0x80)) << 184));
+  }
+
+  /// @inheritdoc ISpaceRegistry
+  function paymentManager() public view returns (address _paymentManager) {
+    _paymentManager = _getSpaceRegistryStorage().paymentManager;
   }
 
   /// @inheritdoc ISpaceRegistry

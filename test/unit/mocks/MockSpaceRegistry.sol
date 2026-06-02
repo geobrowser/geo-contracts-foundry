@@ -28,12 +28,21 @@ contract MockSpaceRegistry is SpaceRegistry {
     $_.archivedSpaceIds[_spaceId] = _isArchived;
   }
 
+  function workaround_setPaymentManager(address _paymentManager) external {
+    SpaceRegistryStorage storage $_ = _getSpaceRegistryStorage();
+    $_.paymentManager = _paymentManager;
+  }
+
   function exposed__authorizeUpgrade(address _newImplementation) external {
     _authorizeUpgrade(_newImplementation);
   }
 
   function exposed__SPACE_REGISTRY_STORAGE_LOCATION() external pure returns (bytes32 _spaceRegistryStorageLocation) {
     _spaceRegistryStorageLocation = _SPACE_REGISTRY_STORAGE_LOCATION;
+  }
+
+  function exposed__ARB_SYS() external pure returns (address _arbSys) {
+    _arbSys = address(_ARB_SYS);
   }
 
   function exposed__spaceIdNonce() external view returns (uint256 __spaceIdNonce) {

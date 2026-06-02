@@ -1,6 +1,7 @@
 UnitSpaceRegistry::constants
 └── when deployed
-    └── it sets _SPACE_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
+    ├── it sets _SPACE_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.SpaceRegistry")) - 1)) & ~bytes32(uint256(0xff))
+    └── it sets _ARB_SYS to address(100)
 
 UnitSpaceRegistry::constructor
 └── when called
@@ -168,6 +169,25 @@ UnitSpaceRegistry::name
 UnitSpaceRegistry::version
 └── when called
     └── it returns semantic version
+
+UnitSpaceRegistry::setPaymentManager
+├── when called by owner
+│   ├── it sets paymentManager
+│   └── it emits Action with PAYMENT_MANAGER_SET
+└── when called by non_owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitSpaceRegistry::setL2IncentivesPayer
+├── when caller is active registered space
+│   └── it sends setPayer to L2 and emits Action with L2_INCENTIVES_PAYER_ENQUEUED
+├── when caller is not registered
+│   └── it reverts with SpaceNotActive
+├── when caller is archived
+│   └── it reverts with SpaceNotActive
+├── when paymentManager is not set
+│   └── it reverts with PaymentManagerNotSet
+└── when payer is zero address
+    └── it reverts with InvalidPayer
 
 UnitSpaceRegistry::_authorizeUpgrade
 ├── when called by owner

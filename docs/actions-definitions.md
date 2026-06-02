@@ -2,7 +2,7 @@ This document outlines how to both encode and interpret an `Action` event from t
 
 ```solidity
 /**
- * @notice Emitted from `SpaceRegistry` (`enter`, lifecycle methods, `overrideAction`, re-entrant `enter` e.g. `DAOSpace._ping`)
+ * @notice Emitted from `SpaceRegistry` (`enter`, lifecycle methods, `setPaymentManager`, `setL2IncentivesPayer`, `overrideAction`, re-entrant `enter` e.g. `DAOSpace._ping`)
  */
 event Action(
   bytes16 indexed fromSpaceId,
@@ -25,6 +25,8 @@ event Action(
 | Space Type Declared | `keccak256('GOVERNANCE.SPACE_TYPE_DECLARED')` | `_type` e.g. `keccak256('DAO_SPACE')` | `_version` e.g. `abi.encode('1.0.0')` |
 | Permissionless Action Added | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_ADDED')` | `keccak256('PERMISSIONLESS.<NAME>')` allowed | empty |
 | Permissionless Action Removed | `keccak256('GOVERNANCE.PERMISSIONLESS_ACTION_REMOVED')` | `keccak256('PERMISSIONLESS.<NAME>')` disallowed | empty |
+| Payment Manager Set | `keccak256('GOVERNANCE.PAYMENT_MANAGER_SET')` | `bytes32(bytes20(paymentManager))` | empty |
+| L2 Incentives Payer Enqueued | `keccak256('GOVERNANCE.L2_INCENTIVES_PAYER_ENQUEUED')` | `bytes32(targetId)` | `abi.encode(address payer, uint256 l2MessageId)` |
 | Voting Settings Updated | `keccak256('GOVERNANCE.VOTING_SETTINGS_UPDATED')` | `bytes32(0)` | `abi.encode(VotingSettings)` |
 | Proposal Created | `keccak256('GOVERNANCE.PROPOSAL_CREATED')` | `bytes32(proposalId)` | `abi.encode(bytes16 proposalId, VotingMode, IDAOSpace.Action[])` |
 | Proposal Settings Selected | `keccak256('GOVERNANCE.PROPOSAL_SETTINGS_SELECTED')` | `bytes32(proposalId)` | `abi.encode(ProposalParameters)` |
@@ -72,6 +74,7 @@ event Action(
     - This field may be left empty.
 - The `data` field is normally `abi.encoded` structured payload (or empty), for on- or off-chain execution.
 - On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
+- **L2 incentives target ids** (e.g. `L2_INCENTIVES_PAYER_ENQUEUED` subject, Arbitrum `PaymentManager.setPayer`, merkle leaves) use `bytes32(bytes16 spaceId)` — the GEO space UUID from `SpaceRegistry`, not the space contract address. This matches geo-incentives `StakingRegistry` space targets and is stable across space migration.
 
 Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
 

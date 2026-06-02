@@ -16,6 +16,7 @@ interface ISpaceRegistry is ISemver {
    * @param addressToSpaceId Reverse mapping: address to its space ID
    * @param permissionlessActions Records each permissionless action
    * @param _spaceIdNonce The nonce used to generate a space ID for registration
+   * @param paymentManager Arbitrum PaymentManager proxy for cross-chain setPayer messages
    * @custom:storage-location erc7201:geo.storage.SpaceRegistry
    */
   struct SpaceRegistryStorage {
@@ -25,6 +26,7 @@ interface ISpaceRegistry is ISemver {
     mapping(address _account => bytes16 _spaceId) addressToSpaceId;
     mapping(bytes32 _action => bool _isPermissionless) permissionlessActions;
     uint256 _spaceIdNonce;
+    address paymentManager;
   }
 
   /**
@@ -65,6 +67,12 @@ interface ISpaceRegistry is ISemver {
 
   /// @notice Thrown when overrideSpaceId targets this registry contract's own address
   error InvalidAccount();
+
+  /// @notice Thrown when setL2IncentivesPayer is called before paymentManager is configured
+  error PaymentManagerNotSet();
+
+  /// @notice Thrown when setL2IncentivesPayer is called with the zero address payer
+  error InvalidPayer();
 
   /**
    * @notice Initializes the contract
@@ -168,6 +176,30 @@ interface ISpaceRegistry is ISemver {
    * @dev Permissionless actions are those where, even if the caller is not the toSpace, fetch and write do not occur
    */
   function setPermissionlessAction(bytes32 _action, bool _set) external;
+
+  /**
+   * @notice Sets the Arbitrum PaymentManager proxy used for cross-chain payer updates
+   * @dev Emits `Action` with `GOVERNANCE.PAYMENT_MANAGER_SET`.
+   * @param _paymentManager PaymentManager proxy address
+   */
+  function setPaymentManager(address _paymentManager) external;
+
+  /**
+   * @notice Queues an L2 PaymentManager.setPayer call for the caller space's incentives target
+   * @dev Callable only by an active registered space (msg.sender). Emits `Action` with `GOVERNANCE.L2_INCENTIVES_PAYER_ENQUEUED`.
+   *      L2 incentives (PaymentManager, Rewarder, StakingManager) key state by a canonical `bytes32` target id. For spaces,
+   *      geo-incentives (`StakingRegistry.getTargetId`) defines that id as `bytes32(bytes16 spaceId)`. L3 must use the same
+   *      encoding in cross-chain calldata and in the Action `subject` so `setPayer`, merkle rewards, allocations, and claims
+   *      align.
+   * @param _payer Address authorized to create payments on L2 for this space's target
+   */
+  function setL2IncentivesPayer(address _payer) external;
+
+  /**
+   * @notice Returns the configured Arbitrum PaymentManager proxy
+   * @return _paymentManager PaymentManager proxy address
+   */
+  function paymentManager() external view returns (address _paymentManager);
 
   /**
    * @notice Maps each unique space ID to its current address
