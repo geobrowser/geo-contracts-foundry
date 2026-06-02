@@ -145,7 +145,7 @@ interface ISpaceRegistry is ISemver {
    * @dev Clears any existing mappings for the given _spaceId and _account, then sets the new mapping. Emits SPACE_ID_OVERRIDDEN.
    *      Reverts with OverrideZero if _account or _spaceId is zero. Reverts with InvalidAccount if _account is this registry.
    * @dev WARNING: For an active DAOSpace proxy, only bind _account to the dao's configured space id (e.g. transplant id) or
-   *      mappings consistent with that deployment. Arbitrary rebinding desynchronizes on-chain roles from the registry and
+   *      mappings consistent with that deployment. Arbitrary rebinding desynchronizes onchain roles from the registry and
    *      can brick governance the same way.
    * @param _account The account to bind to _spaceId
    * @param _spaceId The space ID to bind to _account
