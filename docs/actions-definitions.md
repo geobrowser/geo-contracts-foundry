@@ -74,9 +74,9 @@ event Action(
     - This field may be left empty.
 - The `data` field is normally an ABI-encoded structured payload (or empty), for onchain or offchain execution.
 - On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
-- **L2 incentives target ids** (e.g. `L2_INCENTIVES_PAYER_ENQUEUED` subject, Arbitrum `PaymentManager.setPayer`, merkle leaves) use `bytes32(bytes16 spaceId)` — the GEO space UUID from `SpaceRegistry`, not the space contract address. This matches geo-incentives `StakingRegistry` space targets and is stable across space migration.
+- L2 incentives target IDs, relevant for `L2_INCENTIVES_PAYER_ENQUEUED`, use `bytes32(bytes16 spaceId)`, which is the GEO space UUID stored in the `SpaceRegistry`, rather than the space contract address. This aligns with the geo-incentives `StakingRegistry` space targets, and must remain stable across space migration.
 
-Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
+The schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
 
 ## Exceptions
 
