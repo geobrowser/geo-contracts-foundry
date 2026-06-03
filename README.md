@@ -36,7 +36,7 @@ yarn test              # all tests
 yarn test:unit         # unit only
 yarn test:unit:deep    # unit with 5x fuzz runs
 yarn test:integration  # integration only
-yarn test:invariant    # invariant / fuzz
+yarn test:invariant    # execution-path + invariant / fuzz
 yarn coverage          # coverage report
 ```
 

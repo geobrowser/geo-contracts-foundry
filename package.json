@@ -26,7 +26,7 @@
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",
     "test:integration": "yarn recompile && forge test --ffi --match-contract Integration -vvv",
-    "test:invariant": "yarn recompile && forge test --ffi --match-contract Invariants -vvv",
+    "test:invariant": "yarn recompile && forge test --ffi --match-contract ExecutionPaths -vvv && forge test --ffi --match-contract Invariants -vvv",
     "test:unit": "yarn recompile && forge test --ffi --match-contract Unit -vvv",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit"
   },
