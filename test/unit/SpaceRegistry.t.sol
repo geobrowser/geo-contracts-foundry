@@ -1103,8 +1103,8 @@ contract UnitSpaceRegistry is TestHelper {
     vm.assume(_action != ActionsConstants.COMMENTED);
   }
 
-  function _permissionlessActionFromIndex(uint8 _index) internal pure returns (bytes32 _action) {
-    uint256 _index = bound(_index, 0, 3);
+  function _permissionlessActionFromIndex(uint8 _permissionlessActionIndex) internal pure returns (bytes32 _action) {
+    uint256 _index = bound(_permissionlessActionIndex, 0, 3);
     if (_index == 0) _action = ActionsConstants.UPVOTED;
     else if (_index == 1) _action = ActionsConstants.DOWNVOTED;
     else if (_index == 2) _action = ActionsConstants.UNVOTED;
