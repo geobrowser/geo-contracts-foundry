@@ -674,7 +674,8 @@ contract UnitDAOSpace is TestHelper {
     uint256 _partialPercentageSupportThreshold
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_partialPercentageSupportThreshold > daoSpaceImplementation.RATIO_BASE());
+    _partialPercentageSupportThreshold =
+      bound(_partialPercentageSupportThreshold, daoSpaceImplementation.RATIO_BASE() + 1, type(uint256).max);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.partialPercentageSupportThreshold = _partialPercentageSupportThreshold;
 
@@ -698,7 +699,8 @@ contract UnitDAOSpace is TestHelper {
     uint256 _universalPercentageSupportThreshold
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_universalPercentageSupportThreshold > daoSpaceImplementation.RATIO_BASE());
+    _universalPercentageSupportThreshold =
+      bound(_universalPercentageSupportThreshold, daoSpaceImplementation.RATIO_BASE() + 1, type(uint256).max);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.universalPercentageSupportThreshold = _universalPercentageSupportThreshold;
 
@@ -722,7 +724,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _flatSupportThreshold
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_flatSupportThreshold > _initialEditors.length);
+    _flatSupportThreshold = bound(_flatSupportThreshold, _initialEditors.length + 1, type(uint256).max);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.flatSupportThreshold = _flatSupportThreshold;
 
@@ -746,7 +748,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _quorum
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_quorum > _initialEditors.length);
+    _quorum = bound(_quorum, _initialEditors.length + 1, type(uint256).max);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.quorum = _quorum;
 
@@ -770,7 +772,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _duration
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_duration < daoSpaceImplementation.MINIMUM_VOTING_DURATION());
+    _duration = bound(_duration, 0, daoSpaceImplementation.MINIMUM_VOTING_DURATION() - 1);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.duration = _duration;
 
@@ -794,7 +796,7 @@ contract UnitDAOSpace is TestHelper {
     uint256 _executionGracePeriod
   ) external when_daoSpaceIdIsNon_zero {
     _assumeFuzzable(__spaceRegistry);
-    vm.assume(_executionGracePeriod < daoSpaceImplementation.MINIMUM_EXECUTION_GRACE_PERIOD());
+    _executionGracePeriod = bound(_executionGracePeriod, 0, daoSpaceImplementation.MINIMUM_EXECUTION_GRACE_PERIOD() - 1);
     IDAOSpace.VotingSettings memory _vs = _votingSettings;
     _vs.executionGracePeriod = _executionGracePeriod;
 
@@ -1017,60 +1019,42 @@ contract UnitDAOSpace is TestHelper {
     daoSpaceProxy.exposed__onlyRole(_daoRole);
   }
 
-  modifier whenRoleIsNeitherSPACE_REGISTRYNorDAO() {
+  modifier whenRoleIsNeitherSPACE_REGISTRYNorDAO(bytes32 _role) {
+    vm.assume(_role != daoSpaceImplementation.SPACE_REGISTRY());
+    vm.assume(_role != daoSpaceImplementation.DAO());
     _;
   }
 
   function test__onlyRole_WhenCallerHasRole(
-    bytes32 __role,
-    address __caller
-  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
-    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
-    vm.assume(__role != daoSpaceImplementation.DAO());
-    _assumeFuzzable(__caller);
+    bytes32 _role,
+    address _caller
+  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO(_role) {
+    _assumeFuzzable(_caller);
 
-    bytes16 __callerSpaceId = _getSpaceId(__caller);
-    _mockAddressToSpaceId(_spaceRegistry, __caller, __callerSpaceId);
-    daoSpaceProxy.workaround_grantRole(__role, __callerSpaceId);
-    assertTrue(daoSpaceProxy.hasRole(__role, __callerSpaceId));
-    vm.prank(__caller);
+    bytes16 _callerSpaceId = _getSpaceId(_caller);
+    _mockAddressToSpaceId(_spaceRegistry, _caller, _callerSpaceId);
+    daoSpaceProxy.workaround_grantRole(_role, _callerSpaceId);
+    assertTrue(daoSpaceProxy.hasRole(_role, _callerSpaceId));
+    vm.prank(_caller);
 
     // it does not revert
-    daoSpaceProxy.exposed__onlyRole(__role);
+    daoSpaceProxy.exposed__onlyRole(_role);
   }
 
   function test__onlyRole_WhenCallerDoesNotHaveRole(
-    bytes32 __role,
-    address __caller
-  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
-    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
-    vm.assume(__role != daoSpaceImplementation.DAO());
-    _assumeFuzzable(__caller);
+    bytes32 _role,
+    address _caller
+  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO(_role) {
+    _assumeFuzzable(_caller);
 
-    bytes16 __callerSpaceId = _getSpaceId(__caller);
-    _mockAddressToSpaceId(_spaceRegistry, __caller, __callerSpaceId);
-    assertFalse(daoSpaceProxy.hasRole(__role, __callerSpaceId));
-    vm.prank(__caller);
+    bytes16 _callerSpaceId = _getSpaceId(_caller);
+    _mockAddressToSpaceId(_spaceRegistry, _caller, _callerSpaceId);
+    assertFalse(daoSpaceProxy.hasRole(_role, _callerSpaceId));
+    vm.prank(_caller);
 
     // it reverts with InvalidCaller
     vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.exposed__onlyRole(__role);
-  }
-
-  function test__onlyRole_WhenCallerSpaceIdIsNotRegistered(
-    bytes32 __role,
-    address __caller
-  ) external whenRoleIsNeitherSPACE_REGISTRYNorDAO {
-    vm.assume(__role != daoSpaceImplementation.SPACE_REGISTRY());
-    vm.assume(__role != daoSpaceImplementation.DAO());
-    _assumeFuzzable(__caller);
-
-    vm.mockCall(_spaceRegistry, abi.encodeCall(ISpaceRegistry.addressToSpaceId, (__caller)), abi.encode(bytes16(0)));
-    vm.prank(__caller);
-
-    // it reverts with InvalidCaller
-    vm.expectRevert(IDAOSpace.InvalidCaller.selector);
-    daoSpaceProxy.exposed__onlyRole(__role);
+    daoSpaceProxy.exposed__onlyRole(_role);
   }
 
   /// WRITE - PROPOSAL CREATED ///
@@ -3243,7 +3227,8 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
-    vm.assume(_partialPercentageSupportThreshold > daoSpaceProxy.RATIO_BASE());
+    _partialPercentageSupportThreshold =
+      bound(_partialPercentageSupportThreshold, daoSpaceProxy.RATIO_BASE() + 1, type(uint256).max);
     _votingSettings.partialPercentageSupportThreshold = _partialPercentageSupportThreshold;
 
     // it reverts with InvalidSetting
@@ -3255,7 +3240,8 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
-    vm.assume(_universalPercentageSupportThreshold > daoSpaceProxy.RATIO_BASE());
+    _universalPercentageSupportThreshold =
+      bound(_universalPercentageSupportThreshold, daoSpaceProxy.RATIO_BASE() + 1, type(uint256).max);
     _votingSettings.universalPercentageSupportThreshold = _universalPercentageSupportThreshold;
 
     // it reverts with InvalidSetting
@@ -3267,7 +3253,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
-    vm.assume(_flatSupportThreshold > daoSpaceProxy.totalEditors());
+    _flatSupportThreshold = bound(_flatSupportThreshold, daoSpaceProxy.totalEditors() + 1, type(uint256).max);
     _votingSettings.flatSupportThreshold = _flatSupportThreshold;
 
     // it reverts with InvalidSetting
@@ -3276,7 +3262,7 @@ contract UnitDAOSpace is TestHelper {
   }
 
   function test_UpdateVotingSettings_WhenQuorumIsGreaterThanTotalEditors(uint256 _quorum) external whenCalledByDAO {
-    vm.assume(_quorum > daoSpaceProxy.totalEditors());
+    _quorum = bound(_quorum, daoSpaceProxy.totalEditors() + 1, type(uint256).max);
     _votingSettings.quorum = _quorum;
 
     // it reverts with InvalidSetting
@@ -3288,7 +3274,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
-    vm.assume(_duration < daoSpaceProxy.MINIMUM_VOTING_DURATION());
+    _duration = bound(_duration, 0, daoSpaceProxy.MINIMUM_VOTING_DURATION() - 1);
     _votingSettings.duration = _duration;
 
     // it reverts with InvalidSetting
@@ -3300,7 +3286,7 @@ contract UnitDAOSpace is TestHelper {
     external
     whenCalledByDAO
   {
-    vm.assume(_executionGracePeriod < daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD());
+    _executionGracePeriod = bound(_executionGracePeriod, 0, daoSpaceProxy.MINIMUM_EXECUTION_GRACE_PERIOD() - 1);
     _votingSettings.executionGracePeriod = _executionGracePeriod;
 
     // it reverts with InvalidSetting

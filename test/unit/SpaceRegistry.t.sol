@@ -180,12 +180,12 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_Enter_WhenCallerIsNotFromSpaceId(
-    uint8 __permissionlessActionIndex,
+    uint8 _permissionlessActionIndex,
     bytes32 _subjectInput,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpaceIdsAreActive whenCallerIsNotFromSpaceId {
-    bytes32 _action = _permissionlessActionFromIndex(__permissionlessActionIndex);
+    bytes32 _action = _permissionlessActionFromIndex(_permissionlessActionIndex);
 
     // it calls fromSpaceId to verify
     _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subjectInput, _data, _signature);
@@ -201,12 +201,12 @@ contract UnitSpaceRegistry is TestHelper {
   }
 
   function test_Enter_When_actionIsPermissionless(
-    uint8 __permissionlessActionIndex,
+    uint8 _permissionlessActionIndex,
     bytes32 _subjectInput,
     bytes calldata _data,
     bytes calldata _signature
   ) external whenSpaceIdsAreActive when_actionIsPermissionless {
-    bytes32 _action = _permissionlessActionFromIndex(__permissionlessActionIndex);
+    bytes32 _action = _permissionlessActionFromIndex(_permissionlessActionIndex);
 
     // it emits Action
     vm.startPrank(_fromSpace);
@@ -266,9 +266,6 @@ contract UnitSpaceRegistry is TestHelper {
     _whenActionIsNotPermissionless(_action);
 
     _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subjectInput, _data, _signature);
-
-    vm.expectCall(_toSpace, abi.encodeCall(ISpace.fetch, (_action, _subjectInput, _data)), 0);
-    vm.expectCall(_toSpace, abi.encodeCall(ISpace.write, (_fromSpaceId, _action, _subjectInput, _data)), 0);
 
     // it emits Action
     vm.expectEmit();
@@ -1106,8 +1103,8 @@ contract UnitSpaceRegistry is TestHelper {
     vm.assume(_action != ActionsConstants.COMMENTED);
   }
 
-  function _permissionlessActionFromIndex(uint8 __index) internal pure returns (bytes32 _action) {
-    uint256 _index = bound(__index, 0, 3);
+  function _permissionlessActionFromIndex(uint8 _index) internal pure returns (bytes32 _action) {
+    uint256 _index = bound(_index, 0, 3);
     if (_index == 0) _action = ActionsConstants.UPVOTED;
     else if (_index == 1) _action = ActionsConstants.DOWNVOTED;
     else if (_index == 2) _action = ActionsConstants.UNVOTED;

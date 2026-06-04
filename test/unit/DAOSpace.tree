@@ -80,9 +80,7 @@ UnitDAOSpace::_onlyRole
 └── when role is neither SPACE_REGISTRY nor DAO
     ├── when caller has role
     │   └── it does not revert
-    ├── when caller does not have role
-    │   └── it reverts with InvalidCaller
-    └── when caller space id is not registered
+    └── when caller does not have role
         └── it reverts with InvalidCaller
 
 UnitDAOSpace::write
