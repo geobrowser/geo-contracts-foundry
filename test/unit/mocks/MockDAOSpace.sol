@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.30;
+pragma solidity 0.8.35;
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 
@@ -81,4 +81,6 @@ contract MockDAOSpace is DAOSpace {
   function exposed__DAO_SPACE_STORAGE_LOCATION() external pure returns (bytes32 _daoSpaceStorageLocation) {
     _daoSpaceStorageLocation = _DAO_SPACE_STORAGE_LOCATION;
   }
+
+  function exposed__onlyRole(bytes32 _role) external onlyRole(_role) {}
 }

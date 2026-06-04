@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.30;
+pragma solidity 0.8.35;
 
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {EIP712Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
@@ -13,7 +13,7 @@ import {ISemver} from 'interfaces/utils/ISemver.sol';
 /**
  * @title VerifierSpace
  * @notice Manages writing verification for a verifier space
- * @dev This contract validates off-chain messages passed to the SpaceRegistry when from ≠ msg.sender
+ * @dev This contract validates offchain messages passed to the SpaceRegistry when from ≠ msg.sender
  *      An arbitrary number of these contracts allows for an EOA (or a DAO) to control multiple spaces simultaneously
  * @custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.
  */

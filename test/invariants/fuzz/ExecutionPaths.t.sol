@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.8.30;
+pragma solidity 0.8.35;
 
 import {DAOSpace} from 'contracts/DAOSpace.sol';
 import {VerifierSpace} from 'contracts/VerifierSpace.sol';

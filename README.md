@@ -14,8 +14,8 @@ Smart contracts for the Geo Browser plugin: a central space registry, DAO spaces
 
 1. Install [Foundry](https://github.com/foundry-rs/foundry#installation).
 2. Copy `.env.example` to `.env` and set the variables (RPC URLs and deployer names for the chains you use).
-3. Install Rust deps: `cargo install lintspec` (optional: `cargo install bulloak` for tree-based tests)
-4. Install deps: `yarn install` (if commands fail, run `foundryup` and retry)
+3. Install Rust deps: `cargo install lintspec` (optional: `cargo install bulloak` for tree-based tests).
+4. Install deps: `yarn install` (if commands fail, run `foundryup` and retry).
 
 ## Build
 
@@ -36,7 +36,7 @@ yarn test              # all tests
 yarn test:unit         # unit only
 yarn test:unit:deep    # unit with 5x fuzz runs
 yarn test:integration  # integration only
-yarn test:invariant    # invariant / fuzz
+yarn test:invariant    # execution-path + invariant / fuzz
 yarn coverage          # coverage report
 ```
 

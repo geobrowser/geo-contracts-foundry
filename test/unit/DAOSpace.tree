@@ -47,12 +47,41 @@ UnitDAOSpace::initialize
 │   │   │   └── it does not grant FAST_PATH_RESTRICTED to initial members
 │   │   ├── when an initial editor already has the EDITOR role
 │   │   │   └── it reverts with InvalidSpaceIdForRole
-│   │   └── when an initial member already has the MEMBER role
-│   │       └── it reverts with InvalidSpaceIdForRole
+│   │   ├── when an initial member already has the MEMBER role
+│   │   │   └── it reverts with InvalidSpaceIdForRole
+│   │   ├── when partialPercentageSupportThreshold is greater than RATIO_BASE
+│   │   │   └── it reverts with InvalidSetting
+│   │   ├── when universalPercentageSupportThreshold is greater than RATIO_BASE
+│   │   │   └── it reverts with InvalidSetting
+│   │   ├── when flatSupportThreshold is greater than totalEditors
+│   │   │   └── it reverts with InvalidSetting
+│   │   ├── when quorum is greater than totalEditors
+│   │   │   └── it reverts with InvalidSetting
+│   │   ├── when duration is less than MINIMUM_VOTING_DURATION
+│   │   │   └── it reverts with InvalidSetting
+│   │   └── when executionGracePeriod is less than MINIMUM_EXECUTION_GRACE_PERIOD
+│   │       └── it reverts with InvalidSetting
 │   └── when delegate called again
 │       └── it reverts with InvalidInitialization
 └── when called
     └── it reverts with InvalidInitialization
+
+UnitDAOSpace::_onlyRole
+├── when role is SPACE_REGISTRY
+│   ├── when called by spaceRegistry
+│   │   └── it does not revert
+│   └── when called by non-spaceRegistry
+│       └── it reverts with InvalidCaller
+├── when role is DAO
+│   ├── when called by DAO
+│   │   └── it does not revert
+│   └── when called by non-DAO
+│       └── it reverts with InvalidCaller
+└── when role is neither SPACE_REGISTRY nor DAO
+    ├── when caller has role
+    │   └── it does not revert
+    └── when caller does not have role
+        └── it reverts with InvalidCaller
 
 UnitDAOSpace::write
 ├── when called by spaceRegistry

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.8.30;
+pragma solidity 0.8.35;
 
 import {TestHelper} from 'test/unit/helpers/TestHelper.t.sol';
 
@@ -172,20 +172,47 @@ contract UnitSpaceRegistry is TestHelper {
     _;
   }
 
-  function test_Enter_WhenCallerIsNotFromSpaceId(
-    bytes32 _action,
-    bytes32 _subject,
-    bytes calldata _data,
-    bytes calldata _signature
-  ) external whenSpaceIdsAreActive {
+  modifier whenCallerIsNotFromSpaceId() {
     // when caller is not fromSpaceId
     vm.startPrank(_toSpace);
+    _;
+    vm.stopPrank();
+  }
+
+  function test_Enter_WhenCallerIsNotFromSpaceId(
+    uint8 _permissionlessActionIndex,
+    bytes32 _subjectInput,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external whenSpaceIdsAreActive whenCallerIsNotFromSpaceId {
+    bytes32 _action = _permissionlessActionFromIndex(_permissionlessActionIndex);
 
     // it calls fromSpaceId to verify
-    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subject, _data, _signature);
+    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subjectInput, _data, _signature);
 
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature);
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data, _signature);
+  }
 
+  modifier when_actionIsPermissionless() {
+    // when _action is permissionless
+    _;
+  }
+
+  function test_Enter_When_actionIsPermissionless(
+    uint8 _permissionlessActionIndex,
+    bytes32 _subjectInput,
+    bytes calldata _data,
+    bytes calldata _signature
+  ) external whenSpaceIdsAreActive when_actionIsPermissionless {
+    bytes32 _action = _permissionlessActionFromIndex(_permissionlessActionIndex);
+
+    // it emits Action
+    vm.startPrank(_fromSpace);
+    vm.expectEmit();
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data, _signature);
     vm.stopPrank();
   }
 
@@ -196,14 +223,18 @@ contract UnitSpaceRegistry is TestHelper {
     vm.stopPrank();
   }
 
-  function test_Enter_When_actionIsNotPermissionless(
+  modifier when_actionIsNotPermissionless() {
+    // when _action is not permissionless
+    _;
+  }
+
+  function test_Enter_WhenCallerIsNotToSpaceId(
     bytes32 _action,
     bytes32 _subjectInput,
     bytes32 _subjectOutput,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpaceIdsAreActive whenCallerIsNotToSpaceId {
-    // when _action is not permissionless
+  ) external whenSpaceIdsAreActive when_actionIsNotPermissionless whenCallerIsNotToSpaceId {
     _whenActionIsNotPermissionless(_action);
 
     // it calls toSpaceId to fetch _subjectOutput
@@ -219,15 +250,28 @@ contract UnitSpaceRegistry is TestHelper {
     spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data, _signature);
   }
 
-  function test_Enter_When_actionIsPermissionless(
+  modifier whenCallerIsToSpaceId() {
+    // when caller is toSpaceId
+    vm.startPrank(_toSpace);
+    _;
+    vm.stopPrank();
+  }
+
+  function test_Enter_WhenCallerIsToSpaceId(
+    bytes32 _action,
     bytes32 _subjectInput,
     bytes calldata _data,
     bytes calldata _signature
-  ) external whenSpaceIdsAreActive whenCallerIsNotToSpaceId {
+  ) external whenSpaceIdsAreActive when_actionIsNotPermissionless whenCallerIsToSpaceId {
+    _whenActionIsNotPermissionless(_action);
+
+    _mockVerify(_fromSpace, _toSpace, _toSpaceId, _action, _subjectInput, _data, _signature);
+
     // it emits Action
     vm.expectEmit();
-    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data);
-    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, ActionsConstants.UPVOTED, _subjectInput, _data, _signature);
+    emit ISpaceRegistry.Action(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data);
+
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subjectInput, _data, _signature);
   }
 
   function test_Enter_WhenSpaceIdIsNotActive(
@@ -239,6 +283,8 @@ contract UnitSpaceRegistry is TestHelper {
     bytes calldata _signature
   ) external {
     // when spaceId is not registered
+    vm.assume(__fromSpaceId != bytes16(0));
+    vm.assume(__toSpaceId != bytes16(0));
 
     // it reverts with SpaceNotActive
     vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
@@ -248,11 +294,12 @@ contract UnitSpaceRegistry is TestHelper {
     // when spaceId is registered but archived
     _mockSpaceIdToAddress(_fromSpaceId, _fromSpace);
     _mockSpaceIdToAddress(_toSpaceId, _toSpace);
+    _mockArchivedSpaceIds(_fromSpaceId, true);
 
     // it reverts with SpaceNotActive
     vm.expectRevert(ISpaceRegistry.SpaceNotActive.selector);
 
-    spaceRegistryProxy.enter(__fromSpaceId, __toSpaceId, _action, _subject, _data, _signature);
+    spaceRegistryProxy.enter(_fromSpaceId, _toSpaceId, _action, _subject, _data, _signature);
   }
 
   modifier whenSpaceIdIsNotRegistered() {
@@ -1054,6 +1101,14 @@ contract UnitSpaceRegistry is TestHelper {
     vm.assume(_action != ActionsConstants.DOWNVOTED);
     vm.assume(_action != ActionsConstants.UNVOTED);
     vm.assume(_action != ActionsConstants.COMMENTED);
+  }
+
+  function _permissionlessActionFromIndex(uint8 _permissionlessActionIndex) internal pure returns (bytes32 _action) {
+    uint256 _index = bound(_permissionlessActionIndex, 0, 3);
+    if (_index == 0) _action = ActionsConstants.UPVOTED;
+    else if (_index == 1) _action = ActionsConstants.DOWNVOTED;
+    else if (_index == 2) _action = ActionsConstants.UNVOTED;
+    else _action = ActionsConstants.COMMENTED;
   }
 
   function _getSpaceId(address _account, uint256 _nonce) internal view returns (bytes16 _spaceId) {

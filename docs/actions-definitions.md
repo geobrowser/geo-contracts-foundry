@@ -56,8 +56,8 @@ event Action(
 | Subspace Unrelated | `keccak256('GOVERNANCE.SUBSPACE_UNRELATED')` | `bytes32(spaceId)` | empty |
 | Subspace Topic Set | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_SET')` | packed `bytes32`: high 16 bytes = `spaceId`, low 16 bytes = `topicId` | empty |
 | Subspace Topic Unset | `keccak256('GOVERNANCE.SUBSPACE_TOPIC_UNSET')` | packed `bytes32`: high 16 bytes = `spaceId`, low 16 bytes = `topicId` | empty |
-| Upvoted | `keccak256('PERMISSIONLESS.UPVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (off-chain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
-| Downvoted | `keccak256('PERMISSIONLESS.DOWNVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (off-chain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
+| Upvoted | `keccak256('PERMISSIONLESS.UPVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (offchain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
+| Downvoted | `keccak256('PERMISSIONLESS.DOWNVOTED')` | 4-byte `objectType` + `bytes16` `objectId` packed (offchain convention) | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
 | Unvoted | `keccak256('PERMISSIONLESS.UNVOTED')` | 4-byte `objectType` + `bytes16` `objectId` | e.g. `abi.encode(uint16 version, bytes16 groupId, bytes16 spacePOV)` |
 | Commented | `keccak256('PERMISSIONLESS.COMMENTED')` | 4-byte `objectType` + `bytes16` `objectId` | e.g. `abi.encode(bytes commentMetadata)` |
 
@@ -66,17 +66,17 @@ event Action(
 - There exist two types of actions; governance and permissionless actions.
     - Governance actions concern those actions where onchain governance, using either the `DAOSpace`, `VerifierSpace`, a user’s EOA, or some third-party governance contracts, are required to mediate access control and execution permissions.
     - Permissionless actions concern those actions where onchain governance and permissions are not required.
-- The `action` field is always the `keccak256` of the past-tense name of the action, printed in bold snake-case, and pre-fixed with the type of action that it is (e.g. `GOVERNANCE.`).
+- The `action` field is always the `keccak256` of the past-tense name of the action, printed in bold snake-case, and prefixed with the type of action that it is (e.g. `GOVERNANCE.`).
     - E.g. `GOVERNANCE.SPACE_ID_REGISTERED`
     - This field may **not** be left empty.
 - The `subject` field provides more granular flags
-    - E.g. Up-Vote/Down-Vote group and object Ids that aren’t passed in data.
+    - E.g. upvote/downvote group and object IDs that aren’t passed in `data`.
     - This field may be left empty.
-- The `data` field is normally `abi.encoded` structured payload (or empty), for on- or off-chain execution.
+- The `data` field is normally an ABI-encoded structured payload (or empty), for onchain or offchain execution.
 - On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
-- **L2 incentives target ids** (e.g. `L2_INCENTIVES_PAYER_ENQUEUED` subject, Arbitrum `PaymentManager.setPayer`, merkle leaves) use `bytes32(bytes16 spaceId)` — the GEO space UUID from `SpaceRegistry`, not the space contract address. This matches geo-incentives `StakingRegistry` space targets and is stable across space migration.
+- L2 incentives target IDs, relevant for `L2_INCENTIVES_PAYER_ENQUEUED`, use `bytes32(bytes16 spaceId)`, which is the GEO space UUID stored in the `SpaceRegistry`, rather than the space contract address. This aligns with the geo-incentives `StakingRegistry` space targets, and must remain stable across space migration.
 
-Schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
+The schema above is the intended convention for callers and the table, not something the registry enforces on every emit.
 
 ## Exceptions
 
