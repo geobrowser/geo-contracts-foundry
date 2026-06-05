@@ -3875,7 +3875,7 @@ contract UnitDAOSpace is TestHelper {
 
   function test_Version_WhenCalled() external view {
     // it returns semantic version
-    assertEq(daoSpaceProxy.version(), '1.0.0');
+    assertEq(daoSpaceProxy.version(), '1.0.1');
   }
 
   /// HELPERS ///

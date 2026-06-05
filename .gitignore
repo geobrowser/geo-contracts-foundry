@@ -24,3 +24,6 @@ broadcast/*/*/*
 # Out dir
 out
 crytic-export
+
+# Reference build info for upgrade validation
+previous-builds
