@@ -468,7 +468,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   function _createSlowPathProposal(bytes16 _proposalId, bytes16 _editorSpaceId) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeEditor, (_editorSpaceId))
+      toAddress: address(daoSpaceProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeEditor, (_editorSpaceId))
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
 
@@ -482,7 +485,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   function _createFastPathProposal(bytes16 _proposalId, bytes16 _memberSpaceId) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
+      toAddress: address(daoSpaceProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, _actions);
 
@@ -525,7 +531,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   function _updateProposalPath(bytes16 _proposalId, IDAOSpace.VotingMode _votingMode, bytes16 _memberSpaceId) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
+      toAddress: address(daoSpaceProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
     });
     bytes memory _updateProposalData = abi.encode(_proposalId, _votingMode, _actions);
 

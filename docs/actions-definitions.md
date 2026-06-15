@@ -74,6 +74,11 @@ event Action(
     - This field may be left empty.
 - The `data` field is normally an ABI-encoded structured payload (or empty), for onchain or offchain execution.
 - On proposal creation (and update), `ProposalParameters.startDate`, `lastDate`, and `executeBy` are zero in the emitted settings. They are snapshotted from `VotingSettings` and re-emitted on the first cast vote; a first fast-path `No` (escalation) sets timers and emits slow-path settings once.
+- Each `IDAOSpace.Action` in proposal create/update payloads encodes:
+    - `toAddress` — explicit call target; `address(0)` means resolve via `toSpaceId` at execution time.
+    - `toSpaceId` — stable GEO space UUID; resolved through `SpaceRegistry.spaceIdToAddress` when `toAddress` is zero.
+    - `value` — native currency amount to send with the call.
+    - `data` — calldata for the resolved target.
 - L2 incentives target IDs, relevant for `L2_INCENTIVES_PAYER_ENQUEUED`, use `bytes32(bytes16 spaceId)`, which is the GEO space UUID stored in the `SpaceRegistry`, rather than the space contract address. This aligns with the geo-incentives `StakingRegistry` space targets, and must remain stable across space migration.
 
 The schema above is the intended convention for callers and the table, not something the registry enforces on every emit.

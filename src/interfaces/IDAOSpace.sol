@@ -107,12 +107,15 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Action to execute when proposal passes
-   * @param to Target address
+   * @param toAddress Explicit call target; `address(0)` means resolve via `toSpaceId`
+   * @param toSpaceId GEO space UUID; resolved through `SpaceRegistry.spaceIdToAddress` at execution
    * @param value Native currency amount to send
    * @param data Calldata
+   * @dev When `toAddress` is non-zero it is used directly; otherwise `toSpaceId` is resolved at execution time.
    */
   struct Action {
-    address to;
+    address toAddress;
+    bytes16 toSpaceId;
     uint256 value;
     bytes data;
   }
@@ -192,8 +195,15 @@ interface IDAOSpace is ISpace {
 
   /**
    * @notice Thrown when a fast path proposal attempts to call a contract other than the DAO itself
+   * @dev Applies to both explicit `toAddress` and spaceId-resolved targets.
    */
   error InvalidTarget();
+
+  /**
+   * @notice Thrown when an action target cannot be resolved
+   * @dev Occurs when `toAddress` is zero and `toSpaceId` is zero or unregistered in the space registry.
+   */
+  error UnresolvedActionTarget();
 
   /**
    * @notice Thrown when a fast path proposal attempts to transfer funds

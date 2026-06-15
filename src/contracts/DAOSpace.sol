@@ -493,7 +493,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
       // limit to only valid fast path actions
       if (!$_.actionIsFastPathValid[bytes4(_actions[0].data)]) revert InvalidAction();
       // limit the target to only this address
-      if (_actions[0].to != address(this)) revert InvalidTarget();
+      if (_resolveActionTarget(_actions[0]) != address(this)) revert InvalidTarget();
       // limit the transfer of funds
       if (_actions[0].value != 0) revert InvalidFundsTransfer();
     }
@@ -683,16 +683,18 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     Action[] memory _actions = proposal_.actions;
     uint256 _actionsLength = _actions.length;
     Action memory _action;
+    address _target;
     for (uint256 _i; _i < _actionsLength; _i++) {
       _action = _actions[_i];
-      if (_action.to.code.length > 0) {
+      _target = _resolveActionTarget(_action);
+      if (_target.code.length > 0) {
         // Checks for insufficient balance
         // Upon reversion, does so with the specific error returned, or a general `FailedCall`
-        Address.functionCallWithValue(payable(_action.to), _action.data, _action.value);
+        Address.functionCallWithValue(payable(_target), _action.data, _action.value);
       } else {
         // Checks for insufficient balance
         // Even if non-empty, `_action.data` is ignored
-        Address.sendValue(payable(_action.to), _action.value);
+        Address.sendValue(payable(_target), _action.value);
       }
     }
   }
@@ -735,7 +737,12 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
 
     VotingMode _votingMode = VotingMode.Fast;
     Action[] memory _actions = new Action[](1);
-    _actions[0] = Action({to: address(this), value: 0, data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))});
+    _actions[0] = Action({
+      toAddress: address(this),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.addMember, (_newMemberSpaceId))
+    });
 
     // Ping the registry to emit the proposal creation
     _ping(ActionsConstants.PROPOSAL_CREATED, bytes32(_proposalId), abi.encode(_proposalId, _votingMode, _actions));
@@ -850,6 +857,19 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
     bytes16 _daoSpaceId = $_.spaceRegistry.addressToSpaceId(address(this));
 
     $_.spaceRegistry.enter(_daoSpaceId, _daoSpaceId, _action, _subject, _data, '');
+  }
+
+  /**
+   * @notice Resolves the call target for a proposal action
+   * @param _action The proposal action
+   * @return _target The resolved target address
+   * @dev Uses `toAddress` when non-zero; otherwise resolves `toSpaceId` via the space registry.
+   *      Reverts `UnresolvedActionTarget` when resolution yields `address(0)`.
+   */
+  function _resolveActionTarget(Action memory _action) internal view returns (address _target) {
+    if (_action.toAddress != address(0)) return _action.toAddress;
+    _target = _getDAOSpaceStorage().spaceRegistry.spaceIdToAddress(_action.toSpaceId);
+    if (_target == address(0)) revert UnresolvedActionTarget();
   }
 
   /**

@@ -142,7 +142,10 @@ contract HandlerDAOSpace is BaseHandler {
 
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: _daoSpace, value: 0, data: abi.encodeCall(IDAOSpace.addMember, (bytes16(0x12340000000000000000000000000000)))
+      toAddress: _daoSpace,
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.addMember, (bytes16(0x12340000000000000000000000000000)))
     });
 
     vm.prank(msg.sender);
