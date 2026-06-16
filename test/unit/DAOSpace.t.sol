@@ -4167,7 +4167,7 @@ contract UnitDAOSpace is TestHelper {
     return abi.encode(__proposalId, _votingMode, _actions);
   }
 
-  /// @dev invalid target because the action resolves to another contract via spaceId
+  /// @dev invalid target because the action directly targets another contract via toAddress
   function _createFastPathProposalToAddMemberOnAnotherContract()
     internal
     view
