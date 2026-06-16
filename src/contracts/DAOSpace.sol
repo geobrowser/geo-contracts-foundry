@@ -866,7 +866,7 @@ contract DAOSpace is SpaceAccessControl, IDAOSpace {
    * @dev Uses `toAddress` when non-zero; otherwise resolves `toSpaceId` via the space registry.
    *      Reverts `UnresolvedActionTarget` when resolution yields `address(0)`.
    */
-  function _resolveActionTarget(Action memory _action) internal view returns (address _target) {
+  function _resolveActionTarget(Action memory _action) internal view virtual returns (address _target) {
     if (_action.toAddress != address(0)) return _action.toAddress;
     _target = _getDAOSpaceStorage().spaceRegistry.spaceIdToAddress(_action.toSpaceId);
     if (_target == address(0)) revert UnresolvedActionTarget();
