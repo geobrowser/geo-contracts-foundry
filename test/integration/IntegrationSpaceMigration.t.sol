@@ -98,10 +98,16 @@ contract IntegrationSpaceMigration is IntegrationBase {
     // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId();
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](2);
     _actions[0] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
     });
     _actions[1] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
     bytes memory _voteProposalData = abi.encode(_proposalId, _proposalVersion, IDAOSpace.VoteOption.Yes);
@@ -153,7 +159,8 @@ contract IntegrationSpaceMigration is IntegrationBase {
     // Proposal 0 (slow path): proposeSpaceMigration();
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy),
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
       value: 0,
       data: abi.encodeCall(ISpaceRegistry.proposeSpaceMigration, (address(daoSpaceProxyBis)))
     });
@@ -186,13 +193,20 @@ contract IntegrationSpaceMigration is IntegrationBase {
     // Proposal 0 (slow path): archiveSpaceId(); clearSpaceId(); acceptSpaceMigration();
     _actions = new IDAOSpace.Action[](3);
     _actions[0] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(ISpaceRegistry.archiveSpaceId, ())
     });
     _actions[1] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy), value: 0, data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(ISpaceRegistry.clearSpaceId, ())
     });
     _actions[2] = IDAOSpace.Action({
-      to: address(spaceRegistryProxy),
+      toAddress: address(spaceRegistryProxy),
+      toSpaceId: bytes16(0),
       value: 0,
       data: abi.encodeCall(ISpaceRegistry.acceptSpaceMigration, (_daoSpaceProxyId, 'DAO_SPACE', '1.0.0'))
     });

@@ -370,8 +370,17 @@ contract IntegrationDefaultGovernance is IntegrationBase {
 
     vm.warp(_v1Params.lastDate + 1);
 
-    // Update: Fast path
-    _updateProposalPath(_slowPathProposalId, IDAOSpace.VotingMode.Fast, _verifierSpaceProxyId);
+    // Revert due to unresolved target address
+    bytes16 _unregisteredToSpaceId = bytes16(keccak256('_unregisteredToSpaceId'));
+    assertEq(spaceRegistryProxy.spaceIdToAddress(_unregisteredToSpaceId), address(0));
+
+    vm.expectRevert(IDAOSpace.UnresolvedActionTarget.selector);
+    _updateProposalPathWithSpaceId(
+      _slowPathProposalId, IDAOSpace.VotingMode.Fast, _verifierSpaceProxyId, _unregisteredToSpaceId
+    );
+
+    // Update: Fast path (target resolved via toAddress)
+    _updateProposalPathWithAddress(_slowPathProposalId, IDAOSpace.VotingMode.Fast, _verifierSpaceProxyId);
 
     Proposal memory _slowPathProposal;
     (, _slowPathProposal.creator, _slowPathProposal.parameters, _slowPathProposal.tally,) =
@@ -468,7 +477,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   function _createSlowPathProposal(bytes16 _proposalId, bytes16 _editorSpaceId) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeEditor, (_editorSpaceId))
+      toAddress: address(daoSpaceProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeEditor, (_editorSpaceId))
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Slow, _actions);
 
@@ -482,7 +494,10 @@ contract IntegrationDefaultGovernance is IntegrationBase {
   function _createFastPathProposal(bytes16 _proposalId, bytes16 _memberSpaceId) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
+      toAddress: address(0),
+      toSpaceId: _daoSpaceProxyId,
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
     });
     bytes memory _createProposalData = abi.encode(_proposalId, IDAOSpace.VotingMode.Fast, _actions);
 
@@ -522,10 +537,39 @@ contract IntegrationDefaultGovernance is IntegrationBase {
     );
   }
 
-  function _updateProposalPath(bytes16 _proposalId, IDAOSpace.VotingMode _votingMode, bytes16 _memberSpaceId) internal {
+  function _updateProposalPathWithAddress(
+    bytes16 _proposalId,
+    IDAOSpace.VotingMode _votingMode,
+    bytes16 _memberSpaceId
+  ) internal {
     IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
     _actions[0] = IDAOSpace.Action({
-      to: address(daoSpaceProxy), value: 0, data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
+      toAddress: address(daoSpaceProxy),
+      toSpaceId: bytes16(0),
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
+    });
+    bytes memory _updateProposalData = abi.encode(_proposalId, _votingMode, _actions);
+
+    vm.prank(eoaSpace);
+    // PROPOSAL_UPDATED
+    spaceRegistryProxy.enter(
+      _eoaSpaceId, _daoSpaceProxyId, ActionsConstants.PROPOSAL_UPDATED, '', _updateProposalData, ''
+    );
+  }
+
+  function _updateProposalPathWithSpaceId(
+    bytes16 _proposalId,
+    IDAOSpace.VotingMode _votingMode,
+    bytes16 _memberSpaceId,
+    bytes16 _toSpaceId
+  ) internal {
+    IDAOSpace.Action[] memory _actions = new IDAOSpace.Action[](1);
+    _actions[0] = IDAOSpace.Action({
+      toAddress: address(0),
+      toSpaceId: _toSpaceId,
+      value: 0,
+      data: abi.encodeCall(IDAOSpace.removeMember, (_memberSpaceId))
     });
     bytes memory _updateProposalData = abi.encode(_proposalId, _votingMode, _actions);
 
