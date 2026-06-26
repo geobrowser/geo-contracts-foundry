@@ -1,0 +1,69 @@
+UnitGEOToken::constants
+└── when deployed
+    └── it sets _GEO_TOKEN_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.GEOToken")) - 1)) & ~bytes32(uint256(0xff))
+
+UnitGEOToken::constructor
+└── when called
+    └── it disables initializers
+
+UnitGEOToken::initialize
+├── when passing valid parameters
+│   ├── it sets the token name and symbol
+│   ├── it sets the owner
+│   ├── it sets the minter
+│   ├── it mints initial supply to initial supply recipient
+│   └── it emits the MinterSet event
+├── when called twice
+│   └── it reverts with InvalidInitialization
+├── when owner is zero
+│   └── it reverts with OwnableInvalidOwner
+├── when minter is zero
+│   └── it reverts with InvalidAddress
+└── when initial supply recipient is zero
+    └── it reverts with InvalidAddress
+
+UnitGEOToken::mint
+├── when called by minter
+│   ├── when amount is greater than zero
+│   │   ├── it mints tokens to recipient
+│   │   └── it emits Transfer event
+│   └── when amount is zero
+│       └── it reverts with ZeroAmount
+└── when called by non-minter
+    └── it reverts with OnlyMinter
+
+UnitGEOToken::burn
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+├── when caller has sufficient balance
+│   ├── it burns tokens from caller
+│   └── it emits Transfer event
+└── when caller has insufficient balance
+    └── it reverts with ERC20InsufficientBalance
+
+UnitGEOToken::setMinter
+├── when called by owner
+│   ├── it sets the new minter address
+│   └── it emits the MinterSet event
+├── when called by non-owner
+│   └── it reverts with OwnableUnauthorizedAccount
+└── when minter is zero
+    └── it reverts with InvalidAddress
+
+UnitGEOToken::typeId
+└── when called
+    └── it returns the type
+
+UnitGEOToken::version
+└── when called
+    └── it returns semantic version
+
+UnitGEOToken::nonces
+└── when called
+    └── it returns the nonce
+
+UnitGEOToken::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount 

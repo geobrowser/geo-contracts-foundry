@@ -17,7 +17,7 @@ jobs:
 
       - name: Check security warning in contracts
         run: |
-          WARNING='@custom:security WARNING: This contract has not been audited, may contain bugs, and should not be used to hold funds.'
+          WARNING='@custom:security WARNING: This contract has not been audited, and may contain bugs.'
           MISSING=()
 
           while IFS= read -r -d '' file; do

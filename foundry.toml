@@ -16,7 +16,7 @@ optimizer_runs = 10_000
 via_ir = true
 ast = true
 build_info = true
-extra_output = ["storageLayout"]
+extra_output = ['storageLayout']
 
 [profile.optimized]
 via_ir = true
@@ -27,7 +27,7 @@ ast = true
 via_ir = true
 ast = true
 build_info = true
-extra_output = ["storageLayout"]
+extra_output = ['storageLayout']
 
 [profile.docs]
 src = 'src/interfaces/'
@@ -40,13 +40,26 @@ timeout = 30
 depth = 128
 show_metrics = true
 fail_on_revert = true
-corpus_dir = 'test/invariants/fuzz/corpus'
 show_solidity = true
 
+[profile.invariant_l2.invariant]
+corpus_dir = 'test/invariants/L2/fuzz/corpus'
+
+[profile.invariant_l3.invariant]
+corpus_dir = 'test/invariants/L3/fuzz/corpus'
+
 [rpc_endpoints]
+ethereum_mainnet = "${ETHEREUM_MAINNET_RPC}"
+ethereum_sepolia = "${ETHEREUM_SEPOLIA_RPC}"
+arbitrum_one = "${ARBITRUM_ONE_RPC}"
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 geo = "${GEO_RPC}"
 geo_testnet = "${GEO_TESTNET_RPC}"
 
 [etherscan]
+1 = { key = "${ETHERSCAN_API_KEY}" }
+11155111 = { key = "${ETHERSCAN_API_KEY}" }
+42161 = { key = "${ARBISCAN_API_KEY}" }
+421614 = { key = "${ARBISCAN_API_KEY}", url = "${ARBISCAN_API_URL}" }
 "${GEO_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}", url = "${GEOSCAN_API_URL}" }
 "${GEO_TESTNET_CHAIN_ID}" = { key = "${GEOSCAN_API_KEY}", url = "${GEOSCAN_TESTNET_API_URL}" }

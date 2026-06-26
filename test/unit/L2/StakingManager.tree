@@ -1,0 +1,176 @@
+UnitStakingManager::constants
+└── when deployed
+    ├── it sets _STAKING_MANAGER_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.StakingManager")) - 1)) & ~bytes32(uint256(0xff))
+    └── it sets MAX_UNSTAKE_REQUEST_DELAY to 30 days
+
+UnitStakingManager::constructor
+└── when called
+    └── it disables initializers
+
+UnitStakingManager::initialize
+├── when passing valid parameters
+│   ├── it sets the owner
+│   ├── it sets arbitrumGeoToken
+│   ├── it sets the min amount
+│   ├── it sets the unstake delay
+│   ├── it sets the staking registry
+│   ├── it sets stakedGEOToken
+│   ├── it emits MinAmountSet
+│   └── it emits UnstakeRequestDelaySet
+├── when called twice
+│   └── it reverts with InvalidInitialization
+├── when arbitrumGeoToken is zero
+│   └── it reverts with InvalidAddress
+├── when owner is zero
+│   └── it reverts with OwnableInvalidOwner
+├── when staking registry is zero
+│   └── it reverts with InvalidAddress
+├── when stakedGEOToken is zero
+│   └── it reverts with InvalidAddress
+├── when min amount is zero
+│   └── it reverts with ZeroAmount
+└── when unstake request delay exceeds maximum
+    └── it reverts with UnstakeRequestDelayExceedsMaximum
+
+UnitStakingManager::setMinAmount
+├── when called by owner
+│   ├── it sets the new minimum amount
+│   └── it emits MinAmountSet
+├── when min amount is zero
+│   └── it reverts with ZeroAmount
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitStakingManager::setUnstakeRequestDelay
+├── when called by owner
+│   ├── it sets the new delay
+│   └── it emits UnstakeRequestDelaySet
+├── when delay exceeds maximum
+│   └── it reverts with UnstakeRequestDelayExceedsMaximum
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitStakingManager::totalUserDisposableStake
+└── when called
+    └── it returns stake minus pending unstake minus allocation
+
+UnitStakingManager::stake
+├── when amount is below minimum
+│   └── it reverts with AmountBelowMinimum
+└── when amount is at least minimum
+    ├── it transfers GEO from the user to the staking manager
+    ├── it mints staked GEO to the user
+    ├── it updates total user stake for the user
+    ├── it updates total staked
+    └── it emits Staked
+
+UnitStakingManager::stakeFor
+├── when recipient is zero address
+│   └── it reverts with InvalidAddress
+├── when amount is below minimum
+│   └── it reverts with AmountBelowMinimum
+└── when amount is at least minimum
+    ├── it updates total user stake for the recipient
+    ├── it updates total staked
+    └── it emits Staked
+
+UnitStakingManager::requestUnstake
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+├── when amount exceeds disposable stake
+│   └── it reverts with InsufficientDisposableStake
+├── when amount is below minimum and not a full disposable exit
+│   └── it reverts with AmountBelowMinimum
+├── when disposable stake remainder is non-zero and below minimum
+│   └── it reverts with DisposableStakeRemainderBelowMinimum
+└── when amount is valid
+    ├── it preserves total user stake for the user
+    ├── it preserves total staked
+    ├── it records the amount in total user pending unstake for the user
+    ├── it records the amount in total pending unstake
+    ├── it increments the unstake request nonce
+    └── it emits UnstakeRequested
+
+UnitStakingManager::unstake
+├── when request is missing
+│   └── it reverts with UnstakeRequestNotFound
+├── when caller is not the requester
+│   └── it reverts with UnstakeRequestUnauthorized
+├── when delay has not elapsed
+│   └── it reverts with UnstakeRequestLocked
+└── when delay has elapsed and caller is the requester
+    ├── it burns staked GEO from the user
+    ├── it transfers unstaked GEO to the user
+    ├── it reduces total user stake for the user by the unstaked amount
+    ├── it reduces total staked by the unstaked amount
+    ├── it clears total user pending unstake for the user
+    ├── it clears total pending unstake
+    ├── it clears the unstake request record for the unstake id
+    └── it emits Unstaked
+
+UnitStakingManager::allocate
+├── when amount exceeds disposable stake
+│   └── it reverts with InsufficientDisposableStake
+├── when amount is below minimum
+│   └── it reverts with AmountBelowMinimum
+├── when target is inactive in registry
+│   └── it reverts with InactiveAllocationTarget
+└── when amount is valid
+    ├── it records allocation for the user and target
+    ├── it records total user allocation for the user
+    ├── it records total target allocation for the target
+    ├── it records total allocated across targets
+    └── it emits Allocated
+
+UnitStakingManager::deallocate
+├── when amount exceeds allocation
+│   └── it reverts with InsufficientAllocation
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+├── when amount is below minimum and not a full target exit
+│   └── it reverts with AmountBelowMinimum
+├── when allocation remainder is non-zero and below minimum
+│   └── it reverts with AllocationRemainderBelowMinimum
+└── when amount is valid
+    ├── it updates allocation for the user and target
+    ├── it updates total user allocation for the user
+    ├── it updates total target allocation for the target
+    ├── it updates total allocated across targets
+    └── it emits Deallocated
+
+UnitStakingManager::reallocate
+├── when source equals destination
+│   └── it reverts with SameReallocationTargets
+├── when amount exceeds source allocation
+│   └── it reverts with InsufficientAllocation
+├── when amount is below minimum
+│   └── it reverts with AmountBelowMinimum
+├── when source allocation remainder is non-zero and below minimum
+│   └── it reverts with AllocationRemainderBelowMinimum
+├── when destination target is inactive in registry
+│   └── it reverts with InactiveAllocationTarget
+└── when amount is valid
+    ├── it updates allocation for the user on the source target
+    ├── it updates allocation for the user on the destination target
+    ├── it updates total target allocation for the source target
+    ├── it updates total target allocation for the destination target
+    ├── it preserves total allocated across targets
+    └── it emits Reallocated
+
+UnitStakingManager::typeId
+└── when called
+    └── it returns the type
+
+UnitStakingManager::name
+└── when called
+    └── it returns the name
+
+UnitStakingManager::version
+└── when called
+    └── it returns semantic version
+
+UnitStakingManager::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

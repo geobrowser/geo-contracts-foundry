@@ -1,0 +1,114 @@
+UnitStakedGEOToken::constants
+└── when deployed
+    └── it sets _STAKED_GEO_TOKEN_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.StakedGEOToken")) - 1)) & ~bytes32(uint256(0xff))
+
+UnitStakedGEOToken::constructor
+└── when called
+    └── it disables initializers
+
+UnitStakedGEOToken::initialize
+├── when passing valid parameters
+│   ├── it sets the owner
+│   ├── it sets stakingManager
+│   ├── it sets the token name
+│   └── it sets the token symbol
+├── when called twice
+│   └── it reverts with InvalidInitialization
+├── when stakingManager is zero
+│   └── it reverts with InvalidAddress
+└── when council is zero
+    └── it reverts with OwnableInvalidOwner
+
+UnitStakedGEOToken::clock
+└── when called
+    └── it returns block.timestamp
+
+UnitStakedGEOToken::CLOCK_MODE
+└── when called
+    └── it returns mode=timestamp
+
+UnitStakedGEOToken::mint
+├── when called by stakingManager
+│   ├── it updates balanceOf
+│   └── it updates getVotes
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+└── when caller is not stakingManager
+    └── it reverts with OnlyStakingManager
+
+UnitStakedGEOToken::burn
+├── when called by stakingManager
+│   ├── it updates balanceOf
+│   └── it updates getVotes
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+└── when caller is not stakingManager
+    └── it reverts with OnlyStakingManager
+
+UnitStakedGEOToken::transfer
+└── when called
+    └── it reverts with SoulboundTransfer
+
+UnitStakedGEOToken::transferFrom
+└── when called
+    └── it reverts with SoulboundTransfer
+
+UnitStakedGEOToken::delegate
+└── when called
+    └── it reverts with DelegationDisabled
+
+UnitStakedGEOToken::delegateBySig
+└── when called
+    └── it reverts with DelegationDisabled
+
+UnitStakedGEOToken::getPastVotes
+├── when staked
+│   └── it returns the minted balance
+└── when partially burned
+    └── it returns the reduced balance
+
+UnitStakedGEOToken::getStakeEligibleSince
+├── when never staked
+│   └── it returns zero
+├── when staked
+│   └── it returns the stake timestamp
+├── when partially burned
+│   └── it returns the original stake timestamp
+├── when fully burned
+│   └── it returns zero
+├── when restaked
+│   └── it returns the restake timestamp
+└── when topped up
+    └── it returns the first stake timestamp
+
+UnitStakedGEOToken::getPastStakeEligibleSince
+├── when never staked
+│   └── it returns zero
+├── when staked before query timestamp
+│   └── it returns the stake timestamp
+├── when staked after query timestamp
+│   └── it returns zero
+├── when partially burned
+│   └── it returns the original stake timestamp
+├── when fully burned
+│   └── it returns zero
+├── when restaked
+│   └── it returns the restake timestamp
+├── when topped up before query timestamp
+│   └── it returns the first stake timestamp
+└── when topped up after query timestamp
+    └── it returns the first stake timestamp
+
+UnitStakedGEOToken::typeId
+└── when called
+    └── it returns the type
+
+UnitStakedGEOToken::version
+└── when called
+    └── it returns semantic version
+
+UnitStakedGEOToken::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

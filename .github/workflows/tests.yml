@@ -7,6 +7,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  ETHEREUM_MAINNET_RPC: ${{ secrets.ETHEREUM_MAINNET_RPC }}
+  ARBITRUM_ONE_RPC: ${{ secrets.ARBITRUM_ONE_RPC }}
   GEO_RPC: ${{ secrets.GEO_RPC }}
 
 jobs:

@@ -1,7 +1,7 @@
 {
   "name": "geo-contracts-foundry",
   "version": "1.0.0",
-  "description": "Geo Browser plugin contracts",
+  "description": "GEO protocol smart contracts",
   "homepage": "https://github.com/defi-wonderland/geo-contracts-foundry#readme",
   "repository": {
     "type": "git",
@@ -13,8 +13,12 @@
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "coverage": "yarn recompile && forge coverage --report summary --report lcov --ir-minimum --ffi --match-path 'test/unit/*' --no-match-coverage test",
-    "deploy:geo-browser": "bash -c 'source .env && yarn recompile && forge script script/DeployGEOBrowser.s.sol:DeployGEOBrowser --ffi --rpc-url geo --account $GEO_DEPLOYER_NAME --broadcast --verify --chain $GEO_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
-    "deploy:geo-browser:testnet": "bash -c 'source .env && yarn recompile && forge script script/DeployGEOBrowser.s.sol:DeployGEOBrowser --ffi --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain $GEO_TESTNET_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
+    "deploy:layer-one:ethereum-mainnet": "bash -c 'source .env && yarn recompile && forge script script/L1/DeployL1Contracts.s.sol:DeployL1Contracts --ffi --rpc-url ethereum_mainnet --account $ETHEREUM_MAINNET_DEPLOYER_NAME --broadcast --verify --chain 1 -vvvvv'",
+    "deploy:layer-one:ethereum-sepolia": "bash -c 'source .env && yarn recompile && forge script script/L1/DeployL1Contracts.s.sol:DeployL1Contracts --ffi --rpc-url ethereum_sepolia --account $ETHEREUM_SEPOLIA_DEPLOYER_NAME --broadcast --verify --chain 11155111 -vvvvv'",
+    "deploy:layer-three": "bash -c 'source .env && yarn recompile && forge script script/L3/DeployL3Contracts.s.sol:DeployL3Contracts --ffi --rpc-url geo --account $GEO_DEPLOYER_NAME --broadcast --verify --chain $GEO_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
+    "deploy:layer-three:testnet": "bash -c 'source .env && yarn recompile && forge script script/L3/DeployL3Contracts.s.sol:DeployL3Contracts --ffi --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain $GEO_TESTNET_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
+    "deploy:layer-two:arbitrum-one": "bash -c 'source .env && yarn recompile && forge script script/L2/DeployL2Contracts.s.sol:DeployL2Contracts --ffi --rpc-url arbitrum_one --account $ARBITRUM_ONE_DEPLOYER_NAME --broadcast --verify --chain 42161 -vvvvv'",
+    "deploy:layer-two:arbitrum-sepolia": "bash -c 'source .env && yarn recompile && forge script script/L2/DeployL2Contracts.s.sol:DeployL2Contracts --ffi --rpc-url arbitrum_sepolia --account $ARBITRUM_SEPOLIA_DEPLOYER_NAME --broadcast --verify --chain 421614 -vvvvv'",
     "lint:bulloak": "find test/unit -name '*.tree' | xargs bulloak check",
     "lint:check": "forge fmt --check && yarn lint:sol",
     "lint:fix": "forge fmt && yarn lint:sol --fix && sort-package-json",
@@ -26,7 +30,7 @@
     "test:bulloak:fix": "bulloak check --fix ./**/*.tree",
     "test:bulloak:scaffold": "bulloak scaffold -wS ./**/*.tree",
     "test:integration": "yarn recompile && forge test --ffi --match-contract Integration -vvv",
-    "test:invariant": "yarn recompile && forge test --ffi --match-contract ExecutionPaths -vvv && forge test --ffi --match-contract Invariants -vvv",
+    "test:invariant": "yarn recompile && FOUNDRY_PROFILE=invariant_l2 forge test --ffi --match-contract 'L2ExecutionPaths|L2Invariants' -vvv && FOUNDRY_PROFILE=invariant_l3 forge test --ffi --match-contract 'L3ExecutionPaths|L3Invariants' -vvv",
     "test:unit": "yarn recompile && forge test --ffi --match-contract Unit -vvv",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit"
   },
@@ -46,6 +50,7 @@
   "devDependencies": {
     "@commitlint/cli": "19.3.0",
     "@commitlint/config-conventional": "19.2.2",
+    "@openzeppelin/upgrades-core": "1.41.0",
     "forge-std": "github:foundry-rs/forge-std#v1.11.0",
     "husky": ">=9",
     "lint-staged": ">=16",

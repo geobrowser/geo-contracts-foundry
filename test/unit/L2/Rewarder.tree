@@ -1,0 +1,118 @@
+UnitRewarder::constants
+└── when deployed
+    ├── it sets _REWARDER_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.Rewarder")) - 1)) & ~bytes32(uint256(0xff))
+    ├── it sets MAX_TOTAL_CLAIMABLE_REWARDS_PER_EPOCH to 100_000_000e18
+    └── it sets MAX_EPOCHS_PER_CLAIM to 50
+
+UnitRewarder::constructor
+└── when called
+    └── it disables initializers
+
+UnitRewarder::initialize
+├── when passing valid parameters
+│   ├── it sets the owner
+│   ├── it sets escrow
+│   └── it sets paymentManager
+├── when called twice
+│   └── it reverts with InvalidInitialization
+├── when escrow is zero
+│   └── it reverts with InvalidAddress
+├── when paymentManager is zero
+│   └── it reverts with InvalidAddress
+└── when council is zero
+    └── it reverts with OwnableInvalidOwner
+
+UnitRewarder::publishMerkleRoot
+├── when called by owner
+│   ├── it stores the root and total claimable
+│   └── it emits MerkleRootPublished
+├── when root is zero
+│   └── it reverts with InvalidMerkleRoot
+├── when total claimable is zero
+│   └── it reverts with InvalidTotalClaimableRewards
+├── when total exceeds cap
+│   └── it reverts with TotalClaimableRewardsCapExceeded
+├── when already published
+│   └── it reverts with MerkleRootAlreadyPublished on a second publish for the same epoch
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitRewarder::revokeMerkleRoot
+├── when called by owner
+│   ├── it marks the epoch as revoked
+│   ├── it zeros remaining total claimable rewards for the epoch
+│   └── it emits MerkleRootRevoked
+├── when merkle root is not published
+│   └── it reverts with MerkleRootNotPublished
+├── when already revoked
+│   └── it reverts with MerkleRootAlreadyRevoked
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitRewarder::claimUserRewards
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when proof is valid
+│   ├── it transfers GEO from escrow to the user
+│   ├── it marks the claim and reduces remaining total claimable for the epoch
+│   └── it emits UserRewardsClaimed
+├── when merkle root is missing
+│   └── it reverts with InvalidMerkleRoot
+├── when merkle root is revoked
+│   └── it reverts with MerkleRootIsRevoked
+├── when epochs amounts or proofs lengths mismatch
+│   └── it reverts with InvalidArrayLength
+├── when epochs exceed max per claim
+│   └── it reverts with TooManyEpochsPerClaim
+├── when proof is invalid
+│   └── it reverts with InvalidProof
+├── when already claimed
+│   └── it reverts with RewardAlreadyClaimed on a second claim
+├── when amount exceeds published total
+│   └── it reverts with TotalClaimableRewardsExceeded when the claim amount exceeds the published total for the epoch
+└── when two leaves proof
+    └── it allows both users to claim
+
+UnitRewarder::claimTargetRewards
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when epochs amounts or proofs lengths mismatch
+│   └── it reverts with InvalidArrayLength
+├── when epochs exceed max per claim
+│   └── it reverts with TooManyEpochsPerClaim
+├── when merkle root is missing
+│   └── it reverts with InvalidMerkleRoot
+├── when merkle root is revoked
+│   └── it reverts with MerkleRootIsRevoked
+├── when proof is invalid
+│   └── it reverts with InvalidProof
+├── when amount exceeds published total
+│   └── it reverts with TotalClaimableRewardsExceeded
+├── when proof is valid
+│   ├── it transfers GEO to the PaymentManager
+│   ├── it credits the target balance on the PaymentManager once with the total amount
+│   └── it emits TargetRewardsClaimed
+├── when multiple epochs
+│   └── it credits the merged Space balance on the PaymentManager
+├── when already claimed
+│   └── it reverts with RewardAlreadyClaimed
+└── when empty arrays
+    └── it performs no PaymentManager balance credit
+
+UnitRewarder::typeId
+└── when called
+    └── it returns the type
+
+UnitRewarder::name
+└── when called
+    └── it returns the name
+
+UnitRewarder::version
+└── when called
+    └── it returns semantic version
+
+UnitRewarder::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

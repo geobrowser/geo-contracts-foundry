@@ -1,0 +1,4 @@
+UnitDeployL1Contracts::run
+└── when called
+    ├── it defines initialization parameters
+    └── it deploys and initializes GEOToken

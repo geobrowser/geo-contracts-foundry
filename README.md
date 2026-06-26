@@ -1,14 +1,29 @@
 # GEO Contracts
 
-Smart contracts for the Geo Browser plugin: a central space registry, DAO spaces, and verifier spaces. Built with Foundry.
+Smart contracts for the GEO protocol: an L1 ERC-20 governance token on **Ethereum mainnet**, an L2 incentives stack on **Arbitrum**, and L3 Geo governance contracts on the **GEO chain**. Built with Foundry.
+
+`L1/`, `L2/`, and `L3/` name the **deployment chain** for each layer. Sources live under `src/contracts/` and `src/interfaces/` with matching `test/unit/`, `test/integration/`, and `script/` subfolders.
 
 ## Contracts
 
+### L1 (Ethereum mainnet)
+
+- **GEOToken** — ERC-20 governance token (UUPS upgradeable)
+- **IGEOToken** — token interface
+
+### L2 (Arbitrum — incentives stack)
+
+- **Escrow** — holds GEO for reward claims
+- **PaymentManager** — payment requests and execution (L3 SpaceRegistry sets payers via cross-chain messages)
+- **Rewarder** — merkle-based reward claims
+- **StakingManager** — stake, allocate, unstake
+- **StakingRegistry** — allocation targets (spaces, topics)
+
+### L3 (GEO chain — Geo Browser plugin)
+
 - **SpaceRegistry** — Central registry for spaces (UUPS upgradeable)
-- **DAOSpaceFactory** — Produces beacon-proxy DAO spaces
-- **DAOSpace** — DAO space implementation (beacon proxy)
-- **VerifierSpaceFactory** — Produces beacon-proxy verifier spaces
-- **VerifierSpace** — Verifier space implementation (beacon proxy)
+- **DAOSpaceFactory** / **DAOSpace** — Beacon-proxy DAO spaces
+- **VerifierSpaceFactory** / **VerifierSpace** — Beacon-proxy verifier spaces
 
 ## Setup
 
@@ -42,23 +57,32 @@ yarn coverage          # coverage report
 
 ## Deploy & verify
 
-1. **Set deployer and chain config in `.env`** — For mainnet: `GEO_DEPLOYER_NAME`, `GEO_RPC`, and `GEO_CHAIN_ID`. For testnet: `GEO_TESTNET_DEPLOYER_NAME`, `GEO_TESTNET_RPC`, and `GEO_TESTNET_CHAIN_ID`. The deployer name is the Foundry keystore name and must match the name you give when importing the key.
-
-2. **Import the key** (if you haven’t already). Use `$GEO_DEPLOYER_NAME` for mainnet or `$GEO_TESTNET_DEPLOYER_NAME` for testnet:
+### L1 — GEO token (Ethereum)
 
 ```bash
-source .env
-cast wallet import $GEO_DEPLOYER_NAME --interactive           # Mainnet
-cast wallet import $GEO_TESTNET_DEPLOYER_NAME --interactive   # Testnet
+yarn deploy:layer-one:ethereum-mainnet
+yarn deploy:layer-one:ethereum-sepolia
 ```
 
-3. **Deploy to GEO:**
+Set `ETHEREUM_MAINNET_DEPLOYER_NAME` / `ETHEREUM_SEPOLIA_DEPLOYER_NAME` and Ethereum RPC URLs in `.env`.
+
+### L2 — incentives stack (Arbitrum)
 
 ```bash
-yarn deploy:geo-browser           # Mainnet
-
-yarn deploy:geo-browser:testnet   # Testnet
+yarn deploy:layer-two:arbitrum-one
+yarn deploy:layer-two:arbitrum-sepolia
 ```
+
+Set `ARBITRUM_ONE_DEPLOYER_NAME` / `ARBITRUM_SEPOLIA_DEPLOYER_NAME`, L2 constants in `script/Constants.sol`, and Arbitrum RPC URLs. The deployer must be an **EOA**.
+
+### L3 — Geo Browser (GEO chain)
+
+```bash
+yarn deploy:layer-three           # Mainnet
+yarn deploy:layer-three:testnet   # Testnet
+```
+
+Set `GEO_DEPLOYER_NAME` / `GEO_TESTNET_DEPLOYER_NAME`, `GEO_RPC` / `GEO_TESTNET_RPC`, chain IDs, and `GEO_GEO_MULTISIG_COUNCIL` in `script/Constants.sol`.
 
 Deployments are written to `./broadcast`. See the [Foundry Book](https://book.getfoundry.sh/reference/forge/forge-create.html) for more options.
 

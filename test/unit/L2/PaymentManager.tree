@@ -1,0 +1,129 @@
+UnitPaymentManager::constants
+└── when deployed
+    └── it sets _PAYMENT_MANAGER_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.PaymentManager")) - 1)) & ~bytes32(uint256(0xff))
+
+UnitPaymentManager::constructor
+└── when called
+    └── it disables initializers
+
+UnitPaymentManager::initialize
+├── when passing valid parameters
+│   ├── it sets the owner
+│   ├── it sets arbitrumGeoToken
+│   ├── it sets outbox
+│   ├── it sets rewarder
+│   ├── it sets escrow
+│   ├── it sets the spaceRegistry
+│   ├── it sets the payment request delay
+│   └── it emits PaymentRequestDelaySet
+├── when called twice
+│   └── it reverts with InvalidInitialization
+├── when arbitrumGeoToken is zero
+│   └── it reverts with InvalidAddress
+├── when outbox is zero
+│   └── it reverts with InvalidAddress
+├── when rewarder is zero
+│   └── it reverts with InvalidAddress
+├── when escrow is zero
+│   └── it reverts with InvalidAddress
+├── when spaceRegistry is zero
+│   └── it reverts with InvalidAddress
+└── when council is zero
+    └── it reverts with OwnableInvalidOwner
+
+UnitPaymentManager::setPaymentRequestDelay
+├── when called by owner
+│   ├── it sets the new delay
+│   └── it emits PaymentRequestDelaySet
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitPaymentManager::setPayer
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when l3 sender is not spaceRegistry
+│   └── it reverts with InvalidL3Sender
+├── when called with valid cross-chain context
+│   ├── it stores the payer
+│   └── it emits PayerSet
+└── when payer is unchanged
+    └── it keeps the same payer
+
+UnitPaymentManager::processRewards
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when caller is not rewarder
+│   └── it reverts with OnlyRewarder
+└── when called by rewarder
+    ├── it credits the target balance
+    └── it emits RewardReceived
+
+UnitPaymentManager::createPayment
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when caller is not authorized payer
+│   └── it reverts with UnauthorizedPayer
+├── when recipient is zero address
+│   └── it reverts with InvalidAddress
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+├── when insufficient target balance
+│   └── it reverts with InsufficientTargetBalance
+└── when parameters are valid
+    ├── it assigns the next incremental payment id
+    ├── it reduces the target balance
+    ├── it increments paymentNonce
+    ├── it stores the payment request fields
+    └── it emits PaymentCreated
+
+UnitPaymentManager::slashPayment
+├── when payment is missing
+│   └── it reverts with InvalidPayment
+├── when called by owner
+│   ├── it deletes the payment request
+│   ├── it sends GEO back to escrow
+│   └── it emits PaymentSlashed
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitPaymentManager::reclaimRewards
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+├── when amount is zero
+│   └── it reverts with ZeroAmount
+├── when insufficient target balance
+│   └── it reverts with InsufficientTargetBalance
+├── when called by owner
+│   ├── it reduces the target balance
+│   ├── it sends GEO back to escrow
+│   └── it emits RewardsReclaimed
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitPaymentManager::executePayment
+├── when payment is missing
+│   └── it reverts with InvalidPayment
+├── when unlock time has not been reached
+│   └── it reverts with PaymentRequestLocked
+└── when unlock time has elapsed
+    ├── it deletes the payment request
+    ├── it transfers GEO to the recipient
+    └── it emits PaymentExecuted
+
+UnitPaymentManager::typeId
+└── when called
+    └── it returns the type
+
+UnitPaymentManager::name
+└── when called
+    └── it returns the name
+
+UnitPaymentManager::version
+└── when called
+    └── it returns semantic version
+
+UnitPaymentManager::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount

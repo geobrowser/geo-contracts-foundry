@@ -1,0 +1,27 @@
+UnitDeployL2Contracts::run
+└── when initialization parameters are set up
+    ├── when precomputed addresses are correct
+    │   ├── it deploys Escrow implementation
+    │   ├── it deploys PaymentManager implementation
+    │   ├── it deploys Rewarder implementation
+    │   ├── it deploys StakingRegistry implementation
+    │   ├── it deploys StakedGEOToken implementation
+    │   ├── it deploys StakingManager implementation
+    │   ├── it deploys and initializes StakingRegistry proxy
+    │   ├── it deploys and initializes StakedGEOToken proxy
+    │   ├── it deploys and initializes StakingManager proxy
+    │   ├── it deploys and initializes Rewarder proxy
+    │   ├── it deploys and initializes Escrow proxy
+    │   └── it deploys and initializes PaymentManager proxy
+    ├── when StakingRegistry proxy precomputed address is incorrect
+    │   └── it reverts with InvalidPrecomputedAddress
+    ├── when StakedGEOToken proxy precomputed address is incorrect
+    │   └── it reverts with InvalidPrecomputedAddress
+    ├── when StakingManager proxy precomputed address is incorrect
+    │   └── it reverts with InvalidPrecomputedAddress
+    ├── when Rewarder proxy precomputed address is incorrect
+    │   └── it reverts with InvalidPrecomputedAddress
+    ├── when Escrow proxy precomputed address is incorrect
+    │   └── it reverts with InvalidPrecomputedAddress
+    └── when PaymentManager proxy precomputed address is incorrect
+        └── it reverts with InvalidPrecomputedAddress

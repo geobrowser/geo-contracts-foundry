@@ -1,0 +1,56 @@
+UnitStakingRegistry::constants
+└── when deployed
+    └── it sets _STAKING_REGISTRY_STORAGE_LOCATION to keccak256(abi.encode(uint256(keccak256("geo.storage.StakingRegistry")) - 1)) & ~bytes32(uint256(0xff))
+
+UnitStakingRegistry::constructor
+└── when called
+    └── it disables initializers
+
+UnitStakingRegistry::initialize
+├── when passing valid parameters
+│   └── it sets the owner
+├── when called twice
+│   └── it reverts with InvalidInitialization
+└── when council is zero
+    └── it reverts with OwnableInvalidOwner
+
+UnitStakingRegistry::setTarget
+├── when called by owner
+│   ├── it stores the target record
+│   └── it emits TargetSet
+├── when null type is active
+│   └── it reverts with NullTargetCannotBeActive
+├── when target id is zero
+│   └── it reverts with InvalidTargetId
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+UnitStakingRegistry::targets
+└── when unset
+    └── it returns the default record
+
+UnitStakingRegistry::getTargetId
+├── when interpreting as a space id
+│   └── it matches the space encoding fixtures
+├── when interpreting as a topic id
+│   └── it folds the high 128 bits for topic ids
+└── when fuzzing inputs
+    └── it matches the pure derivation rules
+
+UnitStakingRegistry::typeId
+└── when called
+    └── it returns the type
+
+UnitStakingRegistry::name
+└── when called
+    └── it returns the name
+
+UnitStakingRegistry::version
+└── when called
+    └── it returns semantic version
+
+UnitStakingRegistry::_authorizeUpgrade
+├── when called by owner
+│   └── it authorizes the upgrade
+└── when called by non-owner
+    └── it reverts with OwnableUnauthorizedAccount
