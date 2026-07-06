@@ -2,10 +2,10 @@
   "name": "geo-contracts-foundry",
   "version": "1.0.0",
   "description": "Geo Browser plugin contracts",
-  "homepage": "https://github.com/defi-wonderland/geo-contracts-foundry#readme",
+  "homepage": "https://github.com/geobrowser/geo-contracts-foundry#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/defi-wonderland/geo-contracts-foundry.git"
+    "url": "git+https://github.com/geobrowser/geo-contracts-foundry.git"
   },
   "license": "AGPL-3.0-or-later",
   "author": "Wonderland",

@@ -190,9 +190,9 @@ GEO_CHAIN_ID=                             # the GEO mainnet chain ID (confirm wi
 GEO_DEPLOYER_NAME=geo-deployer            # any nickname you choose for your wallet (see Step 7)
 
 # --- Testnet (the free practice network) ---
-GEO_TESTNET_RPC=https://your-geo-testnet-rpc-url
-GEO_TESTNET_CHAIN_ID=55516                # the GEO testnet chain ID
-GEO_TESTNET_DEPLOYER_NAME=geo-deployer-testnet
+GEO_TESTNET_RPC=https://your-geo-testnet-rpc-url  # the RPC address from Step "What you need"
+GEO_TESTNET_CHAIN_ID=55516                        # the GEO testnet chain ID
+GEO_TESTNET_DEPLOYER_NAME=geo-deployer-testnet    # any nickname you choose for your wallet (see Step 7)
 
 # --- Block explorer verification (optional) ---
 GEOSCAN_API_URL=https://api.geoscan..../api                          # explorer API URL (mainnet)
