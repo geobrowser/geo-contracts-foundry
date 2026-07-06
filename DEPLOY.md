@@ -16,13 +16,13 @@ step in order, copy-paste the commands exactly as shown, and read the notes.
 
 You are publishing five smart contracts to the GEO blockchain:
 
-| Contract | Plain-English purpose |
-| --- | --- |
-| **SpaceRegistry** | The central address book that keeps track of every space. |
-| **DAOSpaceFactory** | A factory that creates new DAO (governance) spaces. |
-| **DAOSpace** | The blueprint each DAO space is built from. |
-| **VerifierSpaceFactory** | A factory that creates new verifier spaces. |
-| **VerifierSpace** | The blueprint each verifier space is built from. |
+| Contract | Plain-English purpose | Has proxy?
+| --- | --- | --- |
+| **SpaceRegistry** | The central address book that keeps track of every space. | UUPSProxy |
+| **DAOSpaceFactory** | A factory that creates new DAO (governance) spaces. | UUPSProxy |
+| **DAOSpace** | The blueprint each DAO space is built from. | BeaconProxy |
+| **VerifierSpaceFactory** | A factory that creates new verifier spaces. | UUPSProxy |
+| **VerifierSpace** | The blueprint each verifier space is built from. | BeaconProxy |
 
 The deployment is fully automated by a single script. You only need to (a) set a
 few values, and (b) run one command.
@@ -297,8 +297,9 @@ After a successful deployment, the results are saved automatically in the
 broadcast/DeployGEOBrowser.s.sol/<chain-id>/run-latest.json
 ```
 
-Open `run-latest.json` and look for the deployed contract addresses (search for
-the contract names like `SpaceRegistry` or `DAOSpaceFactory`). Save these
+Open `run-latest.json` and look for the deployed contract addresses and (search for
+the contract names like `SpaceRegistry` or `DAOSpaceFactory` with their respective
+proxies too). Save these
 addresses somewhere safe and share them with the team — the app and other tools
 will need them.
 
