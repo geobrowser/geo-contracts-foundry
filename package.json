@@ -52,5 +52,6 @@
     "solhint-community": "4.0.1",
     "solhint-config-wonderland": "0.0.1",
     "sort-package-json": "3.4.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }
