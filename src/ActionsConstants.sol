@@ -133,5 +133,30 @@ bytes32 constant DOWNVOTED = keccak256('PERMISSIONLESS.DOWNVOTED');
 /// @dev The ID of the action to remove a vote on something (e.g. content, topic, proposal)
 bytes32 constant UNVOTED = keccak256('PERMISSIONLESS.UNVOTED');
 
+/// @dev The ID of the action to agree with a claim. Part of the `stance` response kind
+/// ("do you hold this position"), which is independent of the curation kind above: a user
+/// may hold a curation vote, a stance and a veracity response on the same object at once
+bytes32 constant AGREED = keccak256('PERMISSIONLESS.AGREED');
+
+/// @dev The ID of the action to disagree with a claim
+bytes32 constant DISAGREED = keccak256('PERMISSIONLESS.DISAGREED');
+
+/// @dev The ID of the action to clear a stance on a claim. Each response kind has its own
+/// clear action rather than sharing UNVOTED: a shared clear would be ambiguous, since an
+/// indexer could not tell which of a user's per-kind responses to remove
+bytes32 constant UNAGREED = keccak256('PERMISSIONLESS.UNAGREED');
+
+/// @dev The ID of the action to assert a claim is true. Part of the `veracity` response
+/// kind ("is this true"). This is a user asserting a fact and is unrelated to
+/// SUBSPACE_VERIFIED above — the PERMISSIONLESS. and GOVERNANCE. prefixes keep the hashes
+/// distinct, but the word is overloaded, so reference this constant by its full name
+bytes32 constant VERIFIED = keccak256('PERMISSIONLESS.VERIFIED');
+
+/// @dev The ID of the action to dispute that a claim is true
+bytes32 constant DISPUTED = keccak256('PERMISSIONLESS.DISPUTED');
+
+/// @dev The ID of the action to clear a veracity response on a claim
+bytes32 constant UNVERIFIED = keccak256('PERMISSIONLESS.UNVERIFIED');
+
 /// @dev The ID of the action to comment on something (e.g. content, topic, proposal)
 bytes32 constant COMMENTED = keccak256('PERMISSIONLESS.COMMENTED');
