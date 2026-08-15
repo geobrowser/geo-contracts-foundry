@@ -2,10 +2,10 @@
   "name": "geo-contracts-foundry",
   "version": "1.0.0",
   "description": "Geo Browser plugin contracts",
-  "homepage": "https://github.com/defi-wonderland/geo-contracts-foundry#readme",
+  "homepage": "https://github.com/geobrowser/geo-contracts-foundry#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/defi-wonderland/geo-contracts-foundry.git"
+    "url": "git+https://github.com/geobrowser/geo-contracts-foundry.git"
   },
   "license": "AGPL-3.0-or-later",
   "author": "Wonderland",
@@ -14,7 +14,7 @@
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "coverage": "yarn recompile && forge coverage --report summary --report lcov --ir-minimum --ffi --match-path 'test/unit/*' --no-match-coverage test",
     "deploy:geo-browser": "bash -c 'source .env && yarn recompile && forge script script/DeployGEOBrowser.s.sol:DeployGEOBrowser --ffi --rpc-url geo --account $GEO_DEPLOYER_NAME --broadcast --verify --chain $GEO_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
-    "deploy:geo-browser:testnet": "bash -c 'source .env && yarn recompile && forge script script/DeployGEOBrowser.s.sol:DeployGEOBrowser --ffi --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --verify --chain $GEO_TESTNET_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
+    "deploy:geo-browser:testnet": "bash -c 'source .env && yarn recompile && forge script script/DeployGEOBrowser.s.sol:DeployGEOBrowser --ffi --rpc-url geo_testnet --account $GEO_TESTNET_DEPLOYER_NAME --broadcast --chain $GEO_TESTNET_CHAIN_ID --gas-estimate-multiplier 300 --slow -vvvvv'",
     "lint:bulloak": "find test/unit -name '*.tree' | xargs bulloak check",
     "lint:check": "forge fmt --check && yarn lint:sol",
     "lint:fix": "forge fmt && yarn lint:sol --fix && sort-package-json",
@@ -52,5 +52,6 @@
     "solhint-community": "4.0.1",
     "solhint-config-wonderland": "0.0.1",
     "sort-package-json": "3.4.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }
